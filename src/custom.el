@@ -10,9 +10,9 @@
  '(custom-enabled-themes '(nord))
  '(custom-safe-themes
    '("37768a79b479684b0756dec7c0fc7652082910c37d8863c35b702db3f16000f8" default))
+ '(lsp-java-server-install-dir "/Users/diego.guzman/opt/eclipse-jdt-server")
  '(org-agenda-files
    '("~/org/personal.org" "~/org/wizeline.org" "~/org/sunpower.org" "~/org/okr.org"))
- '(lsp-java-server-install-dir "/Users/diego.guzman/opt/eclipse-jdt-server")
  '(org-capture-templates
    '(("w" "Wizeline Templates")
      ("wi" "Capture an interview session" entry
@@ -30,7 +30,7 @@
  '(org-refile-targets '((org-agenda-files :maxlevel . 2)))
  '(org-refile-use-outline-path 'file)
  '(package-selected-packages
-   '(emojify exec-path-from-shell fzf vterm ob-http lsp-ui lsp-java lsp-ivy dap-mode csv-mode company magit ivy gradle-mode helm evil lsp-mode jq-mode nord-theme))
+   '(helm-lsp which-key yasnippet flycheck projectile emojify exec-path-from-shell fzf vterm ob-http lsp-ui lsp-java lsp-ivy dap-mode csv-mode company magit ivy gradle-mode helm evil lsp-mode jq-mode nord-theme))
  '(scroll-bar-mode nil)
  '(tool-bar-mode nil)
  '(tooltip-mode nil))
