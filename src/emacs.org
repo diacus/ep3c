@@ -19,6 +19,11 @@
     (package-refresh-contents)
   #+end_src
 
+* Add Own Packages
+  #+begin_src emacs-lisp :results none
+    (add-to-list 'load-path "~/.config/emacs/packages")
+  #+end_src
+
 * Saving Customizations
   In the customization buffer, you can _save_ a customization setting
   by choosing the ='Save for Future Sessions'= choice from its
@@ -244,41 +249,11 @@
 * SQL Settings
   Enable Org-mode babel for SQL
 
-** Sunpower EDP databases
-
-   #+name: SQL argument list
-   #+begin_src emacs-lisp :results none
-     (setq sql-connection-alist
-           '((mds-noprod (sql-product 'postgres)
-                         (sql-server "dm1xfz5pr3go5w5.cnnwe8pmnp5z.us-west-2.rds.amazonaws.com")
-                         (sql-user "diguzman")
-                         (sql-databse "edp_mds"))
-             (sot-dev    (sql-product 'postgres)
-                         (sql-server "dsxzsf7yo02uin.cnnwe8pmnp5z.us-west-2.rds.amazonaws.com")
-                         (sql-user "diguzman")
-                         (sql-name "edp_sot"))
-             (mds-local  (sql-product 'postgres)
-                         (sql-server "localhost")
-                         (sql-user "postgres")
-                         (sql-name "mds"))
-             (sot-local  (sql-product 'postgres)
-                         (sql-server "localhost")
-                         (sql-user "postgres")
-                         (sql-name "sot"))
-             ))
-
-     (defun sql-connect-mds-noprod ()
-       (interactive)
-       (sql-connect 'mds-noprod "*mds-noprod*"))
-
-     (defun sql-connect-sot-dev ()
-       (interactive)
-       (sql-connect 'sot-dev "*sot-dev*"))
-
-     (add-hook 'sql-interactive-mode-hook
-               (lambda ()
-                 (toggle-truncate-lines t)))
-   #+end_src
+  #+begin_src emacs-lisp :results none
+    (add-hook 'sql-interactive-mode-hook
+              (lambda ()
+                (toggle-truncate-lines t)))
+  #+end_src
 
 * LSP Mode
    #+begin_src emacs-lisp :results none

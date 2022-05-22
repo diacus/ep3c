@@ -30,7 +30,7 @@
  '(org-refile-targets '((org-agenda-files :maxlevel . 2)))
  '(org-refile-use-outline-path 'file)
  '(package-selected-packages
-   '(use-package helm-lsp which-key yasnippet flycheck projectile emojify exec-path-from-shell fzf vterm ob-http lsp-ui lsp-java lsp-ivy dap-mode csv-mode company magit ivy gradle-mode helm evil lsp-mode jq-mode nord-theme))
+   '(helm-pass pass use-package helm-lsp which-key yasnippet flycheck projectile emojify exec-path-from-shell fzf vterm ob-http lsp-ui lsp-java lsp-ivy dap-mode csv-mode company magit ivy gradle-mode helm evil lsp-mode jq-mode nord-theme))
  '(scroll-bar-mode nil)
  '(tool-bar-mode nil)
  '(tooltip-mode nil))
