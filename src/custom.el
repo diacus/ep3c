@@ -24,13 +24,17 @@
      ("s" "Sunpower EDP Project")
      ("ss" "Sunpower Story from Pivotal Traker" entry
       (file+headline "~/org/sunpower.org" "Pivotal Tracker")
-      (file "~/org/templates/pivotal-tracker.txt"))))
+      (file "~/org/templates/pivotal-tracker.txt"))
+     ("p" "Personal caputre")
+     ("pb" "Book entry" entry
+      (file "~/org/lecturas.org")
+      (file "~/org/templates/book.txt"))))
  '(org-export-backends '(ascii html icalendar latex md odt))
  '(org-refile-allow-creating-parent-nodes 'confirm)
  '(org-refile-targets '((org-agenda-files :maxlevel . 2)))
  '(org-refile-use-outline-path 'file)
  '(package-selected-packages
-   '(helm-pass pass use-package helm-lsp which-key yasnippet flycheck projectile emojify exec-path-from-shell fzf vterm ob-http lsp-ui lsp-java lsp-ivy dap-mode csv-mode company magit ivy gradle-mode helm evil lsp-mode jq-mode nord-theme))
+   '(rg docker docker-api docker-cli docker-compose-mode dockerfile-mode yaml yaml-imenu yaml-mode yaml-tomato helm-pass pass use-package helm-lsp which-key yasnippet flycheck projectile emojify exec-path-from-shell fzf vterm ob-http lsp-ui lsp-java lsp-ivy dap-mode csv-mode company magit ivy gradle-mode helm evil lsp-mode jq-mode nord-theme))
  '(scroll-bar-mode nil)
  '(tool-bar-mode nil)
  '(tooltip-mode nil))
