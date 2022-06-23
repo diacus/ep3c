@@ -43,6 +43,15 @@
     (load custom-file)
   #+end_src
 
+  When running Emacs --daemon at startup on MacOS, the customized
+  theme is not loaded properly, so it is better to attach the
+  theme loading to the =after-init-hook=.
+
+  #+begin_src emacs-lisp :results none
+    (add-hook 'after-init-hook
+              (lambda () (load-theme 'nord)))
+  #+end_src
+
 * Install Selected Packages
   #+begin_src emacs-lisp :results none
     (package-install-selected-packages)
