@@ -1,16 +1,6 @@
 #+TITLE: EMACS Settings
 #+AUTHOR: Diacus Mágnuz
 #+STARTUP: logdrawer overview
-* Saving and applying customizations
-Define a custom file to stroe the settings modified through the
-standard customization buffer (=M-x customize RET=).
-
-#+begin_src emacs-lisp
-  (setq custom-file
-	(file-name-concat user-emacs-directory "custom.el"))
-  (when (file-exists-p custom-file)
-    (load custom-file))
-#+end_src
 * Packages
 Add package sources
 #+begin_src emacs-lisp
@@ -39,10 +29,45 @@ Add package sources
 #+begin_example emacs-lisp
   (require 'org-tools)
 #+end_example
+* Saving and applying customizations
+Define a custom file to stroe the settings modified through the
+standard customization buffer (=M-x customize RET=).
+
+#+begin_src emacs-lisp
+  (setq custom-file
+	(file-name-concat user-emacs-directory "custom.el"))
+  (when (file-exists-p custom-file)
+    (load custom-file))
+#+end_src
+* Basic interface setup
+Clean and simple interface
+#+begin_src emacs-lisp
+  (set-scroll-bar-mode nil)
+  (tool-bar-mode 0)
+  (setq column-number-mode t)
+  (unless (equal system-type 'darwin) (menu-bar-mode 0))
+#+end_src
+
+File type and mode mapping
+#+begin_src emacs-lisp
+  (add-to-list 'auto-mode-alist '("\\.env\\'" . conf-mode))
+  (add-to-list 'auto-mode-alist '("\\.http\\'" . restclient-mode))
+#+end_src
+
+Keep the ring quiet
+#+begin_src emacs-lisp
+  (setq ring-bell-function 'ignore)
+#+end_src
+
 * Theme
 #+begin_src emacs-lisp
-  (use-package dracula-theme :ensure t)
-  (load-theme 'dracula t)
+  (use-package dracula-theme
+    :ensure t
+    :init (load-theme 'dracula t))
+
+  (use-package doom-modeline
+    :ensure t
+    :hook (after-init . doom-modeline-mode))
 #+end_src
 * Command line interface
 #+begin_src emacs-lisp
@@ -110,7 +135,10 @@ working with GNU pass.
 * Development
 ** Version control
 #+begin_src emacs-lisp
-  (use-package magit :ensure t)
+  (use-package magit
+    :ensure t
+    :config (setq magit-log-arguments '("-n256" "--graph" "--decorate" "--color")
+		  magit-diff-refine-hunk t))
 #+end_src
 
 ** Language Server Protocol
