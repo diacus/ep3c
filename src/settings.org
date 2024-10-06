@@ -1,0 +1,173 @@
+#+TITLE: EMACS Settings
+#+AUTHOR: Diacus Mágnuz
+#+STARTUP: logdrawer overview
+* Saving and applying customizations
+Define a custom file to stroe the settings modified through the
+standard customization buffer (=M-x customize RET=).
+
+#+begin_src emacs-lisp
+  (setq custom-file
+	(file-name-concat user-emacs-directory "custom.el"))
+  (when (file-exists-p custom-file)
+    (load custom-file))
+#+end_src
+* Packages
+Add package sources
+#+begin_src emacs-lisp
+  (package-initialize)
+  (require 'package)
+
+  (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
+  (add-to-list 'package-archives '("org" . "http://orgmode.org/elpa/") t)
+  (add-to-list 'package-archives '("gnu" . "https://elpa.gnu.org/packages/") t)
+
+  (package-refresh-contents t)
+
+  (dolist (package '(use-package))
+    (unless (package-installed-p package)
+      (package-install package)))
+#+end_src
+
+** Add own packages
+#+begin_src emacs-lisp
+  (defvar personal-packages
+    (file-name-concat user-emacs-directory "my-packages")
+    "Directory containing custom packages")
+  (add-to-list 'load-path personal-packages)
+#+end_src
+
+#+begin_src emacs-lisp
+  (require 'org-tools)
+#+end_src
+* Theme
+#+begin_src emacs-lisp
+  (use-package dracula-theme :ensure t)
+  (load-theme 'dracula t)
+#+end_src
+* Command line interface
+#+begin_src emacs-lisp
+  ;; libvterm is not for Windows
+  (unless (member system-type '(ms-dos windows-nt cygwin))
+    (use-package vterm :ensure t))
+
+  ;; If the operating system is Windows install PowerShell package
+  (if (member system-type '(ms-dos windows-nt cygwin))
+      (use-package powershell :ensure t))
+#+end_src
+* Auto completion
+Company is a text completion framework for Emacs.
+#+begin_src emacs-lisp
+  (use-package company :ensure t)
+  (company-mode)
+  (add-hook 'after-init-hook 'global-company-mode)
+#+end_src
+* Minibuffer completion
+** Ivy
+#+begin_src emacs-lisp
+  (use-package ivy :ensure t)
+  (ivy-mode)
+  (setq ivy-use-virtual-buffers t)
+  (setq enable-recursive-minibuffers t)
+  (global-set-key "\C-s" 'swiper)
+  (global-set-key (kbd "C-c C-r") 'ivy-resume)
+  (global-set-key (kbd "<f6>") 'ivy-resume)
+#+end_src
+** Counsel
+#+begin_src emacs-lisp
+  (use-package counsel :ensure t)
+  (global-set-key (kbd "M-x") 'counsel-M-x)
+  (global-set-key (kbd "C-x C-f") 'counsel-find-file)
+  (global-set-key (kbd "<f1> f") 'counsel-describe-function)
+  (global-set-key (kbd "<f1> v") 'counsel-describe-variable)
+  (global-set-key (kbd "<f1> o") 'counsel-describe-symbol)
+  (global-set-key (kbd "<f1> l") 'counsel-describe-find-library)
+  (global-set-key (kbd "<f2> i") 'counsel-describe-info-lookup-symbol)
+  (global-set-key (kbd "<f2> u") 'counsel-describe-unicode-char)
+  (global-set-key (kbd "C-c g") 'counsel-git)
+  (global-set-key (kbd "C-c j") 'counsel-git-grep)
+  (global-set-key (kbd "C-c k") 'counsel-ag)
+  (global-set-key (kbd "C-x l") 'counsel-locate)
+  (global-set-key (kbd "C-S-o") 'counsel-rhythmbox)
+  (define-key minibuffer-local-map (kbd "C-r") 'counsel-minibuffer-history)
+#+end_src
+* Development
+** Version control
+#+begin_src emacs-lisp
+  (use-package magit :ensure t)
+#+end_src
+
+** Language Server Protocol
+#+begin_src emacs-lisp
+  (use-package lsp-mode
+    :ensure t
+    :init
+    ;; set prefix for lsp-command-keymap (few alternatives - "C-l", "C-c l")
+    (setq lsp-keymap-prefix "C-c l")
+    :hook (;; replace/add XXX-mode with concrete major-mode(e. g. python-mode)
+	   (python-mode . lsp)
+	   ;; if you want which-key integration
+	   (lsp-mode . lsp-enable-which-key-integration))
+    :commands (lsp lsp-deferred))
+
+  ;; optionally
+  (use-package lsp-ui
+    :ensure t
+    :commands lsp-ui-mode)
+
+  ;; if you are helm user
+  ;; (use-package helm-lsp
+  ;;   :ensure t
+  ;;   :commands helm-lsp-workspace-symbol)
+
+  ;; if you are ivy user
+  (use-package lsp-ivy
+    :ensure t
+    :commands lsp-ivy-workspace-symbol)
+
+  (use-package lsp-treemacs
+    :ensure t
+    :commands lsp-treemacs-errors-list)
+
+  ;; optionally if you want to use debugger
+  (use-package dap-mode
+    :ensure t)
+  ;; (use-package dap-LANGUAGE) to load the dap adapter for your language
+
+  ;; optional if you want which-key integration
+  (use-package which-key
+    :ensure t
+    :config (which-key-mode))
+#+end_src
+** Python
+:REFERENCES:
+- [[https://emacs-lsp.github.io/lsp-pyright/][LSP Pyright]]
+:END:
+#+begin_src emacs-lisp
+  (use-package lsp-pyright
+    :ensure t
+    :hook (python-mode . (lambda ()
+			   (require 'lsp-pyright (lsp)))))
+#+end_src
+* Orgmode
+Jump to heading, as describes at [[https://stackoverflow.com/questions/15011703/is-there-an-emacs-org-mode-command-to-jump-to-an-org-heading][Stackoverflow]]
+#+begin_src emacs-lisp
+  (setq org-goto-interface 'outline-path-completion
+	org-goto-max-level 10)
+  (setq org-outline-path-complete-in-steps nil)
+#+end_src
+
+Org bullets
+#+begin_src emacs-lisp
+  (use-package org-bullets :ensure t)
+  (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1)))
+#+end_src
+
+* Emulate Vim editing style
+Evil is an extensible vi layer for Emacs.
+
+#+begin_src emacs-lisp
+  (use-package evil :ensure t)
+  (evil-mode 1)
+  (with-eval-after-load
+      'evil-maps (define-key evil-motion-state-map (kbd "TAB") nil))
+#+end_src

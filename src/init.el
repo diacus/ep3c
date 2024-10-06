@@ -1,1 +1,5 @@
-(org-babel-load-file "~/.config/emacs/emacs.org")
+(setq settings-file
+      (if (member system-type '(ms-dos windows-nt cygwin))
+	  (file-name-concat (getenv "HOME") "OneDrive - Microsoft" "emacs" "settings.org")
+	(file-name-concat (getenv "HOME") ".config" "emacs" "settings.org")))
+org-babel-load-file settings-file)
