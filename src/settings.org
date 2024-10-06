@@ -90,11 +90,23 @@ Company is a text completion framework for Emacs.
   (global-set-key (kbd "C-S-o") 'counsel-rhythmbox)
   (define-key minibuffer-local-map (kbd "C-r") 'counsel-minibuffer-history)
 #+end_src
+* Password management
+GNU [[https://www.passwordstore.org][pass]] is a tool that makes password management simple by following
+the [[http://en.wikipedia.org/wiki/Unix_philosophy][UNIX philosophy]].
+
+With =pass= each password lives inside of a =gpg= encrypted text file,
+which make it easy to share between devices.
+
+Emacs [[https://github.com/stuartsierra/password-store/tree/master/contrib/emacs][password-store.el]] is a package that provides functions for
+working with GNU pass.
+#+begin_src emacs-lisp
+  (use-package password-store :ensure t)
+#+end_src
+
 * REST client
 #+begin_src emacs-lisp
   (use-package restclient :ensure t)
 #+end_src
-
 * Development
 ** Version control
 #+begin_src emacs-lisp
