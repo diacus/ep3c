@@ -36,9 +36,9 @@ Add package sources
   (add-to-list 'load-path personal-packages)
 #+end_src
 
-#+begin_src emacs-lisp
+#+begin_example emacs-lisp
   (require 'org-tools)
-#+end_src
+#+end_example
 * Theme
 #+begin_src emacs-lisp
   (use-package dracula-theme :ensure t)
