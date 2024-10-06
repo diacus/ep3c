@@ -1,6 +1,8 @@
 #+TITLE: Emacs Pretty Personal Portable Configuration
 #+AUTHOR: Diacus Mágnuz
 #+STARTUP: logdrawer overview
+See the settings [[file:src/settings.org][here]].
+
 * Installation
 To install the settings just copy =init.el= and =settings.org= files
 to the =user-emacs-directory= folder.
