@@ -60,6 +60,7 @@ Keep the ring quiet
 #+end_src
 
 * Theme
+Change this section to select any theme you like to use
 #+begin_src emacs-lisp
   (use-package dracula-theme
     :ensure t
@@ -69,6 +70,10 @@ Keep the ring quiet
     :ensure t
     :hook (after-init . doom-modeline-mode))
 #+end_src
+
+For setting up the font family and face, take a look on [[https://stackoverflow.com/questions/6026713/how-do-i-change-emacs-default-font-size-and-font-type][these
+instructions]] from Stackoverflow.
+
 * Command line interface
 #+begin_src emacs-lisp
   ;; libvterm is not for Windows
