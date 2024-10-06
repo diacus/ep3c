@@ -188,6 +188,13 @@ working with GNU pass.
     :ensure t
     :config (which-key-mode))
 #+end_src
+** Haskell
+#+begin_src emacs-lisp
+  (use-package lsp-haskell :ensure t)
+  (add-hook 'haskell-mode-hook #'lsp)
+  (add-hook 'haskell-literate-mode-hook #'lsp)
+#+end_src
+
 ** Python
 :REFERENCES:
 - [[https://emacs-lsp.github.io/lsp-pyright/][LSP Pyright]]
