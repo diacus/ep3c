@@ -90,6 +90,11 @@ Company is a text completion framework for Emacs.
   (global-set-key (kbd "C-S-o") 'counsel-rhythmbox)
   (define-key minibuffer-local-map (kbd "C-r") 'counsel-minibuffer-history)
 #+end_src
+* REST client
+#+begin_src emacs-lisp
+  (use-package restclient :ensure t)
+#+end_src
+
 * Development
 ** Version control
 #+begin_src emacs-lisp
