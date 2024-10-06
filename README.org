@@ -1,37 +1,29 @@
-#+AUTOR: Diacus Mágnuz
 #+TITLE: Emacs Pretty Personal Portable Configuration
-
-* Getting Started
-  Clone this repository and run the =help= target
-
-  #+begin_src shell
-    git clone https://github.com/diacus/emacs-config.git
-    cd emacs-config
-    make help
-  #+end_src
-
+#+AUTHOR: Diacus Mágnuz
+#+STARTUP: logdrawer overview
 * Installation
-  #+begin_src shell
-    cd emacs-config
-    make install
+To install the settings just copy =init.el= and =settings.org= files
+to the =user-emacs-directory= folder.
+
+  #+begin_src emacs-lisp
+    (unless (file-directory-p user-emacs-directory)
+      (make-directory user-emacs-directory t))
+    (copy-file "./src/init.el" user-emacs-directory t)
+    (copy-file "./src/settings.org" user-emacs-directory t)
   #+end_src
 
 * Remove configuration
-  #+begin_src shell
-    cd emacs-config
-    make reset-emacs
-  #+end_src
+To get rid of everything just delete =user-emacs-directory=
+#+name: remove-everything
+#+begin_src emacs-lisp
+  (delete-directory user-emacs-directory t t)
+#+end_src
 
-* Syncing your changes
-  If for any reason you change the configuration manually or use the
-  =customize-variable= or =customize-option= functions you can fetch
-  those changes back to this repository by running the =sync= target.
+To delete the settings but keep the rest, only deleete =init.el= and
+=settings.org= files.
 
-  #+begin_src shell
-    cd emacs-config
-    make sync
-  #+end_src
-
-  After that your local repository will contain the changes from your
-  installed configuration, you can inspect them and decide if commit
-  or discard them.
+#+name: delete-settings-only
+#+begin_src emacs-lisp
+  (dolist (file '("init.el" "settings.org"))
+    (delete-file (file-name-concat user-emacs-directory file)))
+#+end_src
