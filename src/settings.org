@@ -188,6 +188,7 @@ working with GNU pass.
     :config (which-key-mode))
 #+end_src
 ** Haskell
+See detailed instrucctions [[https://emacs-lsp.github.io/lsp-haskell/][here]].
 #+begin_src emacs-lisp
   (use-package lsp-haskell :ensure t)
   (add-hook 'haskell-mode-hook #'lsp)
