@@ -92,7 +92,7 @@ Company is a text completion framework for Emacs.
 #+end_src
 * Minibuffer completion
 ** Ivy
-#+begin_src emacs-lisp
+#+begin_example emacs-lisp
   (use-package ivy :ensure t)
   (ivy-mode)
   (setq ivy-use-virtual-buffers t)
@@ -100,9 +100,9 @@ Company is a text completion framework for Emacs.
   (global-set-key "\C-s" 'swiper)
   (global-set-key (kbd "C-c C-r") 'ivy-resume)
   (global-set-key (kbd "<f6>") 'ivy-resume)
-#+end_src
+#+end_example
 ** Counsel
-#+begin_src emacs-lisp
+#+begin_example emacs-lisp
   (use-package counsel :ensure t)
   (global-set-key (kbd "M-x") 'counsel-M-x)
   (global-set-key (kbd "C-x C-f") 'counsel-find-file)
