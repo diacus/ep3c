@@ -7,7 +7,7 @@ See the settings [[file:src/settings.org][here]].
 To install the settings just copy =init.el= and =settings.org= files
 to the =user-emacs-directory= folder.
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :results none
   (unless (file-directory-p user-emacs-directory)
     (make-directory user-emacs-directory t))
   (copy-file "./src/init.el" user-emacs-directory t)
@@ -17,7 +17,7 @@ to the =user-emacs-directory= folder.
 * Remove configuration
 To get rid of everything just delete =user-emacs-directory=
 #+name: remove-everything
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :results none
   (delete-directory user-emacs-directory t t)
 #+end_src
 
@@ -25,7 +25,7 @@ To delete the settings but keep the rest, only deleete =init.el= and
 =settings.org= files.
 
 #+name: delete-settings-only
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :results none
   (dolist (file '("init.el" "settings.org"))
     (delete-file (file-name-concat user-emacs-directory file)))
 #+end_src
