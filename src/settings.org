@@ -118,7 +118,23 @@ Company is a text completion framework for Emacs.
   (global-set-key (kbd "C-x l") 'counsel-locate)
   (global-set-key (kbd "C-S-o") 'counsel-rhythmbox)
   (define-key minibuffer-local-map (kbd "C-r") 'counsel-minibuffer-history)
+#+end_example
+** Vertico
+#+begin_src emacs-lisp
+  (use-package vertico
+    :ensure t
+    :init
+    (vertico-mode))
 #+end_src
+
+** Marginalia
+#+begin_src emacs-lisp
+  (use-package marginalia
+    :ensure t
+    :init
+    (marginalia-mode))
+#+end_src
+
 * Password management
 GNU [[https://www.passwordstore.org][pass]] is a tool that makes password management simple by following
 the [[http://en.wikipedia.org/wiki/Unix_philosophy][UNIX philosophy]].
