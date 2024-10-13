@@ -90,7 +90,7 @@ Company is a text completion framework for Emacs.
   (company-mode)
   (add-hook 'after-init-hook 'global-company-mode)
 #+end_src
-* Minibuffer completion
+* Minibuffer settings
 ** Ivy
 #+begin_example emacs-lisp
   (use-package ivy :ensure t)
@@ -102,7 +102,7 @@ Company is a text completion framework for Emacs.
   (global-set-key (kbd "<f6>") 'ivy-resume)
 #+end_example
 ** Counsel
-#+begin_example emacs-lisp
+#+begin_src emacs-lisp
   (use-package counsel :ensure t)
   (global-set-key (kbd "M-x") 'counsel-M-x)
   (global-set-key (kbd "C-x C-f") 'counsel-find-file)
@@ -118,7 +118,7 @@ Company is a text completion framework for Emacs.
   (global-set-key (kbd "C-x l") 'counsel-locate)
   (global-set-key (kbd "C-S-o") 'counsel-rhythmbox)
   (define-key minibuffer-local-map (kbd "C-r") 'counsel-minibuffer-history)
-#+end_example
+#+end_src
 ** Vertico
 #+begin_src emacs-lisp
   (use-package vertico
