@@ -135,6 +135,35 @@ Company is a text completion framework for Emacs.
     (marginalia-mode))
 #+end_src
 
+** Orderless
+This package lets minibuffer use an out-of-order pattern matching
+algorithm. It matches space-separated words or regular expressions in
+any order.
+
+#+begin_src emacs-lisp
+  (use-package orderless
+    :ensure t
+    :config
+    (setq completion-styles '(orderless basic)))
+#+end_src
+
+** Consult
+Provides lots of commands that are enhanced variants of basic,
+built-in functionality. One of the headline features is tis preview
+facility, where it shows in another window the context of what is
+currently matched in the minibuffer.
+
+#+begin_src emacs-lisp
+  (use-package consult
+    :ensure t
+    :bind
+    (("M-s M-g" . consult-grep)     ;; A recursive grep
+     ("M-s M-f" . consult-find)     ;; Search for file names recursively
+     ("M-s M-o" . consult-outline)  ;; Search through the headlines of a file
+     ("M-s M-l" . consult-line)     ;; Search in the current buffer
+     ("M-s M-b" . consult-buffer))) ;; Switch to another buffer
+#+end_src
+
 * Password management
 GNU [[https://www.passwordstore.org][pass]] is a tool that makes password management simple by following
 the [[http://en.wikipedia.org/wiki/Unix_philosophy][UNIX philosophy]].
@@ -244,3 +273,6 @@ Evil is an extensible vi layer for Emacs.
   (with-eval-after-load
       'evil-maps (define-key evil-motion-state-map (kbd "TAB") nil))
 #+end_src
+
+* References
+- [[https://protesilaos.com/codelog/2024-02-17-emacs-modern-minibuffer-packages/][Emacs modern minibuffer packages]]
