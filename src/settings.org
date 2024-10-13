@@ -61,9 +61,9 @@ Keep the ring quiet
 * Theme
 Change this section to select any theme you like to use
 #+begin_src emacs-lisp
-  (use-package dracula-theme
+  (use-package timu-macos-theme
     :ensure t
-    :init (load-theme 'dracula t))
+    :init (load-theme 'timu-macos t))
 
   (use-package doom-modeline
     :ensure t
