@@ -189,6 +189,32 @@ working with GNU pass.
     :config (setq magit-log-arguments '("-n256" "--graph" "--decorate" "--color")
 		  magit-diff-refine-hunk t))
 #+end_src
+** Docker
+Add support for managing Docker containers, images, volumes, networks,
+contexts and docker-compose
+
+#+begin_src emacs-lisp
+  (use-package docker
+    :ensure t
+    :bind ("C-c d" . docker))
+#+end_src
+
+Use =M-x docker=, select a resource then mark or unmark items using
+the following keybindings (for more possibilities, check out [[https://github.com/politza/tablist][tablist]]):
+
+| Binding   | Description          |
+|-----------+----------------------|
+| =?=       | List actions         |
+| =l=       | Configure listing    |
+| =m=       | MarkItem             |
+| =u=       | Unmark item          |
+| =t=       | Toggle marks         |
+| =U=       | Unmark all           |
+| =s=       | Sort                 |
+| =* r=     | Mark items by regexp |
+| =<=       | Shink column         |
+| =>=       | Enlarge column       |
+| =C-c C-e= | Export to CSV        |
 
 ** Language Server Protocol
 #+begin_src emacs-lisp
