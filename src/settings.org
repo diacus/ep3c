@@ -291,13 +291,27 @@ Org bullets
 #+end_src
 
 * Emulate Vim editing style
-Evil is an extensible vi layer for Emacs.
+Evil is an extensible vi layer for Emacs, plus [[https://github.com/emacs-evil/evil-collection][evil-collection]] package
+installs a collection of Evil bindings for the parts of Emacs that
+Evil doest not cover property by default, such as =help-mode=, =M-x
+calendar=, Eshell and more.
+
+See Evil Collection repository for details.
 
 #+begin_src emacs-lisp
-  (use-package evil :ensure t)
-  (evil-mode 1)
-  (with-eval-after-load
-      'evil-maps (define-key evil-motion-state-map (kbd "TAB") nil))
+  (use-package evil
+    :ensure t
+    :init
+    (setq evil-want-integration t)
+    (setq evil-want-keybinding nil)
+    :config
+    (evil-mode 1))
+
+  (use-package evil-collection
+    :after evil
+    :ensure t
+    :config
+    (evil-collection-init))
 #+end_src
 
 * References
