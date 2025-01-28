@@ -263,21 +263,26 @@ the following keybindings (for more possibilities, check out [[https://github.co
 ** Haskell
 See detailed instrucctions [[https://emacs-lsp.github.io/lsp-haskell/][here]].
 #+begin_src emacs-lisp
-  (use-package lsp-haskell :ensure t)
-  (add-hook 'haskell-mode-hook #'lsp)
-  (add-hook 'haskell-literate-mode-hook #'lsp)
-#+end_src
+  (use-package haskell-mode :ensure t)
+#+end_src emacs-lisp
+
+#+begin_example emacs-lisp
+  (use-package lsp-haskell
+    :ensure t
+    :hook ((haskell-mode          . lsp)
+	   (haskell-literate-mode . lsp)))
+#+end_example
 
 ** Python
 :REFERENCES:
 - [[https://emacs-lsp.github.io/lsp-pyright/][LSP Pyright]]
 :END:
-#+begin_src emacs-lisp
+#+begin_example emacs-lisp
   (use-package lsp-pyright
     :ensure t
     :hook (python-mode . (lambda ()
 			   (require 'lsp-pyright (lsp)))))
-#+end_src
+#+end_example
 * Orgmode
 Jump to heading, as describes at [[https://stackoverflow.com/questions/15011703/is-there-an-emacs-org-mode-command-to-jump-to-an-org-heading][Stackoverflow]]
 #+begin_src emacs-lisp
