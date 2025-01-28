@@ -173,7 +173,9 @@ which make it easy to share between devices.
 
 Emacs [[https://github.com/stuartsierra/password-store/tree/master/contrib/emacs][password-store.el]] is a package that provides functions for
 working with GNU pass.
+
 #+begin_src emacs-lisp
+  (use-package pass :ensure t)
   (use-package password-store :ensure t)
 #+end_src
 
