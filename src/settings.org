@@ -163,6 +163,86 @@ currently matched in the minibuffer.
      ("M-s M-l" . consult-line)     ;; Search in the current buffer
      ("M-s M-b" . consult-buffer))) ;; Switch to another buffer
 #+end_src
+* Ledger
+#+begin_src emacs-lisp
+  (use-package ledger-mode :ensure t)
+#+end_src
+* GPG
+There is a problem wiht GPG, when the key is locked and GPG prompts
+for a password in MacOS, it fails with this error:
+#+begin_quote
+gpg: signing failed: Inappropriate ioctl for device
+#+end_quote
+
+I found [[https://stackoverflow.com/questions/57591432/gpg-signing-failed-inappropriate-ioctl-for-device-on-macos-with-maven][this question]] at Stackoverflow that claim to solve it by one
+of two ways:
+** Seting up environment variable
+Add this to the file ~/.bash_profile
+#+begin_src shell
+  GPG_TTY=$(tty)
+  export GPG_TTY
+#+end_src
+- [[https://github.com/Homebrew/homebrew-core/issues/14737#issuecomment-309848851][source]]
+
+** Using pinentry-mac
+Install =pinentry-mac= to have GUI window to enter pin and optionally store it in keychain.
+
+#+begin_src shell
+  brew install pinentry-mac
+#+end_src
+
+Then enableit with this line in =~/.gnupg/gpg-agent.conf=
+
+#+begin_example
+  pinentry-program /usr/local/bin/pinentry-mac
+#+end_example
+
+To apply changes kill =gpg-agent=
+
+#+begin_src shell
+  killall gpg-agent
+#+end_src
+* Gptel
+#+begin_quote
+[[https://github.com/karthink/gptel?tab=readme-ov-file#gptel-a-simple-llm-client-for-emacs][gptel]] isa simple Large Language Model chat client for Emacs, whith
+support for multiple models and backends. It works in the spirit of
+Emacs, available at any time and uniformly in any buffer.
+#+end_quote
+
+You need to get an [[https://platform.openai.com/account/api-keys][OpenAI API Key]] to use GhatGPT, once you get it,
+store it in [[file:~/.authinfo.gpg][~/authinfo.gpg]] like this:
+
+#+begin_export ascii
+machine api.openaio.com login api_key password YOUR-API-KEY
+#+end_export
+
+For [[https://ollama.com][Ollama]] just call =gptel-make-ollama=. See the [[https://github.com/karthink/gptel?tab=readme-ov-file#ollama][documentation]] for
+details.
+
+Once you get it enable the following block:
+#+begin_src emacs-lisp
+  (use-package gptel
+    :ensure t
+    :config
+    ;; Load API Key from ~/.authinfo.gpg
+    (setq gptel-api-key
+	  (auth-source-pick-first-password
+	   :host "api.openai.com"
+	   :user "api_key")))
+
+  (gptel-make-ollama
+      "Ollama"
+    :host "localhost:11434"
+    :models
+    '(mistral:latest                        ;Simple specs
+      openhermes:latest
+      (llava:13b                            ;Full spec
+       :description
+       "Llava 1.6: Large Lanuage and Vision Assistant"
+       :capabilities (media)
+       :mime-types ("image/jpeg" "image/png")))
+    :stream t)
+#+end_src
 
 * Password management
 GNU [[https://www.passwordstore.org][pass]] is a tool that makes password management simple by following
