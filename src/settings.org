@@ -2,7 +2,7 @@
 #+AUTHOR: Diacus Mágnuz
 #+STARTUP: logdrawer overview
 * Packages
-Add package sources
+** Add package sources
 #+begin_src emacs-lisp
   (package-initialize)
   (require 'package)
@@ -15,6 +15,43 @@ Add package sources
 
   (unless (package-installed-p 'use-package)
     (package-install 'use-package))
+#+end_src
+** Package manager straight.el
+[[https://github.com/radian-software/straight.el/tree/master][straight.el]] is an alternative package manager that allows installing
+Emacs packages directly from their source code repositories. With it
+is possible choosing specific versions of the packages to install,
+either by branch, fork and even specific commits.
+
+The following code block bootstraps the installation of straight.el,
+for details take a look on the [[https://github.com/radian-software/straight.el/tree/master?tab=readme-ov-file#getting-started][Getting started]] section of its
+repository.
+
+#+begin_src emacs-lisp
+  (defvar bootstrap-version)
+  (let ((bootstrap-file
+	 (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
+	(bootstrap-version 5))
+    (unless (file-exists-p bootstrap-file)
+      (with-current-buffer
+	  (url-retrieve-synchronously
+	   "https://raw.githubusercontent.com/raxod502/straight.el/develop/install.el"
+	   'silent 'inhibit-cookies)
+	(goto-char (point-max))
+	(eval-print-last-sexp)))
+    (load bootstrap-file nil 'nomessage))
+#+end_src
+
+For a better explaination of this package, take a look at the [[https://systemcrafters.net/advanced-package-management/using-straight-el/][Advanced
+Emacs Package Management with straight.el]] article by /SYSTEM
+CRAFTERS/.
+
+*** Integration with =use-package=
+[[https://github.com/jwiegley/use-package][use-package]] is a macro that provides convenient syntactic sugar for
+many common tasks related to installing and configuring Emacs
+packages. For details about this integration checkout [[https://github.com/radian-software/straight.el/tree/master?tab=readme-ov-file#integration-with-use-package][this section]].
+
+#+begin_src emacs-lisp
+  (straight-use-package 'use-package)
 #+end_src
 
 ** Add own packages
