@@ -96,12 +96,29 @@ Keep the ring quiet
 #+end_src
 
 * Theme
-Change this section to select any theme you like to use
+** Colors for Linux
+For Linux, currently I'm using [[https://github.com/cfraz89/arc-dark-theme?tab=readme-ov-file#arc-dark-theme][Arc dark]] theme. Based off
+[[https://github.com/jonathanchu/atom-one-dark-theme][jonathanchu/atom-one-dark-theme]] and colors matching [[https://marketplace.visualstudio.com/items?itemName=ph-hawkins.arc-plus][VSCode Arc+]] theme.
 #+begin_src emacs-lisp
-  (use-package timu-macos-theme
-    :ensure t
-    :init (load-theme 'timu-macos t))
+  (when (eq system-type 'gnu/linux)
+    (use-package arc-dark-theme
+      :straight (:host github :repo "cfraz89/arc-dark-theme")
+      :config (load-theme 'arc-dark t)))
+#+end_src
 
+** Colors for MacOs
+[[https://github.com/emacsmirror/timu-macos-theme][timu-macos-theme]] is inspired by the macOS UI.
+#+begin_src emacs-lisp
+  (when (eq system-type 'darwin)
+    (use-package timu-macos-theme
+      :ensure t
+      :init (load-theme 'timu-macos t)))
+#+end_src
+
+** Doom modeline
+The [[https://github.com/seagle0128/doom-modeline][doom-modeline]] is a fancy and fast mode-line inspired by minimalist
+design.
+#+begin_src emacs-lisp
   (use-package doom-modeline
     :ensure t
     :hook (after-init . doom-modeline-mode))
