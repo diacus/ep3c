@@ -488,11 +488,7 @@ variable.
 #+end_src
 
 ** Perl
-:LOGBOOK:
-- Note taken on [2025-02-19 Wed 00:09]
-- Note taken on [2025-02-19 Wed 00:08]
-:END:
-CPerl mode is an enhanced mode for Perl development. It was designed
+[[http://xahlee.info/emacs/emacs/emacs_perl_vs_cperl_mode.html][CPerl mode]] is an enhanced mode for Perl development. It was designed
 to provide better suppor for Perl's syntax and features, specially for
 more complex code.
 
@@ -508,23 +504,25 @@ a specific file extension.
   (add-to-list 'auto-mode-alist '("\\.[tT]\\'" . cperl-mode)) ; For .t files (Perl test files)
 #+end_src
 
-#+begin_src emacs-lisp
-  (use-package inf-perl
-    :straight (:host github :repo "nverno/inf-perl"))
-#+end_src
-
 The following hook settings are based on the [[https://dev.to/nicholasbhubbard/how-i-use-emacs-to-write-perl-40e6]["How I use Emacs to write
 Perl"]] post.
 #+begin_src emacs-lisp
   (require 'flycheck)
+  (use-package inf-perl
+    :straight (:host github :repo "nverno/inf-perl"))
+
   (defun cperl-mode-custom-settings ()
     (setq cperl-indent-level 2)
     (setq cperl-indent-parens-as-block t)
     (setq flycheck-check-syntax-automatically '(mode-enabled save))
     (setq flycheck-display-errors-delay 0.3))
 
+  (defun cperl-mode-key-bindings ()
+    (define-key cperl-mode-map (kbd "C-c C-z") 'inf-perl-run))
+
   (add-hook 'cperl-mode-hook 'flycheck-mode)
   (add-hook 'cperl-mode-hook 'cperl-mode-custom-settings)
+  (add-hook 'cperl-mode-hook 'cperl-mode-key-bindings)
 #+end_src
 
 * References
