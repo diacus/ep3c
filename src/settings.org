@@ -473,6 +473,11 @@ All text-based major modes run =text-mode-hook=, and many programming
 language modes (see [[https://www.gnu.org/software/emacs/manual/html_node/elisp/Derived-Modes.html#Derived-Modes][Derived Modes]] for details) run =prog-mode-hook=
 prior running their own mode hooks.
 
+** Flycheck
+#+begin_src emacs-lisp
+  (use-package flycheck :ensure t)
+#+end_src
+
 ** Prog mode
 Key bindings for prog mode
 #+begin_src emacs-lisp
