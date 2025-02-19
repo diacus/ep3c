@@ -461,5 +461,71 @@ See Evil Collection repository for details.
     (evil-collection-init))
 #+end_src
 
+* Major mode hooks
+Every buffer posses a [[https://www.gnu.org/software/emacs/manual/html_node/emacs/Major-Modes.html][major mode]], which determines the editing
+behavior of Emacs while that buffer is current.
+
+Every major mode, apart from =Fundamental mode=, defines a /mode
+hook/, a customizable list of Lisp functions to run each time the mode
+is enabled in a buffer. See [[https://www.gnu.org/software/emacs/manual/html_node/emacs/Hooks.html][Hooks]], for more information about hooks.
+
+All text-based major modes run =text-mode-hook=, and many programming
+language modes (see [[https://www.gnu.org/software/emacs/manual/html_node/elisp/Derived-Modes.html#Derived-Modes][Derived Modes]] for details) run =prog-mode-hook=
+prior running their own mode hooks.
+
+** Prog mode
+=hl-line-mode= to highlights the cursor line. Then customize the
+*Highlight* face to teak the look and feel as you need.
+#+begin_src emacs-lisp
+  (add-hook 'prog-mode-hook 'hl-line-mode)
+#+end_src
+
+=display-line-numbers-mode= numbers the lines in the buffer. Set
+relative numbering by customizing =display-line-numbers-type=
+variable.
+#+begin_src emacs-lisp
+  (add-hook 'prog-mode-hook 'display-line-numbers-mode)
+#+end_src
+
+** Perl
+:LOGBOOK:
+- Note taken on [2025-02-19 Wed 00:09]
+- Note taken on [2025-02-19 Wed 00:08]
+:END:
+CPerl mode is an enhanced mode for Perl development. It was designed
+to provide better suppor for Perl's syntax and features, specially for
+more complex code.
+
+By customizing =interpreter-mode-alist=, it is possible make Emacs
+recognize Perl scripts based on their shebang line, even if they lack
+a specific file extension.
+
+#+begin_src emacs-lisp
+  (add-to-list 'interpreter-mode-alist '("perl"     . cperl-mode))
+  (add-to-list 'interpreter-mode-alist '("perl5"    . cperl-mode))
+  (add-to-list 'interpreter-mode-alist '("miniperl" . cperl-mode))
+  (add-to-list 'auto-mode-alist '("\\.\\([pP][Llm]\\|al\\)\\'" . cperl-mode))
+  (add-to-list 'auto-mode-alist '("\\.[tT]\\'" . cperl-mode)) ; For .t files (Perl test files)
+#+end_src
+
+#+begin_src emacs-lisp
+  (use-package inf-perl
+    :straight (:host github :repo "nverno/inf-perl"))
+#+end_src
+
+The following hook settings are based on the [[https://dev.to/nicholasbhubbard/how-i-use-emacs-to-write-perl-40e6]["How I use Emacs to write
+Perl"]] post.
+#+begin_src emacs-lisp
+  (require 'flycheck)
+  (defun cperl-mode-custom-settings ()
+    (setq cperl-indent-level 2)
+    (setq cperl-indent-parens-as-block t)
+    (setq flycheck-check-syntax-automatically '(mode-enabled save))
+    (setq flycheck-display-errors-delay 0.3))
+
+  (add-hook 'cperl-mode-hook 'flycheck-mode)
+  (add-hook 'cperl-mode-hook 'cperl-mode-custom-settings)
+#+end_src
+
 * References
 - [[https://protesilaos.com/codelog/2024-02-17-emacs-modern-minibuffer-packages/][Emacs modern minibuffer packages]]
