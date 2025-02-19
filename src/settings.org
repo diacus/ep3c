@@ -517,6 +517,28 @@ a specific file extension.
   (add-to-list 'auto-mode-alist '("\\.[tT]\\'" . cperl-mode)) ; For .t files (Perl test files)
 #+end_src
 
+Perl debugger
+#+begin_src emacs-lisp
+  (defun spawn-run-perl-debugger-with-stdin ()
+    "Run the Perl debugger on the current file with ojput from another file."
+    (interactive)
+    (let* ((perl-file  (buffer-file-name))
+	   (input-file (read-file-name "Input file: ")))
+      (if (and perl-file input-file)
+	  (progn
+	    (split-window-below)
+	    (other-window 1)
+	    (let ((buffer (get-buffer-create "*perl-debugger*")))
+	      (with-current-buffer buffer
+		(comint-mode)
+		(erase-buffer)
+		(insert (format "Starting Perl debugger for %s with input from %s\n" perl-file input-file))
+		(make-comint "perl-debugger" "perl" nil "-d" perl-file)
+		(comint-send-string buffer (format "open(STDIN, '<%s') or die $!;\n" input-file)))
+	      (switch-to-buffer buffer)))
+	(message "No file is associated with this buffer or not imput selected"))))
+#+end_src
+
 The following hook settings are based on the [[https://dev.to/nicholasbhubbard/how-i-use-emacs-to-write-perl-40e6]["How I use Emacs to write
 Perl"]] post.
 #+begin_src emacs-lisp
@@ -531,7 +553,8 @@ Perl"]] post.
     (setq flycheck-display-errors-delay 0.3))
 
   (defun cperl-mode-key-bindings ()
-    (define-key cperl-mode-map (kbd "C-c C-z") 'inf-perl-run))
+    (define-key cperl-mode-map (kbd "C-c C-z") 'inf-perl-run)
+    (define-key cperl-mode-map (kbd "C-c C-d") 'spawn-run-perl-debugger-with-stdin))
 
   (add-hook 'cperl-mode-hook 'flycheck-mode)
   (add-hook 'cperl-mode-hook 'cperl-mode-custom-settings)
