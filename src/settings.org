@@ -474,6 +474,14 @@ language modes (see [[https://www.gnu.org/software/emacs/manual/html_node/elisp/
 prior running their own mode hooks.
 
 ** Prog mode
+Key bindings for prog mode
+#+begin_src emacs-lisp
+  (defun prog-mode-key-bindings()
+    (define-key prog-mode-map (kbd "C-c C-z") 'vterm-other-window))
+
+  (add-hook 'prog-mode-hook 'prog-mode-key-bindings)
+#+end_src
+
 =hl-line-mode= to highlights the cursor line. Then customize the
 *Highlight* face to teak the look and feel as you need.
 #+begin_src emacs-lisp
