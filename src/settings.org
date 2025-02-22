@@ -204,7 +204,7 @@ any order.
 [[https://github.com/abo-abo/swiper?tab=readme-ov-file#ivy][Ivy]] is a generic completion mechanism for Emacs. While it operates
 similary to other completion schemes, aims to be more efficient,
 smaller, simpler and smoother to use yet highly customizable.
-#+begin_src emacs-lisp
+#+begin_example emacs-lisp
   (use-package ivy
     :ensure t
     :config
@@ -214,7 +214,7 @@ smaller, simpler and smoother to use yet highly customizable.
     (global-set-key (kbd "C-c C-r") 'ivy-resume)
     (global-set-key (kbd "<f6>") 'ivy-resume)
     :init (ivy-mode))
-#+end_src
+#+end_example
 ** Counsel
 #+begin_src emacs-lisp
   (use-package counsel :ensure t)
