@@ -188,6 +188,33 @@ context of what is currently matched in the minibuffer.
      ("M-s M-b" . consult-buffer))) ;; Switch to another buffer
 #+end_src
 
+** Orderless
+This package lets minibuffer use an out-of-order pattern matching
+algorithm. It matches space-separated words or regular expressions in
+any order.
+
+#+begin_src emacs-lisp
+  (use-package orderless
+    :ensure t
+    :config
+    (setq completion-styles '(orderless basic)))
+#+end_src
+
+** Ivy
+[[https://github.com/abo-abo/swiper?tab=readme-ov-file#ivy][Ivy]] is a generic completion mechanism for Emacs. While it operates
+similary to other completion schemes, aims to be more efficient,
+smaller, simpler and smoother to use yet highly customizable.
+#+begin_src emacs-lisp
+  (use-package ivy
+    :ensure t
+    :config
+    (setq ivy-use-virtual-buffers t)
+    (setq enable-recursive-minibuffers t)
+    (global-set-key "\C-s" 'swiper)
+    (global-set-key (kbd "C-c C-r") 'ivy-resume)
+    (global-set-key (kbd "<f6>") 'ivy-resume)
+    :init (ivy-mode))
+#+end_src
 ** Counsel
 #+begin_src emacs-lisp
   (use-package counsel :ensure t)
@@ -206,28 +233,6 @@ context of what is currently matched in the minibuffer.
   (global-set-key (kbd "C-S-o") 'counsel-rhythmbox)
   (define-key minibuffer-local-map (kbd "C-r") 'counsel-minibuffer-history)
 #+end_src
-** Orderless
-This package lets minibuffer use an out-of-order pattern matching
-algorithm. It matches space-separated words or regular expressions in
-any order.
-
-#+begin_src emacs-lisp
-  (use-package orderless
-    :ensure t
-    :config
-    (setq completion-styles '(orderless basic)))
-#+end_src
-
-** Ivy
-#+begin_example emacs-lisp
-  (use-package ivy :ensure t)
-  (ivy-mode)
-  (setq ivy-use-virtual-buffers t)
-  (setq enable-recursive-minibuffers t)
-  (global-set-key "\C-s" 'swiper)
-  (global-set-key (kbd "C-c C-r") 'ivy-resume)
-  (global-set-key (kbd "<f6>") 'ivy-resume)
-#+end_example
 ** References
 - [[https://protesilaos.com/codelog/2024-02-17-emacs-modern-minibuffer-packages/][Emacs modern minibuffer packages]]
 * Saving and applying customizations
@@ -247,7 +252,7 @@ standard customization buffer (=M-x customize RET=).
     (use-package vterm :ensure t))
 
   ;; If the operating system is Windows install PowerShell package
-  (if (member system-type '(ms-dos windows-nt cygwin))
+  (when (member system-type '(ms-dos windows-nt cygwin))
       (use-package powershell :ensure t))
 #+end_src
 * Ledger
