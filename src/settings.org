@@ -368,6 +368,22 @@ working with GNU pass.
   (add-to-list 'auto-mode-alist '("\\.http\\'" . restclient-mode))
 #+end_src
 * Development
+** Projectile
+[[https://docs.projectile.mx/projectile/index.html][Projectile]] is a project integration library for Emacs. Its goal is to
+provide features operating on a project level without introducing
+external dependencies (when feasable).
+#+begin_src emacs-lisp
+  (use-package projectile
+    :ensure t
+    :config
+    (evil-define-key 'normal 'global (kbd "SPC p p") 'projectile-switch-project)
+    (evil-define-key 'normal 'global (kbd "SPC p k") 'projectile-kill-buffers)
+    (evil-define-key 'normal 'global (kbd "SPC p f") 'projectile-find-file)
+    (evil-define-key 'normal 'global (kbd "SPC p F") 'projectile-find-file-other-frame)
+    (evil-define-key 'normal 'global (kbd "SPC p b") 'projectile-switch-to-buffer)
+    (evil-define-key 'normal 'global (kbd "SPC p B") 'projectile-switch-to-buffer-other-frame)
+    (projectile-mode +1))
+#+end_src
 ** Prog mode
 Many programming language modes (see [[https://www.gnu.org/software/emacs/manual/html_node/elisp/Derived-Modes.html#Derived-Modes][Derived Modes]] for details) run
 =prog-mode-hook= prior running their own mode hooks. So this is a good
