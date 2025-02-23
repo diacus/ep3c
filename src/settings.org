@@ -200,6 +200,17 @@ any order.
     (setq completion-styles '(orderless basic)))
 #+end_src
 
+** Which-key
+When working in Emacs, we used to use complex keybindings to access
+various functions and commands. [[https://systemhalted.in/emacs/emacs-which-key/][which-key]] is a package that provides a
+pop-up window that displays available keybindings and their associated
+commands.
+#+begin_src emacs-lisp
+  (use-package which-key
+    :ensure t
+    :config
+    (which-key-mode))
+#+end_src
 ** Ivy
 [[https://github.com/abo-abo/swiper?tab=readme-ov-file#ivy][Ivy]] is a generic completion mechanism for Emacs. While it operates
 similary to other completion schemes, aims to be more efficient,
