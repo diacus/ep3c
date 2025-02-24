@@ -391,9 +391,8 @@ place to define settings common for use with any programming language.
 #+begin_src emacs-lisp
   (defun prog-mode-key-bindings()
     "Define key bindings useful for prog-mode"
-    (evil-define-key 'normal prog-mode-map (kbd "SPC o t") 'vterm-other-window)
-    (evil-define-key 'visual prog-mode-map (kbd "SPC o t") 'vterm-other-window)
-    (evil-define-key 'motion prog-mode-map (kbd "SPC o t") 'vterm-other-window))
+    (evil-define-key
+      '(normal visual motion) prog-mode-map (kbd "C-`") 'vterm-other-window))
 
   (add-hook 'prog-mode-hook 'prog-mode-key-bindings)
 #+end_src
@@ -556,4 +555,3 @@ Orgmode babel loading languages
   (org-babel-do-load-languages
    'org-babel-load-languages '((shell . t)))
 #+end_src
-
