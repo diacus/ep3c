@@ -525,12 +525,32 @@ Perl"]] post.
 #+end_src
 
 ** Haskell
-See detailed instrucctions [[https://emacs-lsp.github.io/lsp-haskell/][here]].
-
+The [[https://wiki.haskell.org/Emacs][haskell-mode]] package is a set of major modes for writing Haskell
+code and working with Haskell projects. Features syntax hightlighting,
+intelligent indentation, interaction with inferior Haskel interpreter,
+code browsing, and Cabal project integration. It supports Hugs, GHCi,
+Cabal, hslint, hoogle, cabal-dev and other utilities. See the [[http://haskell.github.io/haskell-mode/manual/latest/][Haskell
+Mode manual]] for more details.
 #+begin_src emacs-lisp
   (use-package haskell-mode :ensure t)
 #+end_src
 
+*** Compilation
+The *haskell-mode* includes an specialized /compilation mode/ with
+additional features called [[http://haskell.github.io/haskell-mode/manual/latest/Compilation.html#Compilation][haskell-compile]]. When invoked it tries to
+guess how to compile the program associated to the current buffer.
+#+begin_src emacs-lisp
+  (add-hook 'haskell-mode-hook
+	    (lambda ()
+	      (evil-define-key 'normal haskell-mode-map (kbd "SPC c c") 'haskell-compile)))
+
+  (add-hook 'haskell-cabal-mode-hook
+	    (lambda ()
+	      (evil-define-key 'normal haskell-cabal-mode-map (kbd "SPC c c") 'haskell-compile)))
+#+end_src
+
+*** LSP
+See detailed instrucctions [[https://emacs-lsp.github.io/lsp-haskell/][here]].  
 * Orgmode
 Jump to heading, as describes at [[https://stackoverflow.com/questions/15011703/is-there-an-emacs-org-mode-command-to-jump-to-an-org-heading][Stackoverflow]]
 #+begin_src emacs-lisp
