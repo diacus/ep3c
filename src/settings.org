@@ -540,13 +540,17 @@ The *haskell-mode* includes an specialized /compilation mode/ with
 additional features called [[http://haskell.github.io/haskell-mode/manual/latest/Compilation.html#Compilation][haskell-compile]]. When invoked it tries to
 guess how to compile the program associated to the current buffer.
 #+begin_src emacs-lisp
-  (add-hook 'haskell-mode-hook
-	    (lambda ()
-	      (evil-define-key 'normal haskell-mode-map (kbd "SPC c c") 'haskell-compile)))
+  (add-hook
+   'haskell-mode-hook
+   (lambda ()
+     (evil-define-key '(normal visual motion) haskell-mode-map (kbd "C-`") 'haskell-interactive-bring)
+     (evil-define-key '(normal visual motion) haskell-mode-map (kbd "SPC c c") 'haskell-compile)))
 
-  (add-hook 'haskell-cabal-mode-hook
-	    (lambda ()
-	      (evil-define-key 'normal haskell-cabal-mode-map (kbd "SPC c c") 'haskell-compile)))
+  (add-hook
+   'haskell-cabal-mode-hook
+   (lambda ()
+     (evil-define-key '(normal visual motion) haskell-cabal-mode-map (kbd "C-`") 'haskell-interactive-bring)
+     (evil-define-key 'normal haskell-cabal-mode-map (kbd "SPC c c") 'haskell-compile)))
 #+end_src
 
 *** LSP
