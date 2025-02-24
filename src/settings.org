@@ -1,6 +1,6 @@
 #+TITLE: EMACS Settings
 #+AUTHOR: Diacus Mágnuz
-#+STARTUP: logdrawer overview
+#+STARTUP: logdrawer overview latexpreview
 * Packages
 ** Add package sources
 #+begin_src emacs-lisp
@@ -555,7 +555,28 @@ guess how to compile the program associated to the current buffer.
 
 *** LSP
 See detailed instrucctions [[https://emacs-lsp.github.io/lsp-haskell/][here]].  
-* Orgmode
+* Writing
+** TeX
+For $\TeX$ and $\LaTeX$ use *AUCTeX*, a program offering many featues
+and configuration options. Take a look to its [[https://www.gnu.org/software/auctex/manual/auctex.html#Editing-Facilities][quick start]] guide for
+details.
+#+begin_src emacs-lisp
+  (use-package tex
+    :ensure auctex
+    :config
+    (setq-default TeX-master nil)
+    (setq TeX-auto-save t)
+    (setq TeX-parse-self t))
+#+end_src
+
+*** Filling
+#+begin_src emacs-lisp
+  (add-hook 'LaTeX-mode-hook #'turn-on-auto-fill)
+#+end_src
+
+Also check [[https://tex.stackexchange.com/questions/50827/a-simpletons-guide-to-tex-workflow-with-emacs][this]] question in StackExchange.
+
+** Orgmode
 Jump to heading, as describes at [[https://stackoverflow.com/questions/15011703/is-there-an-emacs-org-mode-command-to-jump-to-an-org-heading][Stackoverflow]]
 #+begin_src emacs-lisp
   (setq org-goto-interface 'outline-path-completion
