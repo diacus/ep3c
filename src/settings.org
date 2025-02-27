@@ -584,18 +584,48 @@ Jump to heading, as describes at [[https://stackoverflow.com/questions/15011703/
   (setq org-outline-path-complete-in-steps nil)
 #+end_src
 
-Org bullets
-#+begin_src emacs-lisp
-  (use-package org-bullets :ensure t)
-  (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1)))
-#+end_src
-
 Disable flycheck in =org-src= mode
 #+begin_src emacs-lisp
   (add-hook 'org-src-mode-hook (lambda () (flycheck-mode -1)))
 #+end_src
 
-Orgmode babel loading languages
+*** Evil Org
+[[https://github.com/Somelauw/evil-org-mode][evil-org]] package adds key-bindings to Emacs org-mode
+#+begin_src emacs-lisp
+  (use-package evil-org
+    :ensure t
+    :after org
+    :hook (org-mode . evil-org-mode)
+    :config
+    (require 'evil-org-agenda)
+    (evil-org-agenda-set-keys))
+#+end_src
+
+If Emacs runs inside a terminal, =TAB= key might not work as expected
+(being bound to =evil-jump-forward= instead of =org-tab= or
+=org-cycle=).
+
+#+begin_src emacs-lisp
+  (add-hook 'org-mode-hook
+	    (lambda ()
+	      ;; Only apply this in terminal mode
+	      (unless (display-graphic-p)
+		;; Prevent Evil from binding C-i (Tab) to evil-jump-forward
+		(setq evil-want-C-i-jump nil)
+		;; Bind TAB to org-cycle in normal state
+		(evil-define-key 'normal 'global (kbd "TAB") 'org-cycle))))
+#+end_src
+
+*** Org bullets
+#+begin_src emacs-lisp
+  (use-package org-bullets
+    :ensure t
+    :after org)
+
+  (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1)))
+#+end_src
+
+*** Orgmode babel
 #+begin_src emacs-lisp
   (org-babel-do-load-languages
    'org-babel-load-languages '((shell . t)))
