@@ -188,6 +188,13 @@ context of what is currently matched in the minibuffer.
      ("M-s M-b" . consult-buffer))) ;; Switch to another buffer
 #+end_src
 
+Consult with LSP:
+#+begin_src emacs-lisp
+  (use-package consult-lsp
+    :ensure t
+    :after lsp-mode)
+#+end_src
+
 ** Orderless
 This package lets minibuffer use an out-of-order pattern matching
 algorithm. It matches space-separated words or regular expressions in
@@ -446,7 +453,14 @@ the following keybindings (for more possibilities, check out [[https://github.co
 | =<=       | Shink column         |
 | =>=       | Enlarge column       |
 | =C-c C-e= | Export to CSV        |
-
+** Language Server Protocol
+#+begin_src emacs-lisp
+  (use-package lsp-mode
+    :ensure t
+    :hook (haskell-mode . lsp)
+    :commands lsp)
+#+end_src
+** Python
 ** Perl
 [[http://xahlee.info/emacs/emacs/emacs_perl_vs_cperl_mode.html][CPerl mode]] is an enhanced mode for Perl development. It was designed
 to provide better suppor for Perl's syntax and features, specially for
@@ -467,7 +481,7 @@ a specific file extension.
 Perl Debugger
 #+begin_src emacs-lisp
   (defun spawn-run-perl-debugger-with-stdin ()
-    "Run the Perl debugger on the current file with ojput from another file."
+    "Run the Perl debugger on the current file with output from another file."
     (interactive)
     (let* ((perl-file  (buffer-file-name))
 	   (input-file (read-file-name "Input file: ")))
@@ -533,8 +547,19 @@ guess how to compile the program associated to the current buffer.
      (evil-define-key 'normal haskell-cabal-mode-map (kbd "SPC c c") 'haskell-compile)))
 #+end_src
 
-*** LSP
-See detailed instrucctions [[https://emacs-lsp.github.io/lsp-haskell/][here]].  
+*** Language Server
+The [[https://haskell-language-server.readthedocs.io/en/latest/what-is-hls.html][Haskell Language Server (HLS)]] is an implementation of a server for
+[[https://microsoft.github.io/language-server-protocol/][LSP]] 
+
+See detailed instrucctions [[https://emacs-lsp.github.io/lsp-haskell/][here]].
+#+begin_src emacs-lisp
+  (use-package lsp-haskell
+    :ensure t
+    :after lsp-mode
+    :config
+    (setq lsp-haskell-process-path-hie "haskell-language-server-wrapper")
+    (setq lsp-haskell-process-args-hie '()))
+#+end_src
 * Writing
 ** TeX
 For $\TeX$ and $\LaTeX$ use *AUCTeX*, a program offering many featues
