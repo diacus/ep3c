@@ -302,8 +302,16 @@ Once you get it enable the following block:
     ;; Load API Key from ~/.authinfo.gpg
     (setq gptel-api-key
 	  (auth-source-pick-first-password
-	   :host "api.openai.com"
-	   :user "api_key")))
+	   :host "api.deepseek.com"
+	   :user "api_key"))
+    (setq gpt-backend
+	  (gptel-make-openai "DeepSeek"
+	    :host "api.deepseek.com"       ; DeepSeek API host
+	    :endpoint "/chat/completions"  ; DeepSeek API endpoint
+	    :models '("deepseek-chat")     ; Model name(s)
+	    :key (auth-source-pick-first-password
+		  :host "api.deepseek.com"
+		  :user "api_key"))))
 
   (gptel-make-ollama
       "Ollama"
