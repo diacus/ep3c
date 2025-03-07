@@ -372,7 +372,7 @@ place to define settings common for use with any programming language.
   (defun prog-mode-key-bindings()
     "Define key bindings useful for prog-mode"
     (evil-define-key
-      '(normal visual motion) prog-mode-map (kbd "C-`") 'vterm-other-window))
+      '(normal visual motion) prog-mode-map (kbd "SPC o r") 'vterm-other-window))
 
   (add-hook 'prog-mode-hook 'prog-mode-key-bindings)
 #+end_src
@@ -523,7 +523,7 @@ guess how to compile the program associated to the current buffer.
   (add-hook
    'haskell-mode-hook
    (lambda ()
-     (evil-define-key '(normal visual motion) haskell-mode-map (kbd "C-`") 'haskell-interactive-bring)
+     (evil-define-key '(normal visual motion) haskell-mode-map (kbd "SPC o r") 'haskell-interactive-bring)
      (evil-define-key '(normal visual motion) haskell-mode-map (kbd "SPC c c") 'haskell-compile)))
 
   (add-hook
