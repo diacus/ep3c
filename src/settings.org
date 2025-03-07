@@ -606,7 +606,16 @@ If Emacs runs inside a terminal, =TAB= key might not work as expected
 #+end_src
 
 *** Orgmode babel
+Org [[https://orgmode.org/worg/org-contrib/babel/languages/index.html][Babel]] supports a growing number of programming languages.
 #+begin_src emacs-lisp
   (org-babel-do-load-languages
-   'org-babel-load-languages '((shell . t)))
+   'org-babel-load-languages
+   '((awk        . t)
+     (dot        . t)
+     (haskell    . t)
+     (js         . t)
+     (python     . t)
+     (restclient . t)
+     (shell      . t)
+     (sql        . t)))
 #+end_src
