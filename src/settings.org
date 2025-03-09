@@ -353,6 +353,8 @@ working with GNU pass.
 #+begin_src emacs-lisp
   (use-package restclient :ensure t)
   (add-to-list 'auto-mode-alist '("\\.http\\'" . restclient-mode))
+
+  (use-package ob-restclient :ensure t)
 #+end_src
 * Development
 ** Projectile
