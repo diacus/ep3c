@@ -26,7 +26,7 @@ The following code block bootstraps the installation of straight.el,
 for details take a look on the [[https://github.com/radian-software/straight.el/tree/master?tab=readme-ov-file#getting-started][Getting started]] section of its
 repository.
 
-#+begin_src emacs-lisp
+#+begin_example emacs-lisp
   (defvar bootstrap-version)
   (let ((bootstrap-file
 	 (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
@@ -39,7 +39,7 @@ repository.
 	(goto-char (point-max))
 	(eval-print-last-sexp)))
     (load bootstrap-file nil 'nomessage))
-#+end_src
+#+end_example
 
 For a better explaination of this package, take a look at the [[https://systemcrafters.net/advanced-package-management/using-straight-el/][Advanced
 Emacs Package Management with straight.el]] article by /SYSTEM
@@ -50,9 +50,9 @@ CRAFTERS/.
 many common tasks related to installing and configuring Emacs
 packages. For details about this integration checkout [[https://github.com/radian-software/straight.el/tree/master?tab=readme-ov-file#integration-with-use-package][this section]].
 
-#+begin_src emacs-lisp
+#+begin_example emacs-lisp
   (straight-use-package 'use-package)
-#+end_src
+#+end_example
 
 ** Add own packages
 #+begin_src emacs-lisp
@@ -69,12 +69,12 @@ packages. For details about this integration checkout [[https://github.com/radia
 ** Colors for Linux
 For Linux, currently I'm using [[https://github.com/cfraz89/arc-dark-theme?tab=readme-ov-file#arc-dark-theme][Arc dark]] theme. Based off
 [[https://github.com/jonathanchu/atom-one-dark-theme][jonathanchu/atom-one-dark-theme]] and colors matching [[https://marketplace.visualstudio.com/items?itemName=ph-hawkins.arc-plus][VSCode Arc+]] theme.
-#+begin_src emacs-lisp
+#+begin_example emacs-lisp
   (when (eq system-type 'gnu/linux)
     (use-package arc-dark-theme
       :straight (:host github :repo "cfraz89/arc-dark-theme")
       :config (load-theme 'arc-dark t)))
-#+end_src
+#+end_example
 
 ** Colors for MacOs
 [[https://github.com/emacsmirror/timu-macos-theme][timu-macos-theme]] is inspired by the macOS UI.
@@ -520,7 +520,7 @@ Perl Debugger
 
 The following hook settings are based on the [[https://dev.to/nicholasbhubbard/how-i-use-emacs-to-write-perl-40e6]["How I use Emacs to write
 Perl"]] post.
-#+begin_src emacs-lisp
+#+begin_example emacs-lisp
   (use-package inf-perl
     :straight (:host github :repo "nverno/inf-perl"))
 
@@ -534,7 +534,7 @@ Perl"]] post.
 
   (add-hook 'cperl-mode-hook 'cperl-mode-custom-settings)
   (add-hook 'cperl-mode-hook 'cperl-mode-key-bindings)
-#+end_src
+#+end_example
 
 ** Haskell
 The [[https://wiki.haskell.org/Emacs][haskell-mode]] package is a set of major modes for writing Haskell
