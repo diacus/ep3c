@@ -85,6 +85,12 @@ For Linux, currently I'm using [[https://github.com/cfraz89/arc-dark-theme?tab=r
       :init (load-theme 'timu-macos t)))
 #+end_src
 
+** Colors for FreeBSD
+#+begin_src emacs-lisp
+  (when (eq system-type 'berkeley-unix)
+    (load-theme 'wombat))
+#+end_src
+
 ** Doom modeline
 The [[https://github.com/seagle0128/doom-modeline][doom-modeline]] is a fancy and fast mode-line inspired by minimalist
 design.
