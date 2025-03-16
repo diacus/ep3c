@@ -178,6 +178,46 @@ minibuffer completions.
     (marginalia-mode))
 #+end_src
 
+** Ivy
+[[https://github.com/abo-abo/swiper?tab=readme-ov-file#ivy][Ivy]] is a generic completion mechanism for Emacs. While it operates
+similary to other completion schemes, aims to be more efficient,
+smaller, simpler and smoother to use yet highly customizable.
+#+begin_src emacs-lisp
+  (use-package ivy
+    :ensure t
+    :config
+    (ivy-mode 1)
+    (setq ivy-use-virtual-buffers t)                               ; Enable virtual buffers
+    (setq ivy-count-format "(%d/%d) ")                             ; Customize the display format
+    (setq ivy-re-builders-alist '((t . ivy--regex-ignore-order)))  ; Improve matching
+    ;; Customize Ivy appearance
+    (setq ivy-height 5)                                            ; Number of lines in minibuffer
+    (setq ivy-format-function 'ivy-format-function-arrow)          ; Use arrows for candidates
+    (setq ivy-display-style 'fancy)                                ; Fancy display style
+    (setq ivy-initial-inputs-alist nil))                           ; Disable initial input
+#+end_src
+** Counsel
+#+begin_src emacs-lisp
+  (use-package counsel
+    :ensure t
+    :after ivy
+    :config
+    (counsel-mode 1))
+  (global-set-key (kbd "M-x") 'counsel-M-x)
+  (global-set-key (kbd "C-x C-f") 'counsel-find-file)
+  (global-set-key (kbd "<f1> f") 'counsel-describe-function)
+  (global-set-key (kbd "<f1> v") 'counsel-describe-variable)
+  (global-set-key (kbd "<f1> o") 'counsel-describe-symbol)
+  (global-set-key (kbd "<f1> l") 'counsel-describe-find-library)
+  (global-set-key (kbd "<f2> i") 'counsel-describe-info-lookup-symbol)
+  (global-set-key (kbd "<f2> u") 'counsel-describe-unicode-char)
+  (global-set-key (kbd "C-c g") 'counsel-git)
+  (global-set-key (kbd "C-c j") 'counsel-git-grep)
+  (global-set-key (kbd "C-c k") 'counsel-ag)
+  (global-set-key (kbd "C-x l") 'counsel-locate)
+  (global-set-key (kbd "C-S-o") 'counsel-rhythmbox)
+  (define-key minibuffer-local-map (kbd "C-r") 'counsel-minibuffer-history)
+#+end_src
 ** Consult
 The [[https://github.com/minad/consult][consult]] package provides lots of commands that are enhanced
 variants of basic, built-in functionality. One of the headline
@@ -223,39 +263,6 @@ commands.
     :ensure t
     :config
     (which-key-mode))
-#+end_src
-** Ivy
-[[https://github.com/abo-abo/swiper?tab=readme-ov-file#ivy][Ivy]] is a generic completion mechanism for Emacs. While it operates
-similary to other completion schemes, aims to be more efficient,
-smaller, simpler and smoother to use yet highly customizable.
-#+begin_example emacs-lisp
-  (use-package ivy
-    :ensure t
-    :config
-    (setq ivy-use-virtual-buffers t)
-    (setq enable-recursive-minibuffers t)
-    (global-set-key "\C-s" 'swiper)
-    (global-set-key (kbd "C-c C-r") 'ivy-resume)
-    (global-set-key (kbd "<f6>") 'ivy-resume)
-    :init (ivy-mode))
-#+end_example
-** Counsel
-#+begin_src emacs-lisp
-  (use-package counsel :ensure t)
-  (global-set-key (kbd "M-x") 'counsel-M-x)
-  (global-set-key (kbd "C-x C-f") 'counsel-find-file)
-  (global-set-key (kbd "<f1> f") 'counsel-describe-function)
-  (global-set-key (kbd "<f1> v") 'counsel-describe-variable)
-  (global-set-key (kbd "<f1> o") 'counsel-describe-symbol)
-  (global-set-key (kbd "<f1> l") 'counsel-describe-find-library)
-  (global-set-key (kbd "<f2> i") 'counsel-describe-info-lookup-symbol)
-  (global-set-key (kbd "<f2> u") 'counsel-describe-unicode-char)
-  (global-set-key (kbd "C-c g") 'counsel-git)
-  (global-set-key (kbd "C-c j") 'counsel-git-grep)
-  (global-set-key (kbd "C-c k") 'counsel-ag)
-  (global-set-key (kbd "C-x l") 'counsel-locate)
-  (global-set-key (kbd "C-S-o") 'counsel-rhythmbox)
-  (define-key minibuffer-local-map (kbd "C-r") 'counsel-minibuffer-history)
 #+end_src
 ** References
 - [[https://protesilaos.com/codelog/2024-02-17-emacs-modern-minibuffer-packages/][Emacs modern minibuffer packages]]
@@ -377,7 +384,8 @@ external dependencies (when feasable).
     (evil-define-key 'normal 'global (kbd "SPC p F") 'projectile-find-file-other-frame)
     (evil-define-key 'normal 'global (kbd "SPC p b") 'projectile-switch-to-buffer)
     (evil-define-key 'normal 'global (kbd "SPC p B") 'projectile-switch-to-buffer-other-frame)
-    (projectile-mode +1))
+    (projectile-mode +1)
+    (setq projectile-completion-system 'ivy))
 #+end_src
 ** Prog mode
 Many programming language modes (see [[https://www.gnu.org/software/emacs/manual/html_node/elisp/Derived-Modes.html#Derived-Modes][Derived Modes]] for details) run
