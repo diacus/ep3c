@@ -287,8 +287,21 @@ standard customization buffer (=M-x customize RET=).
 * Command line interface
 #+begin_src emacs-lisp
   ;; libvterm is not for Windows
+  (defun vterm-key-bindings ()
+    "Define key bindings useful for prog-mode"
+    (evil-define-key
+      '(normal visual motion) prog-mode-map (kbd "SPC o t") 'vterm-other-window)
+    (evil-define-key
+      '(normal visual motion) text-mode-map (kbd "SPC o t") 'vterm-other-window)
+    (evil-define-key
+      '(normal visual motion) prog-mode-map (kbd "SPC o T") 'vterm)
+    (evil-define-key
+      '(normal visual motion) text-mode-map (kbd "SPC o T") 'vterm))
+
   (unless (member system-type '(ms-dos windows-nt cygwin))
-    (use-package vterm :ensure t))
+    (use-package vterm
+      :ensure t
+      :hook ((startup-mode . vterm-key-bindings))))
 
   ;; If the operating system is Windows install PowerShell package
   (when (member system-type '(ms-dos windows-nt cygwin))
