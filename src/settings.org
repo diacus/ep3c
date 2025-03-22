@@ -66,6 +66,14 @@ packages. For details about this integration checkout [[https://github.com/radia
   (require 'org-tools)
 #+end_example
 * Theme
+** Cursor line
+By default the cursorline hightlighting is underlined, I don't like it.
+#+begin_src emacs-lisp
+   (use-package hl-line
+     :config
+     (set-face-underline 'hl-line nil))
+#+end_src
+
 ** Colors for Linux
 For Linux, currently I'm using [[https://github.com/cfraz89/arc-dark-theme?tab=readme-ov-file#arc-dark-theme][Arc dark]] theme. Based off
 [[https://github.com/jonathanchu/atom-one-dark-theme][jonathanchu/atom-one-dark-theme]] and colors matching [[https://marketplace.visualstudio.com/items?itemName=ph-hawkins.arc-plus][VSCode Arc+]] theme.
