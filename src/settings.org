@@ -59,13 +59,9 @@ By default the cursorline hightlighting is underlined, I don't like it.
 #+end_src
 
 ** Colors for Linux
-For Linux, currently I'm using [[https://github.com/cfraz89/arc-dark-theme?tab=readme-ov-file#arc-dark-theme][Arc dark]] theme. Based off
-[[https://github.com/jonathanchu/atom-one-dark-theme][jonathanchu/atom-one-dark-theme]] and colors matching [[https://marketplace.visualstudio.com/items?itemName=ph-hawkins.arc-plus][VSCode Arc+]] theme.
 #+begin_src emacs-lisp
   (when (eq system-type 'gnu/linux)
-    (use-package arc-dark-theme
-      :quelpa (arc-dark-theme :fetcher github :repo "cfraz89/arc-dark-theme")
-      :config (load-theme 'arc-dark t)))
+    (load-theme 'modus-vivendi))
 #+end_src
 
 ** Colors for MacOs
