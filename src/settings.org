@@ -102,6 +102,7 @@ Clean and simple interface
   (tool-bar-mode 0)
   (setq column-number-mode t)
   (unless (equal system-type 'darwin) (menu-bar-mode 0))
+  (setq inhibit-splash-screen t)
 #+end_src
 
 File type and mode mapping
