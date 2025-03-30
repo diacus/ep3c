@@ -16,43 +16,27 @@
   (unless (package-installed-p 'use-package)
     (package-install 'use-package))
 #+end_src
-** Package manager straight.el
-[[https://github.com/radian-software/straight.el/tree/master][straight.el]] is an alternative package manager that allows installing
-Emacs packages directly from their source code repositories. With it
-is possible choosing specific versions of the packages to install,
-either by branch, fork and even specific commits.
+** Quelpa package manager
+Install Emacs packages directly from source, for more information
+about installation and usage see its [[https://github.com/quelpa/quelpa][repository]] at Github. The
+following snippet bootstraps Quelpa automatically.
+#+begin_src emacs-lisp
+  (unless (package-installed-p 'quelpa)
+    (with-temp-buffer
+      (url-insert-file-contents "https://raw.githubusercontent.com/quelpa/quelpa/master/quelpa.el")
+      (eval-buffer)
+      (quelpa-self-upgrade)))
+#+end_src
 
-The following code block bootstraps the installation of straight.el,
-for details take a look on the [[https://github.com/radian-software/straight.el/tree/master?tab=readme-ov-file#getting-started][Getting started]] section of its
-repository.
-
-#+begin_example emacs-lisp
-  (defvar bootstrap-version)
-  (let ((bootstrap-file
-	 (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
-	(bootstrap-version 5))
-    (unless (file-exists-p bootstrap-file)
-      (with-current-buffer
-	  (url-retrieve-synchronously
-	   "https://raw.githubusercontent.com/raxod502/straight.el/develop/install.el"
-	   'silent 'inhibit-cookies)
-	(goto-char (point-max))
-	(eval-print-last-sexp)))
-    (load bootstrap-file nil 'nomessage))
-#+end_example
-
-For a better explaination of this package, take a look at the [[https://systemcrafters.net/advanced-package-management/using-straight-el/][Advanced
-Emacs Package Management with straight.el]] article by /SYSTEM
-CRAFTERS/.
-
-*** Integration with =use-package=
-[[https://github.com/jwiegley/use-package][use-package]] is a macro that provides convenient syntactic sugar for
-many common tasks related to installing and configuring Emacs
-packages. For details about this integration checkout [[https://github.com/radian-software/straight.el/tree/master?tab=readme-ov-file#integration-with-use-package][this section]].
-
-#+begin_example emacs-lisp
-  (straight-use-package 'use-package)
-#+end_example
+Quelpa integrates with =use-package= with a handler provided by
+=quelpa-use-package=.
+#+begin_src emacs-lisp
+  (quelpa
+   '(quelpa-use-package
+     :fetcher git
+     :url "https://github.com/quelpa/quelpa-use-package.git"))
+  (require 'quelpa-use-package)
+#+end_src
 
 ** Add own packages
 #+begin_src emacs-lisp
@@ -77,12 +61,12 @@ By default the cursorline hightlighting is underlined, I don't like it.
 ** Colors for Linux
 For Linux, currently I'm using [[https://github.com/cfraz89/arc-dark-theme?tab=readme-ov-file#arc-dark-theme][Arc dark]] theme. Based off
 [[https://github.com/jonathanchu/atom-one-dark-theme][jonathanchu/atom-one-dark-theme]] and colors matching [[https://marketplace.visualstudio.com/items?itemName=ph-hawkins.arc-plus][VSCode Arc+]] theme.
-#+begin_example emacs-lisp
+#+begin_src emacs-lisp
   (when (eq system-type 'gnu/linux)
     (use-package arc-dark-theme
-      :straight (:host github :repo "cfraz89/arc-dark-theme")
+      :quelpa (arc-dark-theme :fetcher github :repo "cfraz89/arc-dark-theme")
       :config (load-theme 'arc-dark t)))
-#+end_example
+#+end_src
 
 ** Colors for MacOs
 [[https://github.com/emacsmirror/timu-macos-theme][timu-macos-theme]] is inspired by the macOS UI.
@@ -502,11 +486,11 @@ popular Emacs packages like =company=, =flycheck= and =projectile=.
 #+end_src
 ** Python
 Use [[https://github.com/aiguofer/pyenv.el][pyenv.el]] to manage your Python version within Emacs using pyenv
-#+begin_example emacs-lisp
+#+begin_src emacs-lisp
   (use-package pyenv
-    :straight (:host github :repo "aiguofer/pyenv.el")
+    :quelpa (pyenv :fetcher github :repo "aiguofer/pyenv.el")
     :hook (python-mode . global-pyenv-mode))
-#+end_example
+#+end_src
 *** Virtual environments
 #+begin_src emacs-lisp
   (use-package pyvenv
@@ -555,9 +539,9 @@ Perl Debugger
 
 The following hook settings are based on the [[https://dev.to/nicholasbhubbard/how-i-use-emacs-to-write-perl-40e6]["How I use Emacs to write
 Perl"]] post.
-#+begin_example emacs-lisp
+#+begin_src emacs-lisp
   (use-package inf-perl
-    :straight (:host github :repo "nverno/inf-perl"))
+    :quelpa (inf-perl :fetcher github :repo "nverno/inf-perl"))
 
   (defun cperl-mode-custom-settings ()
     (setq cperl-indent-level 2)
@@ -569,7 +553,7 @@ Perl"]] post.
 
   (add-hook 'cperl-mode-hook 'cperl-mode-custom-settings)
   (add-hook 'cperl-mode-hook 'cperl-mode-key-bindings)
-#+end_example
+#+end_src
 
 ** Haskell
 The [[https://wiki.haskell.org/Emacs][haskell-mode]] package is a set of major modes for writing Haskell
