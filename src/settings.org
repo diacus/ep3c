@@ -98,7 +98,14 @@ Clean and simple interface
   (tool-bar-mode 0)
   (setq column-number-mode t)
   (unless (equal system-type 'darwin) (menu-bar-mode 0))
-  (setq inhibit-splash-screen t)
+#+end_src
+
+Instead of the default init screen, check out this [[https://github.com/emacs-dashboard/emacs-dashboard?tab=readme-ov-file#emacs-dashboard][Emacs Dashboard]].
+#+begin_src emacs-lisp
+  (use-package dashboard
+    :ensure t
+    :config
+    (dashboard-setup-startup-hook))
 #+end_src
 
 File type and mode mapping
@@ -180,7 +187,7 @@ smaller, simpler and smoother to use yet highly customizable.
     (setq ivy-count-format "(%d/%d) ")                             ; Customize the display format
     (setq ivy-re-builders-alist '((t . ivy--regex-ignore-order)))  ; Improve matching
     ;; Customize Ivy appearance
-    (setq ivy-height 5)                                            ; Number of lines in minibuffer
+    (setq ivy-height 10)                                           ; Number of lines in minibuffer
     (setq ivy-format-function 'ivy-format-function-arrow)          ; Use arrows for candidates
     (setq ivy-display-style 'fancy)                                ; Fancy display style
     (setq ivy-initial-inputs-alist nil))                           ; Disable initial input
