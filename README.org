@@ -1,6 +1,6 @@
 #+TITLE: Emacs Pretty Personal Portable Configuration
 #+AUTHOR: Diacus Mágnuz
-#+STARTUP: logdrawer overview
+#+STARTUP: logdrawer
 See the settings [[file:src/settings.org][here]].
 
 * Installation

@@ -1,6 +1,6 @@
 #+TITLE: EMACS Settings
 #+AUTHOR: Diacus Mágnuz
-#+STARTUP: logdrawer overview latexpreview
+#+STARTUP: logdrawer latexpreview
 * Packages
 ** Add package sources
 #+begin_src emacs-lisp
