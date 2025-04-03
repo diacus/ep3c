@@ -105,6 +105,10 @@ Instead of the default init screen, check out this [[https://github.com/emacs-da
   (use-package dashboard
     :ensure t
     :config
+    (setq dashboard-startup-banner 'logo)
+    (setq dashboard-items '((agenda   . 5)
+			    (projects . 5)
+			    (recents  . 5)))
     (dashboard-setup-startup-hook))
 #+end_src
 
