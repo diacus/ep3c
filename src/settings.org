@@ -58,9 +58,9 @@ By default the cursorline hightlighting is underlined, I don't like it.
      (set-face-underline 'hl-line nil))
 #+end_src
 
-** Colors for Linux
+** Colors for Linux and BSD
 #+begin_src emacs-lisp
-  (when (eq system-type 'gnu/linux)
+  (when (member system-type '(gnu/linux berkeley-unix))
     (load-theme 'modus-vivendi))
 #+end_src
 
@@ -71,12 +71,6 @@ By default the cursorline hightlighting is underlined, I don't like it.
     (use-package timu-macos-theme
       :ensure t
       :init (load-theme 'timu-macos t)))
-#+end_src
-
-** Colors for FreeBSD
-#+begin_src emacs-lisp
-  (when (eq system-type 'berkeley-unix)
-    (load-theme 'wombat))
 #+end_src
 
 ** Doom modeline
