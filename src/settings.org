@@ -59,9 +59,16 @@ By default the cursorline hightlighting is underlined, I don't like it.
 #+end_src
 
 ** Colors for Linux and BSD
+Installing Nord theme included in [[https://github.com/doomemacs/themes?tab=readme-ov-file#manually--use-package][doom-themes]] collection
 #+begin_src emacs-lisp
   (when (member system-type '(gnu/linux berkeley-unix))
-    (load-theme 'modus-vivendi))
+    (use-package doom-themes
+      :ensure t
+      :config
+      ;; Global settings (defaults)
+      (setq doom-themes-enable-bold t
+  	  doom-themes-enable-italic t)
+      (load-theme 'doom-nord)))
 #+end_src
 
 ** Colors for MacOs
