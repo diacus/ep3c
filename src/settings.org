@@ -21,11 +21,7 @@ Install Emacs packages directly from source, for more information
 about installation and usage see its [[https://github.com/quelpa/quelpa][repository]] at Github. The
 following snippet bootstraps Quelpa automatically.
 #+begin_src emacs-lisp
-  (unless (package-installed-p 'quelpa)
-    (with-temp-buffer
-      (url-insert-file-contents "https://raw.githubusercontent.com/quelpa/quelpa/master/quelpa.el")
-      (eval-buffer)
-      (quelpa-self-upgrade)))
+  (use-package quelpa :ensure t)
 #+end_src
 
 Quelpa integrates with =use-package= with a handler provided by
