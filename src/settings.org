@@ -478,6 +478,17 @@ variable.
      magit-log-arguments '("-n256" "--graph" "--decorate" "--color")
      magit-diff-refine-hunk t))
 #+end_src
+*** Consult Github CLI
+This package provides an interface to interact with GitHub
+repositories from inside Emacs.
+#+begin_src emacs-lisp
+  (use-package consult-gh
+    :ensure t
+    :after consult
+    :config
+    (setq consult-gh-default-clone-directory "~/git"))
+#+end_src
+
 ** Docker
 Add support for managing Docker containers, images, volumes, networks,
 contexts and docker-compose
