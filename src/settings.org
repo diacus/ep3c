@@ -64,7 +64,7 @@ Installing Nord theme included in [[https://github.com/doomemacs/themes?tab=read
       ;; Global settings (defaults)
       (setq doom-themes-enable-bold t
   	  doom-themes-enable-italic t)
-      (load-theme 'doom-nord)))
+      (load-theme 'doom-nord :no-confirm)))
 #+end_src
 
 ** Colors for MacOs
@@ -334,7 +334,7 @@ query the passphrase throught minibuffer.
 
 * Gptel
 #+begin_quote
-[[https://github.com/karthink/gptel?tab=readme-ov-file#gptel-a-simple-llm-client-for-emacs][gptel]] isa simple Large Language Model chat client for Emacs, whith
+[[https://github.com/karthink/gptel?tab=readme-ov-file#gptel-a-simple-llm-client-for-emacs][gptel]] is a simple Large Language Model chat client for Emacs, whith
 support for multiple models and backends. It works in the spirit of
 Emacs, available at any time and uniformly in any buffer.
 #+end_quote
@@ -464,6 +464,7 @@ variable.
 #+end_src
 
 ** Version control
+*** Magit
 [[https://magit.vc/][Magit]] is a complete text based user interface to [[https://git-scm.com/][Git]].
 #+begin_src emacs-lisp
   (use-package magit
