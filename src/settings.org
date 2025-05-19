@@ -663,6 +663,14 @@ Disable flycheck in =org-src= mode
   (add-hook 'org-src-mode-hook (lambda () (flycheck-mode -1)))
 #+end_src
 
+Include =.org.gpg= files in =org-agenda-files= following [[https://emacs.stackexchange.com/questions/36542/include-org-gpg-files-in-org-agenda][StackExchange
+(emacs) answer]]
+
+#+begin_src emacs-lisp
+  (unless (string-match-p "\\.gpg" org-agenda-file-regexp)
+    (setq org-agenda-file-regexp "\\`[^.].*\\.org\\\(\\.gpg\\\)?\\'"))
+#+end_src
+
 *** Evil Org
 [[https://github.com/Somelauw/evil-org-mode][evil-org]] package adds key-bindings to Emacs org-mode
 #+begin_src emacs-lisp
