@@ -404,6 +404,23 @@ working with GNU pass.
 
   (use-package ob-restclient :ensure t)
 #+end_src
+
+* IA Integration
+#+begin_src emacs-lisp
+  (use-package gptel
+    :ensure t
+    :config
+    ;; Configurar backend de Ollama correctamente
+    (setq gptel-backend
+	  (gptel-make-ollama
+	    "ollama"         ;; Nombre del backend
+	    :protocol "http"
+	    :host "localhost:11434"                   ;; Puerto por defecto de Ollama
+	    :models '("codellama:latest" "deepseek-coder:latest" "llama3:latest")
+	    :stream t)) 
+    (setq gptel-model "codellama:latest"))
+#+end_src
+
 * Development
 ** Projectile
 [[https://docs.projectile.mx/projectile/index.html][Projectile]] is a project integration library for Emacs. Its goal is to
