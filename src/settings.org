@@ -118,6 +118,14 @@ Keep the ring quiet
   (setq ring-bell-function 'ignore)
 #+end_src
 
+* File Management
+Use Emacs as a file manager with =dired=. Enable the follwing setting
+to copy/move files between distant directories. [[https://emacs.stackexchange.com/questions/5603/how-to-quickly-copy-move-file-in-emacs-dired][Source]].
+
+#+begin_src emacs-lisp
+  (setq dired-dwim-target 1)
+#+end_src
+
 * Emulate Vim editing style
 Evil is an extensible vi layer for Emacs, plus [[https://github.com/emacs-evil/evil-collection][evil-collection]] package
 installs a collection of Evil bindings for the parts of Emacs that
