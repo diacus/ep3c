@@ -94,7 +94,6 @@ Clean and simple interface
   (set-scroll-bar-mode nil)
   (tool-bar-mode 0)
   (setq column-number-mode t)
-  (unless (equal system-type 'darwin) (menu-bar-mode 0))
 #+end_src
 
 Instead of the default init screen, check out this [[https://github.com/emacs-dashboard/emacs-dashboard?tab=readme-ov-file#emacs-dashboard][Emacs Dashboard]].
