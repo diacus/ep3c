@@ -538,9 +538,11 @@ popular Emacs packages like =company=, =flycheck= and =projectile=.
   (use-package lsp-mode
     :ensure t
     :hook ((haskell-mode . lsp)
-	   (python-mode . lsp))
+	   (python-mode . lsp)
+	   (js-mode . lsp))
     :commands lsp)
 #+end_src
+
 ** Debug Adapter Protocol
 #+begin_src emacs-lisp
   (use-package dap-mode
@@ -712,6 +714,12 @@ See detailed instrucctions [[https://emacs-lsp.github.io/lsp-haskell/][here]].
     (setq lsp-haskell-process-path-hie "haskell-language-server-wrapper")
     (setq lsp-haskell-process-args-hie '()))
 #+end_src
+
+** Javascript
+#+begin_src emacs-lisp
+  (setq js-indent-level 2)
+#+end_src
+
 * Writing
 ** TeX
 For $\TeX$ and $\LaTeX$ use *AUCTeX*, a program offering many featues
