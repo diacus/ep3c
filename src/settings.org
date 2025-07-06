@@ -537,9 +537,11 @@ popular Emacs packages like =company=, =flycheck= and =projectile=.
 #+begin_src emacs-lisp
   (use-package lsp-mode
     :ensure t
-    :hook ((haskell-mode . lsp)
-	   (python-mode . lsp)
-	   (js-mode . lsp))
+    :hook ((c-mode . lsp)
+	   (c++-mode . lsp)
+	   (haskell-mode . lsp)
+	   (js-mode . lsp)
+	   (python-mode . lsp))
     :commands lsp)
 #+end_src
 
