@@ -584,6 +584,13 @@ popular Emacs packages like =company=, =flycheck= and =projectile=.
 - =dap-hydra=: Quick panel for debugging commands
 - Keep in mind, hydra will capture keys unexpectedly (M-x, etc)
 - Automatically show Hydra when debugger stops
+
+** C/C++
+#+begin_src emacs-lisp
+  (add-hook 'c-mode-hook #'lsp)
+  (add-hook 'c++-mode-hook #'lsp)
+#+end_src
+
 ** Python
 Elpy (see the [[https://elpy.readthedocs.io/en/latest/index.html][docs]] for details)a is the Emacs Python Development
 Environment. It aims to provide an easy to install, fully-featured
@@ -600,6 +607,8 @@ environment for Python development.
     (load "elpy-profile")
     (load "elpy-refactor")
     (load "elpy-django"))
+
+  (add-hook 'python-mode-hook #'lsp)
 #+end_src
 
 *** Virtual environments
@@ -723,6 +732,8 @@ See detailed instrucctions [[https://emacs-lsp.github.io/lsp-haskell/][here]].
     :config
     (setq lsp-haskell-process-path-hie "haskell-language-server-wrapper")
     (setq lsp-haskell-process-args-hie '()))
+
+  (add-hook 'haskell-mode-hook #'lsp)
 #+end_src
 
 ** Javascript
