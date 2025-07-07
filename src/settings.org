@@ -46,6 +46,7 @@ Quelpa integrates with =use-package= with a handler provided by
   (require 'org-tools)
 #+end_example
 * Environment
+See [[https://github.com/purcell/exec-path-from-shell][exec-path-from-shell]] package Github page for details
 #+begin_src emacs-lisp
   (use-package exec-path-from-shell
     :ensure t
