@@ -66,7 +66,7 @@ By default the cursorline hightlighting is underlined, I don't like it.
 ** Colors for Linux and BSD
 Installing Nord theme included in [[https://github.com/doomemacs/themes?tab=readme-ov-file#manually--use-package][doom-themes]] collection
 #+begin_src emacs-lisp
-  (when (member system-type '(gnu/linux berkeley-unix))
+  (when (member system-type '(android gnu/linux berkeley-unix))
     (use-package doom-themes
       :ensure t
       :config
@@ -100,8 +100,10 @@ instructions]] from Stackoverflow.
 * Basic interface setup
 Clean and simple interface
 #+begin_src emacs-lisp
-  (set-scroll-bar-mode nil)
-  (tool-bar-mode 0)
+  (when (display-graphic-p)
+    (progn
+      (set-scroll-bar-mode nil)
+      (tool-bar-mode 0)))
   (setq column-number-mode t)
 #+end_src
 
