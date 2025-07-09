@@ -541,6 +541,35 @@ the following keybindings (for more possibilities, check out [[https://github.co
 | =<=       | Shink column         |
 | =>=       | Enlarge column       |
 | =C-c C-e= | Export to CSV        |
+
+*** Editing Dockerfiles
+Writing Dockerfiles is made easier with =dockerfile-mode=, which
+provides syntax hightlighting, indentation, and command customization.
+
+See [[https://www.rahuljuliato.com/posts/emacs-docker-podman][this article]] for further settings.
+
+#+begin_src emacs-lisp
+  (use-package dockerfile-mode
+    :defer t
+    :ensure t
+    :config
+    (setq dockerfile-mode-command "docker"))
+#+end_src
+
+#+RESULTS:
+
+** YAML
+#+begin_src emacs-lisp
+  (use-package yaml-mode
+    :defer t
+    :ensure t
+    :mode
+    ("\\.yaml\\'" "\\.yml\\'")
+    :custom-face
+    (font-lock-variable-name-face ((t (:foreground "#cba6f7"))))
+    :config)
+#+end_src
+
 ** Language Server Protocol
 The client for [[https://github.com/Microsoft/language-server-protocol/][Language Server Protocol]], [[https://emacs-lsp.github.io/lsp-mode/][lsp-mode]] aims to provide
 IDE-like experience by providing optional integration with the most
@@ -836,3 +865,16 @@ Org [[https://orgmode.org/worg/org-contrib/babel/languages/index.html][Babel]] s
      (shell      . t)
      (sql        . t)))
 #+end_src
+
+** PDF Tools
+The [[https://pdftools.wiki/][PDF Tools]] package among other things is a replacement of DocView
+for PDF files. The key differences is that pages are not pre-rendered
+but created on-demand and stored in memory
+#+begin_src emacs-lisp
+  (use-package pdf-tools
+    :ensure t
+    :init
+    (pdf-tools-install)
+    (pdf-loader-install))
+#+end_src
+
