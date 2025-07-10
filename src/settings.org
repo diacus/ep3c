@@ -594,6 +594,7 @@ popular Emacs packages like =company=, =flycheck= and =projectile=.
 	   (dap-mode . dap-ui-mode)
 	   (dap-stopped . (lambda (arg) (call-interactively #'dap-hydra))))
     :config
+    (dap-mode 1)
     (dap-ui-mode 1)
     (dap-tooltip-mode 1)
     (dap-ui-controls-mode 1))
@@ -768,9 +769,24 @@ See detailed instrucctions [[https://emacs-lsp.github.io/lsp-haskell/][here]].
   (add-hook 'haskell-mode-hook #'lsp)
 #+end_src
 
+
 ** Javascript
 #+begin_src emacs-lisp
   (setq js-indent-level 2)
+  (add-hook 'js-mode-hook #'lsp)
+
+  (require 'dap-firefox)
+#+end_src
+
+#+begin_src emacs-lisp
+  ;; Opcional: registro de plantilla de depuración
+  (dap-register-debug-template
+   "Firefox :: Launch Localhost"
+   (list :type "firefox"
+	 :request "launch"
+	 :name "Firefox :: Launch"
+	 :url "http://localhost:3000"
+	 :webRoot "${workspaceFolder}"))
 #+end_src
 
 * Writing
