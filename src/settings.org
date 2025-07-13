@@ -721,8 +721,7 @@ popular Emacs packages like =company=, =flycheck= and =projectile=.
   (use-package dap-mode
     :ensure t
     :after lsp-mode
-    :hook ((lsp-mode . dap-mode)
-	   (dap-mode . dap-ui-mode))
+    :hook ((lsp-mode . dap-mode))
     :config
     (dap-mode 1)
     (dap-ui-mode 1)
@@ -731,16 +730,17 @@ popular Emacs packages like =company=, =flycheck= and =projectile=.
 
   (add-hook 'dap-mode-hook
 	    (lambda ()
-	      (evil-define-key '(normal visual emacs) dap-mode-map (kbd "SPC d c") '(dap-continue          :which-key "continue"))
-	      (evil-define-key '(normal visual emacs) dap-mode-map (kbd "SPC d q") '(dap-continue          :which-key "quit/disconnect"))
-	      (evil-define-key '(normal visual emacs) dap-mode-map (kbd "SPC d n") '(dap-next              :which-key "next"))
-	      (evil-define-key '(normal visual emacs) dap-mode-map (kbd "SPC d i") '(dap-step-in           :which-key "step in"))
-	      (evil-define-key '(normal visual emacs) dap-mode-map (kbd "SPC d o") '(dap-step-out          :which-key "step out"))
-	      (evil-define-key '(normal visual emacs) dap-mode-map (kbd "SPC d b") '(dap-breakpoint-toggle :which-key "toggle breakpoint"))
-	      (evil-define-key '(normal visual emacs) dap-mode-map (kbd "SPC d B") '(dap-ui-breakpoints    :which-key "list breakpoints"))
-	      (evil-define-key '(normal visual emacs) dap-mode-map (kbd "SPC d l") '(dap-ui-locals         :which-key "locals"))
-	      (evil-define-key '(normal visual emacs) dap-mode-map (kbd "SPC d s") '(dap-ui-sessions       :which-key "sessions"))
-	      (evil-define-key '(normal visual emacs) dap-mode-map (kbd "SPC d r") '(dap-ui-repl           :which-key "REPL"))))
+	      (evil-define-key '(normal visual emacs) dap-mode-map (kbd "SPC d d") 'dap-debug)
+	      (evil-define-key '(normal visual emacs) dap-mode-map (kbd "SPC d c") 'dap-continue)
+	      (evil-define-key '(normal visual emacs) dap-mode-map (kbd "SPC d e") 'dap-debug-edit-template)
+	      (evil-define-key '(normal visual emacs) dap-mode-map (kbd "SPC d n") 'dap-next)
+	      (evil-define-key '(normal visual emacs) dap-mode-map (kbd "SPC d i") 'dap-step-in)
+	      (evil-define-key '(normal visual emacs) dap-mode-map (kbd "SPC d o") 'dap-step-out)
+	      (evil-define-key '(normal visual emacs) dap-mode-map (kbd "SPC d b") 'dap-breakpoint-toggle)
+	      (evil-define-key '(normal visual emacs) dap-mode-map (kbd "SPC d B") 'dap-ui-breakpoints)
+	      (evil-define-key '(normal visual emacs) dap-mode-map (kbd "SPC d l") 'dap-ui-locals)
+	      (evil-define-key '(normal visual emacs) dap-mode-map (kbd "SPC d s") 'dap-ui-sessions)
+	      (evil-define-key '(normal visual emacs) dap-mode-map (kbd "SPC d r") 'dap-ui-repl)))
 
   (use-package dap-ui
     :ensure nil
