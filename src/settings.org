@@ -805,15 +805,27 @@ environment for Python development.
 *** Virtual environments
 Use [[https://github.com/aiguofer/pyenv.el][pyenv.el]] to manage your Python version within Emacs using pyenv
 #+begin_src emacs-lisp
+  (defun activate-pyvenv-if-exists ()
+    "Activate python virtual environment in default-dir"
+    (let ((venv-directory (concat (file-name-as-directory default-directory)
+				   "env")))
+      (message (format "Checking if there is a pyvenv at '%s'" default-directory))
+      (message (format "Looking for '%s'" venv-directory))
+      (if (file-directory-p venv-directory)
+	  (progn
+	    (message (format "Activating virtual environment: '%s'" venv-directory))
+	    (pyvenv-activate venv-directory))
+	(message "pyvenv not found"))))
+
   (use-package pyenv
     :quelpa (pyenv :fetcher github :repo "aiguofer/pyenv.el")
     :hook (python-mode . global-pyenv-mode))
-#+end_src
 
-#+begin_src emacs-lisp
   (use-package pyvenv
     :ensure t
     :hook (python-mode . pyvenv-mode))
+
+  (add-hook 'python-mode-hook #'activate-pyvenv-if-exists)
 #+end_src
 
 *** Debugging
