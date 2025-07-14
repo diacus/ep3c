@@ -187,7 +187,7 @@ possessing basic file management utilities.
 	    treemacs-recenter-after-tag-follow       nil
 	    treemacs-recenter-after-project-jump     'always
 	    treemacs-recenter-after-project-expand   'on-distance
-	    treemacs-litter-directories              '("/node_modules" "/.venv" "/.cask")
+	    treemacs-litter-directories              '("/node_modules" "/.venv" "/venv" "/.cask")
 	    treemacs-project-follow-into-home        nil
 	    treemacs-show-cursor                     nil
 	    treemacs-show-hidden-files               t
@@ -579,6 +579,9 @@ external dependencies (when feasable).
     (evil-define-key 'normal 'global (kbd "SPC p F") 'projectile-find-file-other-frame)
     (evil-define-key 'normal 'global (kbd "SPC p b") 'projectile-switch-to-buffer)
     (evil-define-key 'normal 'global (kbd "SPC p B") 'projectile-switch-to-buffer-other-frame)
+    (evil-define-key 'normal 'global (kbd "SPC p t") 'projectile-run-vterm-other-window)
+    (evil-define-key 'normal 'global (kbd "SPC p T") 'projectile-run-vterm)
+    (evil-define-key 'normal 'global (kbd "SPC p c") 'projectile-compile-project)
     (projectile-mode +1)
     (setq projectile-completion-system 'ivy))
 #+end_src
@@ -808,7 +811,7 @@ Use [[https://github.com/aiguofer/pyenv.el][pyenv.el]] to manage your Python ver
   (defun activate-pyvenv-if-exists ()
     "Activate python virtual environment in default-dir"
     (let ((venv-directory (concat (file-name-as-directory default-directory)
-				   "env")))
+				   "venv")))
       (message (format "Checking if there is a pyvenv at '%s'" default-directory))
       (message (format "Looking for '%s'" venv-directory))
       (if (file-directory-p venv-directory)
@@ -938,7 +941,6 @@ See detailed instrucctions [[https://emacs-lsp.github.io/lsp-haskell/][here]].
 
   (add-hook 'haskell-mode-hook #'lsp)
 #+end_src
-
 
 ** Javascript
 #+begin_src emacs-lisp
