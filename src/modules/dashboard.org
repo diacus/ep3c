@@ -1,0 +1,14 @@
+#+TITLE: Emacs Dashboard
+#+AUTHOR: Diacus Mágnuz
+Instead of the default init screen, check out this [[https://github.com/emacs-dashboard/emacs-dashboard?tab=readme-ov-file#emacs-dashboard][Emacs Dashboard]].
+#+begin_src emacs-lisp
+  (use-package dashboard
+    :ensure t
+    :after projectile
+    :config
+    (setq dashboard-startup-banner 'logo)
+    (setq dashboard-items '((agenda   . 5)
+			    (registers . 5)
+			    (recents  . 5)))
+    (dashboard-setup-startup-hook))
+#+end_src

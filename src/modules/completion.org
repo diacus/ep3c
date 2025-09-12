@@ -1,0 +1,9 @@
+[[https://company-mode.github.io/][Company]] is a text and code completion framework for Emacs. It uses
+pluggable backends and frontends to retreive and display completion
+candidates.
+#+begin_src emacs-lisp
+  (use-package company
+    :ensure t
+    :hook (after-init . global-company-mode)
+    :init (company-mode))
+#+end_src

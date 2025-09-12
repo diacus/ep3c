@@ -1,0 +1,50 @@
+* Emulate Vim editing style
+Evil is an extensible vi layer for Emacs, plus [[https://github.com/emacs-evil/evil-collection][evil-collection]] package
+installs a collection of Evil bindings for the parts of Emacs that
+Evil doest not cover property by default, such as =help-mode=, =M-x
+calendar=, Eshell and more.
+
+See Evil Collection repository for details.
+
+#+begin_src emacs-lisp
+  (use-package evil
+    :ensure t
+    :init
+    (setq evil-want-integration t)
+    (setq evil-want-keybinding nil)
+    :init
+    (evil-mode 1))
+
+  (use-package evil-collection
+    :after evil
+    :ensure t
+    :config
+    (evil-collection-init))
+#+end_src
+
+* Evil Org
+[[https://github.com/Somelauw/evil-org-mode][evil-org]] package adds key-bindings to Emacs org-mode
+#+begin_src emacs-lisp
+  (use-package evil-org
+    :ensure t
+    :after org
+    :hook (org-mode . evil-org-mode)
+    :config
+    (require 'evil-org-agenda)
+    (evil-org-agenda-set-keys))
+#+end_src
+
+If Emacs runs inside a terminal, =TAB= key might not work as expected
+(being bound to =evil-jump-forward= instead of =org-tab= or
+=org-cycle=).
+
+#+begin_src emacs-lisp
+  (add-hook 'org-mode-hook
+	    (lambda ()
+	      ;; Only apply this in terminal mode
+	      (unless (display-graphic-p)
+		;; Prevent Evil from binding C-i (Tab) to evil-jump-forward
+		(setq evil-want-C-i-jump nil)
+		;; Bind TAB to org-cycle in normal state
+		(evil-define-key 'normal 'global (kbd "TAB") 'org-cycle))))
+#+end_src

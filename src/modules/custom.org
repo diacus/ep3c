@@ -1,0 +1,9 @@
+Define a custom file to store the settings modified through the
+standard customization buffer (=M-x customize RET=).
+
+#+begin_src emacs-lisp
+  (setq custom-file
+	(file-name-concat user-emacs-directory "custom.el"))
+  (when (file-exists-p custom-file)
+    (load custom-file))
+#+end_src

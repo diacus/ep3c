@@ -1,0 +1,58 @@
+#+TITLE: Gptel settings
+#+AUTHOR: Diacus Magnuz
+* Gptel
+#+begin_quote
+[[https://github.com/karthink/gptel?tab=readme-ov-file#gptel-a-simple-llm-client-for-emacs][gptel]] is a simple Large Language Model chat client for Emacs, whith
+support for multiple models and backends. It works in the spirit of
+Emacs, available at any time and uniformly in any buffer.
+#+end_quote
+
+* ChatGPT
+You need to get an [[https://platform.openai.com/account/api-keys][OpenAI API Key]] to use GhatGPT, once you get it,
+store it in [[file:~/.authinfo.gpg][~/authinfo.gpg]] like this:
+
+#+begin_export ascii
+machine api.openaio.com login api_key password YOUR-API-KEY
+#+end_export
+
+Once you have an API KEY add the corresponding backend following the
+example bellow.
+#+begin_example emacs-lisp
+  (use-package gptel
+    :ensure t
+    :config
+    ;; Load API Key from ~/.authinfo.gpg
+    (setq gptel-api-key
+	  (auth-source-pick-first-password
+	   :host "api.deepseek.com"
+	   :user "api_key"))
+    (setq gpt-backend
+	  (gptel-make-openai "DeepSeek"
+	    :host "api.deepseek.com"       ; DeepSeek API host
+	    :endpoint "/chat/completions"  ; DeepSeek API endpoint
+	    :models '("deepseek-chat")     ; Model name(s)
+	    :key (auth-source-pick-first-password
+		  :host "api.deepseek.com"
+		  :user "api_key"))))
+#+end_example
+
+* Ollama
+For [[https://ollama.com][Ollama]] just call =gptel-make-ollama=. See the [[https://github.com/karthink/gptel?tab=readme-ov-file#ollama][documentation]] for
+details.
+
+#+begin_src emacs-lisp
+  (use-package gptel
+    :ensure t
+    :config
+    ;; Configure Ollama backend correctly
+    (setq gptel-backend
+	  (gptel-make-ollama
+	    "ollama"                ;; Backend name
+	    :protocol "http"
+	    :host "localhost:11434" ;; Ollama's default port
+	    :models '("codellama:latest"
+		      "deepseek-coder:latest"
+		      "llama3:latest")
+	    :stream t)) 
+    (setq gptel-model "codellama:latest"))
+#+end_src

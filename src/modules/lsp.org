@@ -1,0 +1,57 @@
+#+TITLE: LSP Settings
+The client for [[https://github.com/Microsoft/language-server-protocol/][Language Server Protocol]], [[https://emacs-lsp.github.io/lsp-mode/][lsp-mode]] aims to provide
+IDE-like experience by providing optional integration with the most
+popular Emacs packages like =company=, =flycheck= and =projectile=.
+
+#+begin_src emacs-lisp
+  (use-package lsp-mode
+    :ensure t
+    :after projectile
+    :hook ((prog-mode . lsp))
+    :init
+    (setq gc-cons-threshold (* 100 1024 1024)
+	  read-process-output-max (* 1024 1024)
+	  treemacs-space-between-root-nodes nil
+	  company-idle-delay 0.0
+	  company-minimum-prefix-length 1
+	  lsp-idle-delay 0.1))
+
+  (use-package lsp-ivy
+    :ensure t
+    :after ivy)
+#+end_src
+
+#+begin_src emacs-lisp
+  (use-package dap-mode
+    :ensure t
+    :after lsp-mode
+    :hook ((lsp-mode . dap-mode))
+    :config
+    (dap-mode 1)
+    (dap-ui-mode 1)
+    (dap-tooltip-mode 1))
+
+  (add-hook 'dap-mode-hook
+	    (lambda ()
+	      (evil-define-key '(normal visual emacs) dap-mode-map (kbd "SPC d d") 'dap-debug)
+	      (evil-define-key '(normal visual emacs) dap-mode-map (kbd "SPC d c") 'dap-continue)
+	      (evil-define-key '(normal visual emacs) dap-mode-map (kbd "SPC d e") 'dap-debug-edit-template)
+	      (evil-define-key '(normal visual emacs) dap-mode-map (kbd "SPC d n") 'dap-next)
+	      (evil-define-key '(normal visual emacs) dap-mode-map (kbd "SPC d i") 'dap-step-in)
+	      (evil-define-key '(normal visual emacs) dap-mode-map (kbd "SPC d o") 'dap-step-out)
+	      (evil-define-key '(normal visual emacs) dap-mode-map (kbd "SPC d b") 'dap-breakpoint-toggle)
+	      (evil-define-key '(normal visual emacs) dap-mode-map (kbd "SPC d B") 'dap-ui-breakpoints)
+	      (evil-define-key '(normal visual emacs) dap-mode-map (kbd "SPC d l") 'dap-ui-locals)
+	      (evil-define-key '(normal visual emacs) dap-mode-map (kbd "SPC d s") 'dap-ui-sessions)
+	      (evil-define-key '(normal visual emacs) dap-mode-map (kbd "SPC d r") 'dap-ui-repl)))
+
+  (use-package yasnippet
+    :ensure t
+    :after dap-mode)
+
+  (use-package dap-cpptools
+    :ensure nil
+    :after lsp-mode
+    :hook ((lsp-mode . lsp-enable-which-key-integration))
+    :init (yas-global-mode))
+#+end_src

@@ -1,0 +1,42 @@
+#+TITLE: Prog mode settings
+#+AUTHOR: Diacus Magnuz
+
+Many programming language modes (see [[https://www.gnu.org/software/emacs/manual/html_node/elisp/Derived-Modes.html#Derived-Modes][Derived Modes]] for details) run
+=prog-mode-hook= prior running their own mode hooks. So this is a good
+place to define settings common for use with any programming language.
+#+begin_src emacs-lisp
+  (defun prog-mode-key-bindings()
+    "Define key bindings useful for prog-mode"
+    (evil-define-key
+      '(normal visual motion) prog-mode-map (kbd "SPC o r") 'vterm-other-window))
+
+  (add-hook 'prog-mode-hook 'prog-mode-key-bindings)
+#+end_src
+
+For syntax checking, [[https://www.flycheck.org/en/latest/][Flycheck]] is a modenr on-the-fly syntax checking
+extension for GNU Emacs, intended as replacement for the older Flymake
+extension which is part of GNU Emacs.
+#+begin_src emacs-lisp
+  (use-package flycheck :ensure t)
+
+  (defun prog-mode-custom-settings ()
+    "Settings for all programming languages"
+    (setq flycheck-check-syntax-automatically '(mode-enabled save))
+    (setq flycheck-display-errors-delay 0.3))
+  
+  (add-hook 'prog-mode-hook 'flycheck-mode)
+  (add-hook 'prog-mode-hook 'prog-mode-custom-settings)
+#+end_src
+
+=hl-line-mode= to highlights the cursor line. Then customize the
+*Highlight* face to teak the look and feel as you need.
+#+begin_src emacs-lisp
+  (add-hook 'prog-mode-hook 'hl-line-mode)
+#+end_src
+
+=display-line-numbers-mode= numbers the lines in the buffer. Set
+relative numbering by customizing =display-line-numbers-type=
+variable.
+#+begin_src emacs-lisp
+  (add-hook 'prog-mode-hook 'display-line-numbers-mode)
+#+end_src

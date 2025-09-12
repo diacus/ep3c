@@ -1,0 +1,111 @@
+#+TITLE: Minibuffer settings
+* Vertico
+  The [[https://github.com/minad/vertico][vertico]] package applies vertical layout to the minibuffer. It
+  also pops up the minibuffer eagerly so we can see the available
+  options without further integrations.
+
+  #+begin_src emacs-lisp
+    (use-package vertico
+      :ensure t
+      :init
+      (vertico-mode))
+  #+end_src
+
+* Marginalia
+  The [[https://elpa.gnu.org/packages/marginalia.html][marginalia]] package provides informative margin annotations to
+  the minibuffer completions.
+  #+begin_src emacs-lisp
+    (use-package marginalia
+      :ensure t
+      :init
+      (marginalia-mode))
+  #+end_src
+
+* Ivy
+  [[https://github.com/abo-abo/swiper?tab=readme-ov-file#ivy][Ivy]] is a generic completion mechanism for Emacs. While it operates
+  similary to other completion schemes, aims to be more efficient,
+  smaller, simpler and smoother to use yet highly customizable.
+  #+begin_src emacs-lisp
+    (use-package ivy
+      :ensure t
+      :config
+      (ivy-mode 1)
+      (setq ivy-use-virtual-buffers t)                               ; Enable virtual buffers
+      (setq ivy-count-format "(%d/%d) ")                             ; Customize the display format
+      (setq ivy-re-builders-alist '((t . ivy--regex-ignore-order)))  ; Improve matching
+      ;; Customize Ivy appearance
+      (setq ivy-height 10)                                           ; Number of lines in minibuffer
+      (setq ivy-format-function 'ivy-format-function-arrow)          ; Use arrows for candidates
+      (setq ivy-display-style 'fancy)                                ; Fancy display style
+      (setq ivy-initial-inputs-alist nil))                           ; Disable initial input
+  #+end_src
+* Counsel
+  #+begin_src emacs-lisp
+    (use-package counsel
+      :ensure t
+      :after ivy
+      :config
+      (counsel-mode 1))
+    (global-set-key (kbd "M-x") 'counsel-M-x)
+    (global-set-key (kbd "C-x C-f") 'counsel-find-file)
+    (global-set-key (kbd "<f1> f") 'counsel-describe-function)
+    (global-set-key (kbd "<f1> v") 'counsel-describe-variable)
+    (global-set-key (kbd "<f1> o") 'counsel-describe-symbol)
+    (global-set-key (kbd "<f1> l") 'counsel-describe-find-library)
+    (global-set-key (kbd "<f2> i") 'counsel-describe-info-lookup-symbol)
+    (global-set-key (kbd "<f2> u") 'counsel-describe-unicode-char)
+    (global-set-key (kbd "C-c g") 'counsel-git)
+    (global-set-key (kbd "C-c j") 'counsel-git-grep)
+    (global-set-key (kbd "C-c k") 'counsel-ag)
+    (global-set-key (kbd "C-x l") 'counsel-locate)
+    (global-set-key (kbd "C-S-o") 'counsel-rhythmbox)
+    (define-key minibuffer-local-map (kbd "C-r") 'counsel-minibuffer-history)
+  #+end_src
+* Consult
+  The [[https://github.com/minad/consult][consult]] package provides lots of commands that are enhanced
+  variants of basic, built-in functionality. One of the headline
+  features is tis preview facility, where it shows in another window
+  the context of what is currently matched in the minibuffer.
+  #+begin_src emacs-lisp
+    (use-package consult
+      :ensure t
+      :bind
+      (("M-s M-g" . consult-grep)     ;; A recursive grep
+       ("M-s M-f" . consult-find)     ;; Search for file names recursively
+       ("M-s M-o" . consult-outline)  ;; Search through the headlines of a file
+       ("M-s M-l" . consult-line)     ;; Search in the current buffer
+       ("M-s M-b" . consult-buffer))) ;; Switch to another buffer
+  #+end_src
+
+  Consult with LSP:
+  #+begin_src emacs-lisp
+    (use-package consult-lsp
+      :ensure t
+      :after lsp-mode)
+  #+end_src
+
+* Orderless
+  This package lets minibuffer use an out-of-order pattern matching
+  algorithm. It matches space-separated words or regular expressions
+  in any order.
+
+  #+begin_src emacs-lisp
+    (use-package orderless
+      :ensure t
+      :config
+      (setq completion-styles '(orderless basic)))
+  #+end_src
+
+* Which-key
+  When working in Emacs, we used to use complex keybindings to access
+  various functions and commands. [[https://systemhalted.in/emacs/emacs-which-key/][which-key]] is a package that provides
+  a pop-up window that displays available keybindings and their
+  associated commands.
+  #+begin_src emacs-lisp
+    (use-package which-key
+      :ensure t
+      :config
+      (which-key-mode))
+  #+end_src
+* References
+  - [[https://protesilaos.com/codelog/2024-02-17-emacs-modern-minibuffer-packages/][Emacs modern minibuffer packages]]

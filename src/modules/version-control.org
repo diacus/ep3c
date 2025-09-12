@@ -1,0 +1,14 @@
+[[https://magit.vc/][Magit]] is a complete text based user interface to [[https://git-scm.com/][Git]].
+#+begin_src emacs-lisp
+  (use-package magit
+    :ensure t
+    :config
+    (evil-define-key 'normal 'global (kbd "SPC g g") 'magit)
+    (evil-define-key 'normal 'global (kbd "SPC g f") 'magit-find-file)
+    (evil-define-key 'normal 'global (kbd "SPC g F") 'magit-find-file-other-frame)
+    (evil-define-key 'normal 'global (kbd "SPC g l") 'magit-log-current)
+    (evil-define-key 'normal 'global (kbd "SPC g t") 'magit-log-all-branches)
+    (setq
+     magit-log-arguments '("-n256" "--graph" "--decorate" "--color")
+     magit-diff-refine-hunk t))
+#+end_src

@@ -1,0 +1,38 @@
+#+TITLE: Vterm settings
+#+AUTHOR: Diacus Magnuz
+Emacs-libvterm ([[https://github.com/akermu/emacs-libvterm][vterm]]) is a fully-fleged terminal emulator inside GNU
+Emacs based on [[https://github.com/neovim/libvterm][libvterm]], a C library (UNIX like systems only)
+#+begin_src emacs-lisp
+  (unless (member system-type '(ms-dos windows-nt cygwin))
+    (use-package vterm
+      :ensure t
+      :config (evil-define-key
+		'(normal visual)
+		'global (kbd "SPC o t")
+		'vterm-other-window)))
+
+  (defun my/delete-vterm-window-on-exit (buffer _status)
+    "Delete vterm window when the shell process exits.
+  BUFFER is the vterm buffer, STATUS is the exit message."
+    (when (buffer-live-p buffer)
+      (with-current-buffer buffer
+	(when (and vterm--process (not (process-live-p vterm--process)))
+	  ;; Kill the buffer first to avoid window errors
+	  (let ((window (get-buffer-window buffer)))
+	    (kill-buffer buffer)
+	    ;; only delete window if it exists and isn´t the only window
+	    (when (and window (not (one-window-p)))
+	      (delete-window window)))))))
+
+  (add-hook 'vterm-exit-functions #'my/delete-vterm-window-on-exit)
+#+end_src
+
+The [[https://github.com/suonlight/multi-vterm][multi-vterm.el]] package allows managing multiple =vterm= buffers.
+#+begin_src emacs-lisp
+  (use-package multi-vterm
+    :ensure t
+    :after vterm
+    :config
+    (evil-define-key '(normal visual) 'global (kbd "SPC o T") 'multi-vterm))
+#+end_src
+

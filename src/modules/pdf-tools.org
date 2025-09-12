@@ -1,0 +1,34 @@
+#+TITLE: PDF tools
+#+AUTHOR: Diacus Magnuz
+The [[https://pdftools.wiki/][PDF Tools]] package among other things is a replacement of DocView
+for PDF files. The key differences is that pages are not pre-rendered
+but created on-demand and stored in memory
+#+begin_src emacs-lisp
+  (use-package pdf-tools
+    :ensure t
+    :init
+    (pdf-tools-install)
+    (pdf-loader-install))
+#+end_src
+
+* Link PDF files
+  Define a new link type and attach a function to handle it. The
+  original solution comes from [[https://emacs.stackexchange.com/questions/30344/how-to-link-and-open-a-pdf-file-to-a-specific-page-skim-adobe][stackexchange]].
+
+  The idea is to process the Link to find out the number of page so we
+  can link specific parts of the document.
+
+  #+begin_src emacs-lisp
+    (require 'org)
+
+    (org-add-link-type "pdf" 'org-utils/open-link-with-default-app nil)
+
+    (defun org-utils/open-link-with-default-app (link)
+      "Spawn the system's default application to open the file pointed by LINK"
+      (let* ((file-path (expand-file-name link))
+	     (file (file-name-nondirectory link))
+	     (open-program "/usr/bin/open")
+	     (process-message (format "Spawn process to open %s file" file)))
+	(message process-message)
+	(start-process process-message nil open-program file-path)))
+  #+end_src

@@ -1,0 +1,8 @@
+#+TITLE:Windows settings
+#+AUTHOR: Diacus Magnuz
+
+If the operating system is Windows install PowerShell package
+#+begin_src emacs-lisp
+  (when (member system-type '(ms-dos windows-nt cygwin))
+    (use-package powershell :ensure t))
+#+end_src

@@ -1,0 +1,52 @@
+#+TITLE:Haskell settings
+#+AUTHOR: Diacus Magnuz
+* Haskell mode
+The [[https://wiki.haskell.org/Emacs][haskell-mode]] package is a set of major modes for writing Haskell
+code and working with Haskell projects. Features syntax hightlighting,
+intelligent indentation, interaction with inferior Haskel interpreter,
+code browsing, and Cabal project integration. It supports Hugs, GHCi,
+Cabal, hslint, hoogle, cabal-dev and other utilities. See the [[http://haskell.github.io/haskell-mode/manual/latest/][Haskell
+Mode manual]] for more details.
+
+The *haskell-mode* includes an specialized /compilation mode/ with
+additional features called [[http://haskell.github.io/haskell-mode/manual/latest/Compilation.html#Compilation][haskell-compile]]. When invoked it tries to
+guess how to compile the program associated to the current buffer.
+
+#+begin_src emacs-lisp
+  (defun haskell-mode-key-bindings (mode-map)
+    "Define convenient key-bindings for Haskell mode"
+    (evil-define-key '(normal visual motion)
+      mode-map
+      (kbd "SPC o r")
+      'haskell-interactive-bring)
+    (evil-define-key '(normal visual motion)
+      mode-map
+      (kbd "SPC c c")
+      'haskell-compile))
+
+  (use-package haskell-mode
+    :ensure t
+    :hook ((haskell-mode . lsp)
+	   (haskell-mode . (lambda ()
+			     (haskell-mode-key-bindings
+			      haskell-mode-map)))
+	   (haskell-cabal-mode . (lambda ()
+				   (haskell-mode-key-bindings
+				    haskell-cabal-mode-map)))))
+#+end_src
+
+* Haskell Language Server
+The [[https://haskell-language-server.readthedocs.io/en/latest/what-is-hls.html][Haskell Language Server (HLS)]] is an implementation of a server for
+[[https://microsoft.github.io/language-server-protocol/][LSP]]
+
+See detailed instrucctions [[https://emacs-lsp.github.io/lsp-haskell/][here]].
+#+begin_src emacs-lisp
+  (use-package lsp-haskell
+    :ensure t
+    :after lsp-mode
+    :config
+    (setq lsp-haskell-process-path-hie "haskell-language-server-wrapper")
+    (setq lsp-haskell-process-args-hie '()))
+
+  (add-hook 'haskell-mode-hook #'lsp)
+#+end_src

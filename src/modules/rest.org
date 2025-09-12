@@ -1,0 +1,14 @@
+#+TITLE: REST Client settings
+#+AUTHOR: Diacus Magnuz
+
+The [[https://github.com/emacsorphanage/restclient][restclient.el]] package is a tool to explore and test HTTP REST web
+services. Runs queries from a plain-text query sheet.
+
+See the [[https://camo.githubusercontent.com/f5bdb86b992801f56ba59a1a5c938f456f14d2cc0649ef678438aa0ecedb0cf4/687474703a2f2f692e696d6775722e636f6d2f51744349442e706e67][Usage]] section for a list of features and cheat sheet.
+
+#+begin_src emacs-lisp
+  (use-package restclient
+    :ensure t
+    :mode ("\\.http\\'"))
+  (use-package ob-restclient :ensure t)
+#+end_src

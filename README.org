@@ -1,7 +1,7 @@
 #+TITLE: Emacs Pretty Personal Portable Configuration
 #+AUTHOR: Diacus Mágnuz
 #+STARTUP: logdrawer
-See the settings [[file:src/settings.org][here]].
+See the settings [[file:src/modules/*.org][here]].
 
 * Installation
 To install the settings just copy =init.el= and =settings.org= files
@@ -9,9 +9,29 @@ to the =user-emacs-directory= folder.
 
 #+begin_src emacs-lisp :results none
   (unless (file-directory-p user-emacs-directory)
-    (make-directory user-emacs-directory t))
-  (copy-file "./src/init.el" user-emacs-directory t)
-  (copy-file "./src/settings.org" user-emacs-directory t)
+    (make-directory user-emacs-directory))
+
+  (let ((init-package (file-name-concat default-directory "src" "init.el")))
+    (copy-file init-package user-emacs-directory t))
+
+  (let* ((modules-wildcard         (file-name-concat default-directory
+						     "src"
+						     "modules"
+						     "*.org"))
+	 (modules                  (file-expand-wildcards modules-wildcard))
+	 (target-modules-directory (file-name-as-directory
+				    (file-name-concat user-emacs-directory "modules"))))
+
+    (when (file-directory-p target-modules-directory)
+      (delete-directory target-modules-directory t))
+    (make-directory target-modules-directory)
+
+    (dolist (module modules)
+      (when (file-exists-p module)
+	(message (format ">> installing module '%s' to %s directory"
+			 module
+			 target-modules-directory))
+	(copy-file module target-modules-directory t))))
 #+end_src
 
 * Remove configuration

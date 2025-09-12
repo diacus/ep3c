@@ -1,0 +1,206 @@
+#+TITLE: Orgmode settings
+#+AUTHOR: Diacus Magnuz
+* General settings
+  Jump to heading, as describes at [[https://stackoverflow.com/questions/15011703/is-there-an-emacs-org-mode-command-to-jump-to-an-org-heading][Stackoverflow]]
+  #+begin_src emacs-lisp
+    (setq org-goto-interface 'outline-path-completion
+	  org-goto-max-level 10)
+    (setq org-outline-path-complete-in-steps nil)
+  #+end_src
+
+  Disable flycheck in =org-src= mode
+  #+begin_src emacs-lisp
+    (add-hook 'org-src-mode-hook (lambda () (flycheck-mode -1)))
+  #+end_src
+
+  Include =.org.gpg= files in =org-agenda-files= following [[https://emacs.stackexchange.com/questions/36542/include-org-gpg-files-in-org-agenda][StackExchange
+  (emacs) answer]]
+
+  #+begin_src emacs-lisp
+    (unless (string-match-p "\\.gpg" org-agenda-file-regexp)
+      (setq org-agenda-file-regexp "\\`[^.].*\\.org\\\(\\.gpg\\\)?\\'"))
+  #+end_src
+* Org Agenda
+  Sometimes I need to focus only in one or a few org agenda topics,
+  these functions help out manipulate =org-agenda-files= list easily.
+
+  #+begin_src emacs-lisp
+    (defun org-tools/set-org-agenda-files ()
+      "Sets `org-agenda-files' selecting multiple files .org/.org.gpg.
+    Excludes backups. Uses ':' as separator like `org-set-tags-command' does.
+    Supports wildcard patterns (e.g. ca*.org) that can be expanded."
+      (interactive)
+      (require 'crm)
+      (require 'cl-lib)
+      (let* ((orgdir (if (and (boundp 'org-directory) org-directory)
+			 (expand-file-name org-directory)
+		       (read-directory-name "org-directory: " "~")))
+	     (org-file-re "\\`[^#].*\\.org\\(\\.gpg\\)?\\'")
+	     (all-org-files (directory-files-recursively orgdir org-file-re))
+	     (rel-files (mapcar (lambda (f) (file-relative-name f orgdir))
+				all-org-files))
+	     (dirs (cl-remove-if-not #'file-directory-p
+				    (directory-files orgdir t "^[^.].*")))
+	     (rel-dirs (mapcar (lambda (d) (file-relative-name d orgdir)) dirs))
+	     (candidates (append rel-files rel-dirs))
+	     (crm-separator ":")
+	     ;; Get entries from user, might be wildcards
+	     (raw (completing-read-multiple
+		   (format "Agenda files (in %s) — use ':' as separator: " orgdir)
+		   candidates nil nil))
+	     (choices (cl-remove-if #'string-empty-p (mapcar #'string-trim raw)))
+	     (result '()))
+	(dolist (choice choices)
+	  (let ((abs-choice (expand-file-name choice orgdir)))
+	    (cond
+	     ;; If entry is a directory
+	     ((and (file-exists-p abs-choice) (file-directory-p abs-choice))
+	      (setq result (append (directory-files-recursively abs-choice org-file-re)
+				   result)))
+	     ;; If entry is a valid file
+	     ((and (file-exists-p abs-choice)
+		   (string-match org-file-re abs-choice))
+	      (push abs-choice result))
+	     ;; If entry contains wildcards → expand matches
+	     ((string-match-p "[[*?]" choice)
+	      (let* ((pattern (expand-file-name choice orgdir))
+		     (matches (file-expand-wildcards pattern t)))
+		(setq matches (cl-remove-if-not
+			       (lambda (f) (string-match org-file-re f))
+			       matches))
+		(if matches
+		    (setq result (append matches result))
+		  (message "Warning: the pattern %s didn't math any valid file"
+			   choice))))
+	     (t
+	      (message "Warning: %s isn't a valid .org(.gpg) file (ignored)" abs-choice)))))
+	;; Normalize results
+	(setq result (cl-delete-duplicates (nreverse result) :test #'string=))
+	(setq org-agenda-files result)
+	(message "org-agenda-files updated (%d): %s"
+		 (length result)
+		 (mapconcat #'file-name-nondirectory result ", "))))
+
+
+    (defun org-tools/restore-org-agenda-files ()
+      "Restores `org-agenda-files` to the value set in `custom-file`.
+    This is equivalent to revert any temporal change made by the user
+    in the current session."
+      (interactive)
+      (if (get 'org-agenda-files 'customized-value)
+	  (progn
+	    (custom-reevaluate-setting 'org-agenda-files)
+	    (message "org-agenda-files value restored from custom.el"))
+	(message "org-agenda-files isn't customized in custom.el")))
+  #+end_src
+
+* Key bindings
+  | Bind key | to function |
+  |----------+-------------|
+  | =SPC= =o= =a=  | =org-agenda=  |
+  | =SPC= =o= =c=  | =org-capture= |
+
+  #+begin_src emacs-lisp
+    (evil-define-key 'normal 'global
+      (kbd "SPC o a") #'org-agenda)
+    (evil-define-key 'normal 'global
+      (kbd "SPC o c") #'org-capture)
+  #+end_src
+
+* Evil Org
+  [[https://github.com/Somelauw/evil-org-mode][evil-org]] package adds key-bindings to Emacs org-mode
+  #+begin_src emacs-lisp
+    (use-package evil-org
+      :ensure t
+      :after org
+      :hook (org-mode . evil-org-mode)
+      :config
+      (require 'evil-org-agenda)
+      (evil-org-agenda-set-keys))
+  #+end_src
+
+  If Emacs runs inside a terminal, =TAB= key might not work as expected
+  (being bound to =evil-jump-forward= instead of =org-tab= or
+  =org-cycle=).
+
+  #+begin_src emacs-lisp
+    (add-hook 'org-mode-hook
+	      (lambda ()
+		;; Only apply this in terminal mode
+		(unless (display-graphic-p)
+		  ;; Prevent Evil from binding C-i (Tab) to evil-jump-forward
+		  (setq evil-want-C-i-jump nil)
+		  ;; Bind TAB to org-cycle in normal state
+		  (evil-define-key 'normal 'global (kbd "TAB") 'org-cycle))))
+  #+end_src
+
+* Org bullets
+  #+begin_src emacs-lisp
+    (use-package org-bullets
+      :ensure t
+      :after org)
+
+    (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1)))
+  #+end_src
+
+* Look and feel
+  Take ideas from [[https://zzamboni.org/post/beautifying-org-mode-in-emacs/][Beautifying Org Mode in Emacs]] blog post
+  #+begin_src emacs-lisp
+    (setq org-hide-emphasis-markers t)
+
+    (let* ((variable-tuple
+	    (cond ((x-list-fonts "ETBembo")         '(:font "ETBembo"))
+		  ((x-list-fonts "Source Sans Pro") '(:font "Source Sans Pro"))
+		  ((x-list-fonts "Lucida Grande")   '(:font "Lucida Grande"))
+		  ((x-list-fonts "Verdana")         '(:font "Verdana"))
+		  ((x-family-fonts "Sans Serif")    '(:family "Sans Serif"))
+		  (nil (warn "Cannot find a Sans Serif Font.  Install Source Sans Pro."))))
+	   (base-font-color     (face-foreground 'default nil 'default))
+	   (headline           `(:inherit default :weight bold :foreground ,base-font-color)))
+
+      (custom-theme-set-faces
+       'user
+       `(org-level-8 ((t (,@headline ,@variable-tuple))))
+       `(org-level-7 ((t (,@headline ,@variable-tuple))))
+       `(org-level-6 ((t (,@headline ,@variable-tuple))))
+       `(org-level-5 ((t (,@headline ,@variable-tuple))))
+       `(org-level-4 ((t (,@headline ,@variable-tuple :height 1.1))))
+       `(org-level-3 ((t (,@headline ,@variable-tuple :height 1.25))))
+       `(org-level-2 ((t (,@headline ,@variable-tuple :height 1.5))))
+       `(org-level-1 ((t (,@headline ,@variable-tuple :height 1.75))))
+       `(org-document-title ((t (,@headline ,@variable-tuple :height 2.0 :underline nil))))))
+
+
+    (custom-theme-set-faces
+     'user
+     '(org-block ((t (:inherit fixed-pitch))))
+     '(org-code ((t (:inherit (shadow fixed-pitch)))))
+     '(org-document-info ((t (:foreground "dark orange"))))
+     '(org-document-info-keyword ((t (:inherit (shadow fixed-pitch)))))
+     '(org-indent ((t (:inherit (org-hide fixed-pitch)))))
+     '(org-link ((t (:foreground "royal blue" :underline t))))
+     '(org-meta-line ((t (:inherit (font-lock-comment-face fixed-pitch)))))
+     '(org-property-value ((t (:inherit fixed-pitch))) t)
+     '(org-special-keyword ((t (:inherit (font-lock-comment-face fixed-pitch)))))
+     '(org-table ((t (:inherit fixed-pitch :foreground "#83a598"))))
+     '(org-tag ((t (:inherit (shadow fixed-pitch) :weight bold :height 0.8))))
+     '(org-verbatim ((t (:inherit (shadow fixed-pitch))))))
+  #+end_src
+* Orgmode babel
+  Org [[https://orgmode.org/worg/org-contrib/babel/languages/index.html][Babel]] supports a growing number of programming languages.
+  #+begin_src emacs-lisp
+    (use-package ob-restclient
+      :ensure t)
+
+    (org-babel-do-load-languages
+     'org-babel-load-languages
+     '((awk        . t)
+       (dot        . t)
+       (haskell    . t)
+       (js         . t)
+       (python     . t)
+       (restclient . t)
+       (shell      . t)
+       (sql        . t)
+       (sqlite     . t)))
+  #+end_src

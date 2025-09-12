@@ -1,0 +1,19 @@
+[[https://docs.projectile.mx/projectile/index.html][Projectile]] is a project integration library for Emacs. Its goal is to
+provide features operating on a project level without introducing
+external dependencies (when feasable).
+#+begin_src emacs-lisp
+  (use-package projectile
+    :ensure t
+    :config
+    (evil-define-key 'normal 'global (kbd "SPC p p") 'projectile-switch-project)
+    (evil-define-key 'normal 'global (kbd "SPC p k") 'projectile-kill-buffers)
+    (evil-define-key 'normal 'global (kbd "SPC p f") 'projectile-find-file)
+    (evil-define-key 'normal 'global (kbd "SPC p F") 'projectile-find-file-other-frame)
+    (evil-define-key 'normal 'global (kbd "SPC p b") 'projectile-switch-to-buffer)
+    (evil-define-key 'normal 'global (kbd "SPC p B") 'projectile-switch-to-buffer-other-frame)
+    (evil-define-key 'normal 'global (kbd "SPC p t") 'projectile-run-vterm-other-window)
+    (evil-define-key 'normal 'global (kbd "SPC p T") 'projectile-run-vterm)
+    (evil-define-key 'normal 'global (kbd "SPC p c") 'projectile-compile-project)
+    (projectile-mode +1)
+    (setq projectile-completion-system 'ivy))
+#+end_src

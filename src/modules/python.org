@@ -1,0 +1,45 @@
+#+TITLE: Python Settings
+#+AUTHOR: Diacus Mágnuz
+
+* Elpy
+Elpy (see the [[https://elpy.readthedocs.io/en/latest/index.html][docs]] for details) is the Emacs Python Development
+Environment. It aims to provide an easy to install, fully-featured
+environment for Python development.
+
+#+begin_src emacs-lisp
+  (use-package elpy
+    :ensure t
+    :defer t
+    :init
+    (advice-add 'python-mode :before 'elpy-enable)
+    (load "elpy")
+    (load "elpy-rpc")
+    (load "elpy-shell")
+    (load "elpy-profile")
+    (load "elpy-refactor")
+    (load "elpy-django"))
+
+  (add-hook 'python-mode-hook #'lsp)
+#+end_src
+
+* Virtual environments
+Use [[https://github.com/aiguofer/pyenv.el][pyenv.el]] to manage your Python version within Emacs using pyenv
+#+begin_src emacs-lisp
+  (use-package pyenv
+    :quelpa (pyenv :fetcher github :repo "aiguofer/pyenv.el")
+    :hook (python-mode . global-pyenv-mode))
+
+  (use-package pyvenv
+    :ensure t
+    :hook ((python-mode . pyvenv-mode)))
+#+end_src
+
+* Debugging
+#+begin_src emacs-lisp
+  (use-package dap-python
+    :ensure nil
+    :after python
+    :init
+    (setq dap-python-debugger 'debugpy))
+#+end_src
+

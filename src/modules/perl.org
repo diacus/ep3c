@@ -1,0 +1,59 @@
+#+TITLE: Perl settings
+#+AUTHOR: Diacus Magnuz
+
+* Major mode
+[[http://xahlee.info/emacs/emacs/emacs_perl_vs_cperl_mode.html][CPerl mode]] is an enhanced mode for Perl development. It was designed
+to provide better suppor for Perl's syntax and features, specially for
+more complex code.
+
+By customizing =interpreter-mode-alist=, it is possible make Emacs
+recognize Perl scripts based on their shebang line, even if they lack
+a specific file extension.
+
+#+begin_src emacs-lisp
+  (add-to-list 'interpreter-mode-alist '("perl"     . cperl-mode))
+  (add-to-list 'interpreter-mode-alist '("perl5"    . cperl-mode))
+  (add-to-list 'interpreter-mode-alist '("miniperl" . cperl-mode))
+  (add-to-list 'auto-mode-alist '("\\.\\([pP][Llm]\\|al\\)\\'" . cperl-mode))
+  (add-to-list 'auto-mode-alist '("\\.[tT]\\'" . cperl-mode)) ; For .t files (Perl test files)
+#+end_src
+
+* Perl Debugger
+#+begin_src emacs-lisp
+  (defun spawn-run-perl-debugger-with-stdin ()
+    "Run the Perl debugger on the current file with output from another file."
+    (interactive)
+    (let* ((perl-file  (buffer-file-name))
+	   (input-file (read-file-name "Input file: ")))
+      (if (and perl-file input-file)
+	  (progn
+	    (split-window-below)
+	    (other-window 1)
+	    (let ((buffer (get-buffer-create "*perl-debugger*")))
+	      (with-current-buffer buffer
+		(comint-mode)
+		(erase-buffer)
+		(insert (format "Starting Perl debugger for %s with input from %s\n" perl-file input-file))
+		(make-comint "perl-debugger" "perl" nil "-d" perl-file)
+		(comint-send-string buffer (format "open(STDIN, '<%s') or die $!;\n" input-file)))
+	      (switch-to-buffer buffer)))
+	(message "No file is associated with this buffer or not imput selected"))))
+#+end_src
+
+The following hook settings are based on the [[https://dev.to/nicholasbhubbard/how-i-use-emacs-to-write-perl-40e6]["How I use Emacs to write
+Perl"]] post.
+#+begin_src emacs-lisp
+  (use-package inf-perl
+    :quelpa (inf-perl :fetcher github :repo "nverno/inf-perl"))
+
+  (defun cperl-mode-custom-settings ()
+    (setq cperl-indent-level 2)
+    (setq cperl-indent-parens-as-block t))
+
+  (defun cperl-mode-key-bindings ()
+    (define-key cperl-mode-map (kbd "C-c C-z") 'inf-perl-run)
+    (define-key cperl-mode-map (kbd "C-c C-d") 'spawn-run-perl-debugger-with-stdin))
+
+  (add-hook 'cperl-mode-hook 'cperl-mode-custom-settings)
+  (add-hook 'cperl-mode-hook 'cperl-mode-key-bindings)
+#+end_src
