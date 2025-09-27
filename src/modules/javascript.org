@@ -1,22 +1,33 @@
 #+TITLE: Javascript settings
 #+AUTHOR: Diacus Magnuz
-
 * Coding Style
-#+begin_src emacs-lisp
-  (setq js-indent-level 2)
-#+end_src
+  #+begin_src emacs-lisp
+    (setq js-indent-level 2)
+  #+end_src
 
 * Node.js REPL
-The [[https://github.com/abicky/nodejs-repl.el][nodejs-repl.el]] program is derived from comint-mode and provides the following features.
+  The [[https://github.com/abicky/nodejs-repl.el][nodejs-repl.el]] program is derived from comint-mode and provides
+  the following features.
 
- * Token completion, same as Node.js REPL
- * File name completion in string
- * Incremental history search
- * Sending JavaScript code to REPL
+  * Token completion, same as Node.js REPL
+  * File name completion in string
+  * Incremental history search
+  * Sending JavaScript code to REPL
 
-#+begin_src emacs-lisp
-  (use-package nodejs-repl
-    :ensure t
-    :after exec-path-from-shell
-    :hook ((js-mode . nodejs-repl-minor-mode)))
-#+end_src
+  #+begin_src emacs-lisp
+    (use-package nodejs-repl
+      :ensure t
+      :after exec-path-from-shell
+      :hook ((js-mode . nodejs-repl-minor-mode)))
+  #+end_src
+
+* Web Mode
+  #+begin_src emacs-lisp
+    (use-package web-mode
+      :ensure t
+      :mode
+       ("\\.jsx\\'"      . web-mode)
+       ("\\.tsx\\'"      . web-mode)
+       ))
+  #+end_src
+
