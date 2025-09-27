@@ -27,7 +27,6 @@
       :ensure t
       :mode
        ("\\.jsx\\'"      . web-mode)
-       ("\\.tsx\\'"      . web-mode)
-       ))
+       ("\\.tsx\\'"      . web-mode))
   #+end_src
 
