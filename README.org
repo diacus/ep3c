@@ -4,48 +4,51 @@
 See the settings [[file:src/modules/*.org][here]].
 
 * Installation
-To install the settings just copy =init.el= and =settings.org= files
-to the =user-emacs-directory= folder.
+  To install the settings just copy =init.el= and =settings.org= files
+  to the =user-emacs-directory= folder.
 
-#+begin_src emacs-lisp :results none
-  (unless (file-directory-p user-emacs-directory)
-    (make-directory user-emacs-directory))
+  #+name: install-ep3c
+  #+begin_src emacs-lisp :results raw
+    (unless (file-directory-p user-emacs-directory)
+      (make-directory user-emacs-directory))
 
-  (let ((init-package (file-name-concat default-directory "src" "init.el")))
-    (copy-file init-package user-emacs-directory t))
+    (let ((init-package (file-name-concat default-directory "src" "init.el")))
+      (copy-file init-package user-emacs-directory t))
 
-  (let* ((modules-wildcard         (file-name-concat default-directory
-						     "src"
-						     "modules"
-						     "*.org"))
-	 (modules                  (file-expand-wildcards modules-wildcard))
-	 (target-modules-directory (file-name-as-directory
-				    (file-name-concat user-emacs-directory "modules"))))
+    (let* ((modules-wildcard         (file-name-concat default-directory
+						       "src"
+						       "modules"
+						       "*.org"))
+	   (modules                  (file-expand-wildcards modules-wildcard))
+	   (target-modules-directory (file-name-as-directory
+				      (file-name-concat user-emacs-directory "modules"))))
 
-    (when (file-directory-p target-modules-directory)
-      (delete-directory target-modules-directory t))
-    (make-directory target-modules-directory)
+      (when (file-directory-p target-modules-directory)
+	(delete-directory target-modules-directory t))
+      (make-directory target-modules-directory)
 
-    (dolist (module modules)
-      (when (file-exists-p module)
-	(message (format ">> installing module '%s' to %s directory"
-			 module
-			 target-modules-directory))
-	(copy-file module target-modules-directory t))))
-#+end_src
+      (dolist (module modules)
+	(when (file-exists-p module)
+	  (message (format ">> installing module '%s' to %s directory"
+			   module
+			   target-modules-directory))
+	  (copy-file module target-modules-directory t))))
+
+    (format "file:%smodules/*.org" user-emacs-directory)
+  #+end_src
 
 * Remove configuration
-To get rid of everything just delete =user-emacs-directory=
-#+name: remove-everything
-#+begin_src emacs-lisp :results none
-  (delete-directory user-emacs-directory t t)
-#+end_src
+  To get rid of everything just delete =user-emacs-directory=
+  #+name: remove-everything
+  #+begin_src emacs-lisp :results none
+    (delete-directory user-emacs-directory t t)
+  #+end_src
 
-To delete the settings but keep the rest, only deleete =init.el= and
-=settings.org= files.
+  To delete the settings but keep the rest, only deleete =init.el= and
+  =settings.org= files.
 
-#+name: delete-settings-only
-#+begin_src emacs-lisp :results none
-  (dolist (file '("init.el" "settings.org"))
-    (delete-file (file-name-concat user-emacs-directory file)))
-#+end_src
+  #+name: delete-settings-only
+  #+begin_src emacs-lisp :results none
+    (dolist (file '("init.el" "settings.org"))
+      (delete-file (file-name-concat user-emacs-directory file)))
+  #+end_src
