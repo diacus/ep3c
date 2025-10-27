@@ -12,7 +12,9 @@ See the settings [[file:src/modules/*.org][here]].
     (unless (file-directory-p user-emacs-directory)
       (make-directory user-emacs-directory))
 
-    (let ((init-package (file-name-concat default-directory "src" "init.el")))
+    (let ((init-package (file-name-concat default-directory
+					  "src"
+					  "init.el")))
       (copy-file init-package user-emacs-directory t))
 
     (let* ((modules-wildcard         (file-name-concat default-directory
@@ -20,9 +22,9 @@ See the settings [[file:src/modules/*.org][here]].
 						       "modules"
 						       "*.org"))
 	   (modules                  (file-expand-wildcards modules-wildcard))
-	   (target-modules-directory (file-name-as-directory
-				      (file-name-concat user-emacs-directory "modules"))))
-
+	   (target-modules-directory (file-name-as-directory (file-name-concat
+							      user-emacs-directory
+							      "modules"))))
       (when (file-directory-p target-modules-directory)
 	(delete-directory target-modules-directory t))
       (make-directory target-modules-directory)
