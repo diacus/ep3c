@@ -5,3 +5,7 @@ to copy/move files between distant directories. [[https://emacs.stackexchange.co
   (setq dired-dwim-target 1)
 #+end_src
 
+Hide details by default
+#+begin_src emacs-lisp
+  (add-hook 'dired-mode-hook 'dired-hide-details-mode)
+#+end_src
