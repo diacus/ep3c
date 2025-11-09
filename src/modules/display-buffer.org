@@ -1,0 +1,35 @@
+#+TITLE: Display Buffer Rules
+This is the space to configure how Emacs displays buffers and manages
+windows. See [[https://www.youtube.com/watch?v=1-UIzYPn38s][Emacs: control where buffers are displayed]] Youtube video
+by =<Protesilaos Stavrou>= for details and a demo about this feature.
+
+#+begin_src emacs-lisp
+  (setq display-buffer-alist
+	'(
+	  ;; Anatomy o fan entry
+	  ;; (BUFFER-MATCHER 
+	  ;;  LIST-OF-DISPLAY-FUNCTIONS
+	  ;;  &optional PARAMETERS)
+
+	  ;; No window
+	  ("\\`\\*Async Shell Command\\*\\'"
+	   (display-buffer-no-window))
+
+	  ;; bottom side window
+	  ("\\*Org \\(Select\\|Note\\)\\*"
+	   (display-buffer-in-side-window)
+	   (dedicated . t)
+	   (side . bottom)
+	   (slot . 0))
+
+	  ((or . ((derived-mode . occur-mode)
+		  (derived-mode . grep-mode)
+		  (derived-mode . compilation-mode)
+		  (derived-mode . help-mode)))
+	   (display-buffer-reuse-window
+	    display-buffer-below-selected)
+	   (window-height . 0.3)
+	   (dedicated . t)
+	   (body-function . select-window))
+	  ))
+#+end_src
