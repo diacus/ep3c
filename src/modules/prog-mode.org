@@ -7,8 +7,10 @@ place to define settings common for use with any programming language.
 #+begin_src emacs-lisp
   (defun prog-mode-key-bindings()
     "Define key bindings useful for prog-mode"
-    (evil-define-key
-      '(normal visual motion) prog-mode-map (kbd "SPC o r") 'vterm-other-window))
+    (evil-define-key '(normal visual motion) prog-mode-map
+      (kbd "SPC o r") 'vterm-other-window)
+    (evil-define-key 'visual prog-mode-map
+      (kbd "SPC ;") 'comment-or-uncomment-region))
 
   (add-hook 'prog-mode-hook 'prog-mode-key-bindings)
 #+end_src
