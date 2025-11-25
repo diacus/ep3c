@@ -7,5 +7,5 @@ to indent the code, I rather using two spaces instead.
 
   (with-eval-after-load 'apheleia
     (setf (alist-get 'gawk apheleia-formatters)
-          '("sh" "-c" "gawk -f - --pretty-print=- | expand -t 2")))
+          '("sh" "-c" "gawk -f - --pretty-print=- | expand -t 4")))
 #+end_src
