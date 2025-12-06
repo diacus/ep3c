@@ -31,17 +31,20 @@
 	  :url "https://github.com/quelpa/quelpa-use-package.git"))
 (require 'quelpa-use-package)
 
+(setq custom-file
+	(file-name-concat user-emacs-directory "custom.el"))
+(when (file-exists-p custom-file)
+  (load custom-file))
 
-(defun init/load-settings-module (file)
-  "Execute 'org-babel-load-file' FILE only if file is executable."
-  (when (file-executable-p file)
-      (org-babel-load-file file)))
+(unless (boundp 'ep3c-modules)
+  (let ((modules-wildcard (file-name-concat user-emacs-directory "modules" "*.org")))
+    (defcustom ep3c-modules
+      (file-expand-wildcards modules-wildcard)
+      "List of available EP3C modules. Disable any module by deleting it from this list"
+      :type '(repeat (file :must-match nil))
+      :group 'ep3c)))
 
-(let* ((modules-wildcard (file-name-concat user-emacs-directory
-					   "modules"
-					   "*.org"))
-       (modules (file-expand-wildcards modules-wildcard)))
-  (mapc 'init/load-settings-module modules))
+(mapcar 'org-babel-load-file ep3c-modules)
 
 (provide 'init)
 ;;; init.el

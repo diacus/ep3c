@@ -8,35 +8,25 @@ See the settings [[file:src/modules/*.org][here]].
   to the =user-emacs-directory= folder.
 
   #+name: install-ep3c
-  #+begin_src emacs-lisp :results raw
+  #+begin_src emacs-lisp :results none
+    (load-file (file-name-concat default-directory "src" "install.el"))
     (unless (file-directory-p user-emacs-directory)
       (make-directory user-emacs-directory))
 
-    (let ((init-package (file-name-concat default-directory
-					  "src"
-					  "init.el")))
-      (copy-file init-package user-emacs-directory t))
+    (setq installed-modules
+          (let* ((init-package (file-name-concat default-directory "src" "init.el"))
+    	     (modules-wildcard (file-name-concat default-directory "src" "modules" "*.org")))
+    	(install-ep3c init-package modules-wildcard)))
 
-    (let* ((modules-wildcard         (file-name-concat default-directory
-						       "src"
-						       "modules"
-						       "*.org"))
-	   (modules                  (file-expand-wildcards modules-wildcard))
-	   (target-modules-directory (file-name-as-directory (file-name-concat
-							      user-emacs-directory
-							      "modules"))))
-      (when (file-directory-p target-modules-directory)
-	(delete-directory target-modules-directory t))
-      (make-directory target-modules-directory)
+    (setq custom-file (file-name-concat user-emacs-directory "custom.el"))
 
-      (dolist (module modules)
-	(when (file-exists-p module)
-	  (message (format ">> installing module '%s' to %s directory"
-			   module
-			   target-modules-directory))
-	  (copy-file module target-modules-directory t))))
+    (defcustom ep3c-modules
+      installed-modules
+      "List of available EP3C modules. Disable any module by deleting it from this list."
+      :type '(repeat (file :must-match nil))
+      :group 'ep3c)
 
-    (format "file:%smodules/*.org" user-emacs-directory)
+    (customize-option 'ep3c-modules)
   #+end_src
 
 * Remove configuration
@@ -46,11 +36,11 @@ See the settings [[file:src/modules/*.org][here]].
     (delete-directory user-emacs-directory t t)
   #+end_src
 
-  To delete the settings but keep the rest, only deleete =init.el= and
-  =settings.org= files.
+  To delete the settings but keep the rest, only delete =init.el= file
+  and =modules= folder.
 
   #+name: delete-settings-only
   #+begin_src emacs-lisp :results none
-    (dolist (file '("init.el" "settings.org"))
-      (delete-file (file-name-concat user-emacs-directory file)))
+    (delete-file (file-name-concat user-emacs-directory "init.el"))
+    (delete-directory (file-name-concat user-emacs-directory "modules") t)
   #+end_src
