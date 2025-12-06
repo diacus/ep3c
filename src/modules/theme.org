@@ -34,10 +34,11 @@ Installing Nord theme included in [[https://github.com/doomemacs/themes?tab=read
 According to its author, Nimbus theme is something beautiful, slihtly
 retro, yet readable and easy on the eyes. See more at [[https://github.com/mrcnski/nimbus-theme][Github.com]].
 #+begin_src emacs-lisp
-  (use-package nimbus-theme
-    :ensure t
-    :init
-    (load-theme 'nimbus :no-confirm))
+  (when (eq system-type 'windows-nt)
+    (use-package nimbus-theme
+      :ensure t
+      :init
+      (load-theme 'nimbus :no-confirm)))
 #+end_src
 
 * Doom modeline
