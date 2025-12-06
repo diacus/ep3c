@@ -7,7 +7,7 @@
     (when (file-directory-p modules-target-directory)
       (delete-directory modules-target-directory t))
     (make-directory modules-target-directory)
-    (copy-file init-package user-emacs-directory)
+    (copy-file init-package user-emacs-directory t)
 
     (dolist (module modules)
       (when (file-exists-p module)
