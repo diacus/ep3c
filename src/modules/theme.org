@@ -1,5 +1,6 @@
-* Theme
-** Cursor line
+#+TITLE: Theme
+#+AUTHOR: Diacus Mágnuz
+* Cursor line
 By default the cursorline hightlighting is underlined, I don't like it.
 #+begin_src emacs-lisp
    (use-package hl-line
@@ -7,7 +8,7 @@ By default the cursorline hightlighting is underlined, I don't like it.
      (set-face-underline 'hl-line nil))
 #+end_src
 
-** Colors for Linux and BSD
+* Colors for Linux and BSD
 Installing Nord theme included in [[https://github.com/doomemacs/themes?tab=readme-ov-file#manually--use-package][doom-themes]] collection
 #+begin_src emacs-lisp
   (when (member system-type '(android gnu/linux berkeley-unix))
@@ -20,7 +21,7 @@ Installing Nord theme included in [[https://github.com/doomemacs/themes?tab=read
       (load-theme 'doom-nord :no-confirm)))
 #+end_src
 
-** Colors for MacOs
+* Colors for MacOs
 [[https://github.com/emacsmirror/timu-macos-theme][timu-macos-theme]] is inspired by the macOS UI.
 #+begin_src emacs-lisp
   (when (eq system-type 'darwin)
@@ -29,13 +30,24 @@ Installing Nord theme included in [[https://github.com/doomemacs/themes?tab=read
       :init (load-theme 'timu-macos t)))
 #+end_src
 
-** Doom modeline
+* Colors for Windows
+According to its author, Nimbus theme is something beautiful, slihtly
+retro, yet readable and easy on the eyes. See more at [[https://github.com/mrcnski/nimbus-theme][Github.com]].
+#+begin_src emacs-lisp
+  (use-package nimbus-theme
+    :ensure t
+    :init
+    (load-theme 'nimbus :no-confirm))
+#+end_src
+
+* Doom modeline
 The [[https://github.com/seagle0128/doom-modeline][doom-modeline]] is a fancy and fast mode-line inspired by minimalist
 design.
 #+begin_src emacs-lisp
-  (use-package doom-modeline
-    :ensure t
-    :hook (after-init . doom-modeline-mode))
+  (when (member system-type '(android gnu/linux berkeley-unix))
+    (use-package doom-modeline
+      :ensure t
+      :hook (after-init . doom-modeline-mode)))
 #+end_src
 
 For setting up the font family and face, take a look on [[https://stackoverflow.com/questions/6026713/how-do-i-change-emacs-default-font-size-and-font-type][these
