@@ -1,0 +1,8 @@
+#+TITLE: .NET Core Development
+
+#+begin_src emacs-lisp
+  (use-package omnisharp
+    :ensure t
+    :after lsp-mode
+    :hook (csharp-mode . lsp-deferred))
+#+end_src
