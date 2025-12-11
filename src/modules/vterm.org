@@ -1,5 +1,11 @@
-#+TITLE: Vterm settings
+#+TITLE: Shell
 #+AUTHOR: Diacus Magnuz
+
+Configuration settings to invoke a *Shell* window, defines two key bindings:
+- =SPC= + =o= + =t= :: opens shell in bottom window
+- =SPC= + =o= + =T= :: opens shell in current window
+
+* Vterm
 Emacs-libvterm ([[https://github.com/akermu/emacs-libvterm][vterm]]) is a fully-fleged terminal emulator inside GNU
 Emacs based on [[https://github.com/neovim/libvterm][libvterm]], a C library (UNIX like systems only)
 #+begin_src emacs-lisp
@@ -7,32 +13,61 @@ Emacs based on [[https://github.com/neovim/libvterm][libvterm]], a C library (UN
     (use-package vterm
       :ensure t
       :config (evil-define-key
-		'(normal visual)
-		'global (kbd "SPC o t")
-		'vterm-other-window)))
+  		'(normal visual)
+  		'global (kbd "SPC o t")
+  		'vterm-other-window)))
 
-  (defun my/delete-vterm-window-on-exit (buffer _status)
+  (defun vterm--delete-window-on-exit (buffer _status)
     "Delete vterm window when the shell process exits.
   BUFFER is the vterm buffer, STATUS is the exit message."
     (when (buffer-live-p buffer)
       (with-current-buffer buffer
-	(when (and vterm--process (not (process-live-p vterm--process)))
-	  ;; Kill the buffer first to avoid window errors
-	  (let ((window (get-buffer-window buffer)))
-	    (kill-buffer buffer)
-	    ;; only delete window if it exists and isn´t the only window
-	    (when (and window (not (one-window-p)))
-	      (delete-window window)))))))
+  	(when (and vterm--process (not (process-live-p vterm--process)))
+  	  ;; Kill the buffer first to avoid window errors
+  	  (let ((window (get-buffer-window buffer)))
+  	    (kill-buffer buffer)
+  	    ;; only delete window if it exists and isn´t the only window
+  	    (when (and window (not (one-window-p)))
+  	      (delete-window window)))))))
 
-  (add-hook 'vterm-exit-functions #'my/delete-vterm-window-on-exit)
+  (add-hook 'vterm-exit-functions #'vterm--delete-window-on-exit)
 #+end_src
 
 The [[https://github.com/suonlight/multi-vterm][multi-vterm.el]] package allows managing multiple =vterm= buffers.
 #+begin_src emacs-lisp
-  (use-package multi-vterm
-    :ensure t
-    :after vterm
-    :config
-    (evil-define-key '(normal visual) 'global (kbd "SPC o T") 'multi-vterm))
+  (unless (member system-type '(ms-dos windows-nt cygwin))
+    (use-package multi-vterm
+      :ensure t
+      :after vterm
+      :config
+      (evil-define-key '(normal visual) 'global (kbd "SPC o T") 'multi-vterm)))
 #+end_src
 
+* Eshell
+#+begin_quote
+Eshell is a shell-like command interpreter implemented in Emacs
+Lisp. It invokes no external processes except for those requested by
+the user. It is intended to be an alternative to the IELM (see [[https://www.gnu.org/software/emacs/manual/html_mono/emacs.html#Lisp-Interaction][Lisp
+Interaction]] in /The Emacs Editor/) REPL for Emacs and with an interface
+similar to command shells such as bash, zsh, rc, or 4dos.
+#+end_quote
+
+Since =vterm= doesn't support Windows operating system, the next viable
+choice for a command line interface is presicely *eshell.*
+
+#+begin_src emacs-lisp
+  (defun eshell--other-window ()
+    "Open eshell in other window"
+    (interactive)
+    (let ((window (split-window-below)))
+      (select-window window)
+      (eshell)))
+
+  (if (member system-type '(ms-dos windows-nt cygwin))
+      (progn
+        (evil-define-key '(normal visual) 'global (kbd "SPC o t") 'eshell--other-window)
+        (evil-define-key '(normal visual) 'global (kbd "SPC o T") 'eshell))
+    (progn
+        (evil-define-key '(normal visual) 'global (kbd "SPC o e") 'eshell--other-window)
+        (evil-define-key '(normal visual) 'global (kbd "SPC o E") 'eshell)))
+#+end_src
