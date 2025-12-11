@@ -43,13 +43,33 @@ retro, yet readable and easy on the eyes. See more at [[https://github.com/mrcns
 
 * Doom modeline
 The [[https://github.com/seagle0128/doom-modeline][doom-modeline]] is a fancy and fast mode-line inspired by minimalist
-design.
+design. It is required to have installed a [[https://www.nerdfonts.com/][Nerd Font]] to display this
+mode line correctly. If that isn't the case the default mode line is
+used instead.
+
+For setting up the font family and face, take a look on [[https://stackoverflow.com/questions/6026713/how-do-i-change-emacs-default-font-size-and-font-type][these
+instructions]] from Stackoverflow.
+
 #+begin_src emacs-lisp
-  (when (member system-type '(android gnu/linux berkeley-unix))
+  (defun theme--get-default-font-family ()
+    "Get default font family."
+    (let* ((font   (face-attribute 'default :font))
+  	 (family (and font (font-get font :family))))
+      (if (stringp family)
+  	family
+        (format "%s" family))))
+   
+
+  (defun theme--is-default-font-nerd-font-p ()
+    "Return non-nil if the default face uses a Nerd Font."
+    (let ((family (theme--get-default-font-family)))
+      (and family
+  	 (string-match-p
+  	  (regexp-opt '("Nerd Font" "Nerd-Font" "NF"))
+  	  family))))
+
+  (when (theme--is-default-font-nerd-font-p))
     (use-package doom-modeline
       :ensure t
       :hook (after-init . doom-modeline-mode)))
 #+end_src
-
-For setting up the font family and face, take a look on [[https://stackoverflow.com/questions/6026713/how-do-i-change-emacs-default-font-size-and-font-type][these
-instructions]] from Stackoverflow.
