@@ -8,6 +8,11 @@
     (setq org-outline-path-complete-in-steps nil)
   #+end_src
 
+  Enable indent mode
+  #+begin_src emacs-lisp
+    (add-hook 'org-mode (lambda () (org-indent-mode 1)))
+  #+end_src
+
   Disable flycheck in =org-src= mode
   #+begin_src emacs-lisp
     (add-hook 'org-src-mode-hook (lambda () (flycheck-mode -1)))
