@@ -54,21 +54,21 @@ instructions]] from Stackoverflow.
   (defun theme--get-default-font-family ()
     "Get default font family."
     (let* ((font   (face-attribute 'default :font))
-  	 (family (and font (font-get font :family))))
+         (family (and font (font-get font :family))))
       (if (stringp family)
-  	family
+        family
         (format "%s" family))))
-   
+
 
   (defun theme--is-default-font-nerd-font-p ()
     "Return non-nil if the default face uses a Nerd Font."
     (let ((family (theme--get-default-font-family)))
       (and family
-  	 (string-match-p
-  	  (regexp-opt '("Nerd Font" "Nerd-Font" "NF"))
-  	  family))))
+         (string-match-p
+          (regexp-opt '("Nerd Font" "Nerd-Font" "NF"))
+          family))))
 
-  (when (theme--is-default-font-nerd-font-p))
+  (when (theme--is-default-font-nerd-font-p)
     (use-package doom-modeline
       :ensure t
       :hook (after-init . doom-modeline-mode)))
