@@ -1,5 +1,13 @@
 ;;; init --- Init file for Emacs
-;;; Commentary: simple minimal configuration and module loading
+;;
+;;; Commentary:
+;;
+;; Simple minimal configuration and module loading
+;;
+;; Local Variables:
+;; byte-compile-warnings: (not free-vars)
+;; End:
+;;
 ;;; Code:
 (when (display-graphic-p)
   (progn
@@ -47,4 +55,4 @@
 (mapcar 'org-babel-load-file ep3c-modules)
 
 (provide 'init)
-;;; init.el
+;;; init.el ends here
