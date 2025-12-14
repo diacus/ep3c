@@ -51,6 +51,8 @@ For setting up the font family and face, take a look on [[https://stackoverflow.
 instructions]] from Stackoverflow.
 
 #+begin_src emacs-lisp
+  (use-package doom-modeline :ensure t)
+
   (defun theme--get-default-font-family ()
     "Get default font family."
     (let* ((font   (face-attribute 'default :font))
@@ -68,8 +70,11 @@ instructions]] from Stackoverflow.
           (regexp-opt '("Nerd Font" "Nerd-Font" "NF"))
           family))))
 
-  (when (theme--is-default-font-nerd-font-p)
-    (use-package doom-modeline
-      :ensure t
-      :hook (after-init . doom-modeline-mode)))
+
+  (defun theme--doom-modeline-mode ()
+    (when (theme--is-default-font-nerd-font-p)
+      (doom-modeline-mode)))
+
+
+  (init--with-ensure-frame-ready #'theme--doom-modeline-mode)
 #+end_src
