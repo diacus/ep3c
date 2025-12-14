@@ -9,17 +9,38 @@
 ;; End:
 ;;
 ;;; Code:
-(when (display-graphic-p)
-  (progn
-    (set-scroll-bar-mode nil)
-    (tool-bar-mode 0)))
-(setq column-number-mode t)
-(setq ring-bell-function 'ignore)
-(setq warning-minimum-level :error)
+(defmacro init--with-ensure-frame-ready (fn &rest args)
+  "Call FN is called with optional ARGS when a graphical frame is ready.
 
-(defconst org-settings-directory
-  (file-name-concat user-emacs-directory "org-settings")
-  "Directory containing 'org-mode' settings modules.")
+First verifies if Emacs runs in daemon mode, in that case adds FN to
+`after-make-frame-functions' hook to ensure it runs when the GUI is ready.
+
+Executes FN right away otherwise."
+  `(if (daemonp)
+       (add-hook 'after-make-frame-functions
+		 (lambda (frame)
+		   (with-selected-frame frame
+		     (message (format "Executing %s in daemon mode" ,fn))
+		     ,(if (null args) `(funcall ,fn)
+			`(apply ,fn (list ,@args)))))
+		 t)
+     (message (format "No daemon mode enabled, executing %s right away" ,fn))
+     ,(if (null args) `(funcall ,fn)
+	`(apply ,fn (list ,@args)))))
+
+(defun init--setup-minimal-ui ()
+  "Set up nimial UI."
+  (when (display-graphic-p)
+    (set-scroll-bar-mode nil)
+    (tool-bar-mode 0)
+    (when (eq system-type 'windows-nt)
+      (menu-bar-mode 0))))
+
+(init--with-ensure-frame-ready #'init--setup-minimal-ui)
+
+(setq column-number-mode t)
+(setq ring-bell-function'ignore)
+(setq warning-minimum-level :error)
 
 (package-initialize)
 (require 'package)
