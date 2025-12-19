@@ -6,8 +6,22 @@ Instead of the default init screen, check out this [[https://github.com/emacs-da
     :ensure t
     :after projectile
     :config
-    (setq dashboard-startup-banner 'logo)
-    (setq dashboard-items '((bookmarks . 5)
-			    (recents   . 5)))
+    (setq dashboard-startup-banner 'logo
+          dashboard-items '((bookmarks . 5)
+  			  (recents   . 5)
+  			  (projects  . 5)
+  			  (registers . 5))
+  	dashboard-center-content t
+  	dashboard-vertically-center-content t
+  	)
     (dashboard-setup-startup-hook))
+#+end_src
+
+When running on daemon mode, switch to =*dashboard*= buffer on every new
+frame created.
+
+#+begin_src emacs-lisp
+  (setq initial-buffer-choice
+        (lambda ()
+  	(get-buffer-create dashboard-buffer-name)))
 #+end_src
