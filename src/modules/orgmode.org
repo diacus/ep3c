@@ -29,11 +29,6 @@
   Sometimes I need to focus only in one or a few org agenda topics,
   these functions help out manipulate =org-agenda-files= list easily.
 
-  #+begin_src emacs-lisp
-    (use-package org-utils
-      :quelpa (org-utils :fetcher github :repo "diacus/org-utils"))
-  #+end_src
-
 * Key bindings
   | Bind key | to function |
   |----------+-------------|
@@ -148,4 +143,10 @@
        (shell      . t)
        (sql        . t)
        (sqlite     . t)))
+  #+end_src
+
+* Org utils
+  #+begin_src emacs-lisp
+    (use-package org-utils
+      :quelpa (org-utils :fetcher github :repo "diacus/org-utils"))
   #+end_src
