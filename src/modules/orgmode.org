@@ -3,18 +3,16 @@
 * General settings
   Jump to heading, as describes at [[https://stackoverflow.com/questions/15011703/is-there-an-emacs-org-mode-command-to-jump-to-an-org-heading][Stackoverflow]]
   #+begin_src emacs-lisp
+    ;; Basic settings
     (setq org-goto-interface 'outline-path-completion
-	  org-goto-max-level 10)
-    (setq org-outline-path-complete-in-steps nil)
-  #+end_src
+          org-goto-max-level 10
+          org-outline-path-complete-in-steps nil
+          org-src-window-setup 'other-frame)
 
-  Enable indent mode
-  #+begin_src emacs-lisp
+    ;; Enable indent mode
     (add-hook 'org-mode-hook (lambda () (org-indent-mode 1)))
-  #+end_src
 
-  Disable flycheck in =org-src= mode
-  #+begin_src emacs-lisp
+    ;; Disable flycheck in =org-src= mode
     (add-hook 'org-src-mode-hook (lambda () (flycheck-mode -1)))
   #+end_src
 
