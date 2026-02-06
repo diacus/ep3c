@@ -1,0 +1,28 @@
+#+TITLE: engine-mode settings
+[[https://github.com/hrs/engine-mode][engine-mode]] is a global minor mode for Emacs. It enables you to easily
+define search engines, bind them to keybindings, and query them from
+the comfort of your editor. Want to see it in action before? check it
+out on [[https://www.youtube.com/watch?v=MBhJBMYfWUo][YouTube]].
+
+#+begin_src emacs-lisp
+  (use-package engine-mode
+    :ensure t
+    :config (engine-mode t)
+    :bind-keymap ("C-x /" . engine-mode-prefixed-map))
+#+end_src
+
+* A few engine examples
+See more examples on [[https://github.com/hrs/engine-mode?tab=readme-ov-file#engine-examples][Github]].
+** GoodReads
+#+begin_src emacs-lisp
+  (defengine goodreads
+               "https://www.goodreads.com/search?q=%s&search_type=books"
+               :keybinding "r")
+#+end_src
+
+** DuckDuckGo
+#+begin_src emacs-lisp
+  (defengine duckduckgo
+               "https://duckduckgo.com/?q=%s"
+               :keybinding "d")
+#+end_src
