@@ -45,9 +45,15 @@ Executes FN right away otherwise."
 (package-initialize)
 (require 'package)
 
-(add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
-(add-to-list 'package-archives '("org" . "http://orgmode.org/elpa/") t)
-(add-to-list 'package-archives '("gnu" . "https://elpa.gnu.org/packages/") t)
+(add-to-list 'package-archives '("gnu"    . "https://elpa.gnu.org/packages/") t)
+(add-to-list 'package-archives '("org"    . "http://orgmode.org/elpa/") t)
+(add-to-list 'package-archives '("melpa"  . "https://melpa.org/packages/") t)
+
+(when (< emacs-major-version 30)
+  (setq package-archive-priorities
+	'(("gnu"    . 20)
+	  ("org"    . 15)
+	  ("melpa"  . 5))))
 
 (package-refresh-contents t)
 
@@ -61,7 +67,7 @@ Executes FN right away otherwise."
 (require 'quelpa-use-package)
 
 (setq custom-file
-	(file-name-concat user-emacs-directory "custom.el"))
+      (file-name-concat user-emacs-directory "custom.el"))
 (when (file-exists-p custom-file)
   (load custom-file))
 
