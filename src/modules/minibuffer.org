@@ -1,15 +1,15 @@
 #+TITLE: Minibuffer settings
 * Vertico
-  The [[https://github.com/minad/vertico][vertico]] package applies vertical layout to the minibuffer. It
-  also pops up the minibuffer eagerly so we can see the available
-  options without further integrations.
+The [[https://github.com/minad/vertico][vertico]] package applies vertical layout to the minibuffer. It also
+pops up the minibuffer eagerly so we can see the available options
+without further integrations.
 
-  #+begin_src emacs-lisp
-    (use-package vertico
-      :ensure t
-      :init
-      (vertico-mode))
-  #+end_src
+#+begin_src emacs-lisp
+  (use-package vertico
+    :ensure t
+    :config
+    (vertico-mode))
+#+end_src
 
 * Marginalia
   The [[https://elpa.gnu.org/packages/marginalia.html][marginalia]] package provides informative margin annotations to
