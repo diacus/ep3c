@@ -9,7 +9,20 @@ See [[https://github.com/purcell/exec-path-from-shell][exec-path-from-shell]] pa
     (exec-path-from-shell-initialize))
 #+end_src
 
+* Buffer Local direnv Interation
+[[https://github.com/purcell/envrc?tab=readme-ov-file][envrc.el]] is a GNU Emacs library which uses [[https://direnv.net/][direnv]] tool to determine
+per-directory/project environment variables and then set those
+environment variables on a per-buffer basis.
+
+#+begin_src emacs-lisp
+  (use-package envrc
+    :ensure t
+    :hook (after-init . envrc-global-mode))
+#+end_src
+
+
 * File type and mode mapping
 #+begin_src emacs-lisp
   (add-to-list 'auto-mode-alist '("\\.env\\'" . conf-mode))
+  (add-to-list 'auto-mode-alist '("\\.envrc\\'" . shell-mode))
 #+end_src
