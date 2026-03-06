@@ -49,4 +49,9 @@ See detailed instrucctions [[https://emacs-lsp.github.io/lsp-haskell/][here]].
     (setq lsp-haskell-process-args-hie '()))
 
   (add-hook 'haskell-mode-hook #'lsp)
+
+  (with-eval-after-load 'lsp-mode
+    (setq flycheck-checker 'lsp)
+    (setq lsp-diagnostics-provider :flycheck)
+    (flycheck-disable-checker 'haskell-ghc))
 #+end_src
