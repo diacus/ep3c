@@ -1,12 +1,27 @@
 #+TITLE:Windows settings
 #+AUTHOR: Diacus Magnuz
 
-If the operating system is Windows install PowerShell package
+If the operating system is Windows:
+1. Install PowerShell package
+2. Setup KQL mode for kusto queries
+3. Explicitly set shell to Powershell 7
 #+begin_src emacs-lisp
+  (defun use-powershell7 ()
+    "Set the default shell to Powershel 7 when available"
+    (let ((xlist
+           '(
+             "~/AppData/Local/Microsoft/WindowsApps/pwsh.exe"
+             "C:/Program Files/Powershell/7/pwsh.exe"
+             ))
+          (setq xfound (seq-some (lambda (x) (if (file-exists-p x) x nil)) xlist))
+          (when xfound (setq explicit-shell-file-name xfound)))))
+
+
   (when (member system-type '(ms-dos windows-nt cygwin))
     (use-package powershell :ensure t)
     (use-package kql-mode
       :ensure t
       :config
-      (add-to-list 'auto-mode-alist '("\\.kql\\'" . kql-mode))))
+      (add-to-list 'auto-mode-alist '("\\.kql\\'" . kql-mode)))
+    (use-powershell7))
 #+end_src
