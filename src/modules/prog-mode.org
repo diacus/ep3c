@@ -1,6 +1,7 @@
 #+TITLE: Prog mode settings
 #+AUTHOR: Diacus Magnuz
 
+* Key bindings
 Many programming language modes (see [[https://www.gnu.org/software/emacs/manual/html_node/elisp/Derived-Modes.html#Derived-Modes][Derived Modes]] for details) run
 =prog-mode-hook= prior running their own mode hooks. So this is a good
 place to define settings common for use with any programming language.
@@ -15,6 +16,23 @@ place to define settings common for use with any programming language.
   (add-hook 'prog-mode-hook 'prog-mode-key-bindings)
 #+end_src
 
+* Temp directory per project
+Sometimes it is useful having temporary files in the root of the
+project, to have the development environment encapsulated.
+
+#+begin_src emacs-lisp
+  (defun prog-mode--project-temp-dir ()
+    "Use project-local .tmp directory if it exists."
+    (when-let* ((project (project-current))
+                (root    (project-root project))
+                (tmp     (expand-file-name ".tmp/" root)))
+      (when (file-directory-p tmp)
+        (setq-local temporary-file-directory tmp))))
+
+  (add-hook 'prog-mode-hook #'prog-mode--project-temp-dir)
+#+end_src
+
+* Syntax checking
 For syntax checking, [[https://www.flycheck.org/en/latest/][Flycheck]] is a modenr on-the-fly syntax checking
 extension for GNU Emacs, intended as replacement for the older Flymake
 extension which is part of GNU Emacs.
@@ -30,12 +48,14 @@ extension which is part of GNU Emacs.
   (add-hook 'prog-mode-hook 'prog-mode-custom-settings)
 #+end_src
 
+* Highlight current line
 =hl-line-mode= to highlights the cursor line. Then customize the
 *Highlight* face to teak the look and feel as you need.
 #+begin_src emacs-lisp
   (add-hook 'prog-mode-hook 'hl-line-mode)
 #+end_src
 
+* Line numbers
 =display-line-numbers-mode= numbers the lines in the buffer. Set
 relative numbering by customizing =display-line-numbers-type=
 variable.
