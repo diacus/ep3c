@@ -26,13 +26,13 @@ guess how to compile the program associated to the current buffer.
 
   (use-package haskell-mode
     :ensure t
-    :hook ((haskell-mode . lsp)
-	   (haskell-mode . (lambda ()
-			     (haskell-mode-key-bindings
-			      haskell-mode-map)))
-	   (haskell-cabal-mode . (lambda ()
-				   (haskell-mode-key-bindings
-				    haskell-cabal-mode-map)))))
+    :hook ((haskell-mode . lsp-deferred)
+  	 (haskell-mode . (lambda ()
+  			   (haskell-mode-key-bindings
+  			    haskell-mode-map)))
+  	 (haskell-cabal-mode . (lambda ()
+  				 (haskell-mode-key-bindings
+  				  haskell-cabal-mode-map)))))
 #+end_src
 
 * Haskell Language Server
