@@ -1,0 +1,303 @@
+#+TITLE: Markdown Preview with Impatient Mode
+#+AUTHOR: Diacus Magnuz
+
+* Prerequisites
+This module requires an external Markdown processor:
+- pandoc (default) - brew install pandoc
+- multimarkdown - brew install multimarkdown
+
+To use a different processor, configure =markdown-command= before loading.
+
+* Markdown Mode
+The [[https://jblevins.org/projects/markdown-mode/][markdown-mode]] package provides a major mode for editing Markdown-formatted
+text in Emacs. It includes support for syntax highlighting, outline navigation,
+and various Markdown extensions.
+
+#+begin_src emacs-lisp
+  (use-package markdown-mode
+    :ensure t
+    :mode (("README\\.md\\'" . gfm-mode)
+           ("\\.md\\'" . markdown-mode)
+           ("\\.markdown\\'" . markdown-mode))
+    :init (setq markdown-command "pandoc"))
+#+end_src
+
+* Markdown Preview Mode
+Live markdown preview using `shr-render-buffer' for in-memory HTML rendering.
+
+** Overview
+Converts markdown to HTML via pandoc and renders directly in Emacs using
+`shr-render-buffer'. This approach avoids temporary files and HTTP servers.
+Preview updates in real-time as you type.
+
+** Customization
+#+begin_src emacs-lisp
+  (defgroup markdown-preview nil
+    "Live markdown preview settings."
+    :group 'markdown)
+
+  (defcustom markdown-preview-buffer-name "*markdown-preview*"
+    "Name of the buffer used for markdown preview."
+    :type 'string
+    :group 'markdown-preview)
+
+  (defcustom markdown-preview-debounce-time 0.3
+    "Idle seconds before updating preview after a change."
+    :type 'number
+    :group 'markdown-preview)
+#+end_src
+
+** State Variables
+#+begin_src emacs-lisp
+  ;; In source buffer: reference to preview buffer
+  (defvar-local markdown-preview--preview-buffer nil)
+
+  ;; In preview buffer: reference to source buffer
+  (defvar-local markdown-preview--source-buffer nil)
+
+  ;; Timer for debounced updates
+  (defvar-local markdown-preview--timer nil)
+#+end_src
+
+** HTML Conversion
+#+begin_src emacs-lisp
+  (defun markdown-preview--to-html ()
+    "Convert current markdown buffer to HTML string.
+Wraps in minimal HTML structure for proper rendering."
+    (let ((content (buffer-string))
+          (cmd (if (boundp 'markdown-command) markdown-command "pandoc")))
+      (message "[md-preview] Converting markdown to HTML (cmd: %s, len: %d)" cmd (length content))
+      ;; Use temp file for reliable pandoc input
+      (let ((temp-file (make-temp-file "md-preview" nil ".md")))
+        (unwind-protect
+            (progn
+              (with-temp-file temp-file
+                (insert content))
+              (with-temp-buffer
+                (let ((exit-code (call-process cmd nil t nil
+                                                "--from=gfm" "--to=html"
+                                                temp-file)))
+                  (message "[md-preview] pandoc exit-code: %s" exit-code)
+                  (let ((html (buffer-string)))
+                    (message "[md-preview] HTML output length: %d" (length html))
+                    ;; Wrap in HTML structure for better shr rendering
+                    (format "<!DOCTYPE html>
+<html>
+<head><meta charset=\"utf-8\">
+<style>
+body { font-family: sans-serif; margin: 2em; line-height: 1.6; }
+h1, h2, h3 { margin-top: 1.5em; }
+code { background: #f5f5f5; padding: 0.2em 0.4em; }
+pre { background: #f5f5f5; padding: 1em; overflow-x: auto; }
+</style>
+</head>
+<body>
+%s
+</body>
+</html>"
+                            html)))))
+          (delete-file temp-file)))))
+#+end_src
+
+** HTML Rendering
+#+begin_src emacs-lisp
+  (defun markdown-preview--render-html (html)
+    "Render HTML string into current buffer using shr.
+Argument HTML is the HTML string to render.
+Uses a temporary buffer for HTML input, then calls shr-render-buffer."
+    (message "[md-preview] render-html called, current-buffer: %s" (current-buffer))
+    (let ((inhibit-read-only t)
+          (temp-buffer (generate-new-buffer " *md-html*")))
+      (unwind-protect
+          (progn
+            (with-current-buffer temp-buffer
+              (insert html))
+            (message "[md-preview] calling shr-render-buffer on temp-buffer: %s" temp-buffer)
+            (erase-buffer)
+            (shr-render-buffer temp-buffer)
+            (message "[md-preview] shr-render-buffer completed, buffer contents: %d chars" (buffer-size))
+            (goto-char (point-min)))
+        (kill-buffer temp-buffer))))
+#+end_src
+
+** Preview Buffer Update
+#+begin_src emacs-lisp
+  (defun markdown-preview--refresh (source-buf preview-buf)
+    "Refresh the preview buffer for SOURCE-BUF.
+Argument PREVIEW-BUF is the preview buffer to refresh."
+    (message "[md-preview] refresh called: source=%s preview=%s" source-buf preview-buf)
+    (when (and (buffer-live-p source-buf)
+               (buffer-live-p preview-buf))
+      ;; Save window focus to prevent stealing focus during update
+      (save-selected-window
+        (let ((html (with-current-buffer source-buf
+                      (markdown-preview--to-html))))
+          (with-current-buffer preview-buf
+            (markdown-preview--render-html html))))))
+
+  (defun markdown-preview--schedule-refresh ()
+    "Schedule a debounced preview refresh."
+    (when (and markdown-preview-mode
+               markdown-preview--preview-buffer
+               (buffer-live-p markdown-preview--preview-buffer))
+      (when (timerp markdown-preview--timer)
+        (cancel-timer markdown-preview--timer))
+      ;; Capture buffer references for the timer callback
+      (let ((source (current-buffer))
+            (preview markdown-preview--preview-buffer))
+        (message "[md-preview] scheduling refresh in %s seconds" markdown-preview-debounce-time)
+        (setq markdown-preview--timer
+              (run-with-idle-timer markdown-preview-debounce-time nil
+                                   #'markdown-preview--refresh
+                                   source preview)))))
+
+  (defun markdown-preview--after-change (&rest _)
+    "Hook for after-change-functions to trigger preview update."
+    (message "[md-preview] after-change triggered")
+    (markdown-preview--schedule-refresh))
+#+end_src
+
+** Cleanup
+#+begin_src emacs-lisp
+  (defun markdown-preview--delete-window-or-frame (buffer)
+    "Delete windows showing BUFFER or their frames.
+If BUFFER is the only window in its frame, delete the frame.
+Otherwise delete just the window."
+    (dolist (win (get-buffer-window-list buffer nil t))
+      (when (window-live-p win)
+        (let ((frame (window-frame win)))
+          (if (= (length (window-list frame)) 1)
+              (delete-frame frame)
+            (delete-window win))))))
+
+  (defun markdown-preview--cleanup-source ()
+    "Cleanup when source buffer is killed."
+    (when markdown-preview--preview-buffer
+      ;; Cancel timer
+      (when (timerp markdown-preview--timer)
+        (cancel-timer markdown-preview--timer))
+      ;; Remove change hook
+      (remove-hook 'after-change-functions #'markdown-preview--after-change t)
+      ;; Remove kill hook
+      (remove-hook 'kill-buffer-hook #'markdown-preview--cleanup-source t)
+      ;; Clean up preview buffer
+      (when (buffer-live-p markdown-preview--preview-buffer)
+        (markdown-preview--delete-window-or-frame markdown-preview--preview-buffer)
+        (kill-buffer markdown-preview--preview-buffer))
+      ;; Clear state
+      (setq markdown-preview--preview-buffer nil)))
+
+  (defun markdown-preview--cleanup-preview ()
+    "Cleanup when preview buffer is killed."
+    (when-let ((source markdown-preview--source-buffer))
+      (when (buffer-live-p source)
+        (with-current-buffer source
+          (when markdown-preview-mode
+            ;; Cancel timer
+            (when (timerp markdown-preview--timer)
+              (cancel-timer markdown-preview--timer))
+            ;; Remove hooks
+            (remove-hook 'after-change-functions #'markdown-preview--after-change t)
+            (remove-hook 'kill-buffer-hook #'markdown-preview--cleanup-source t)
+            ;; Clear mode
+            (setq markdown-preview-mode nil
+                  markdown-preview--preview-buffer nil))))))
+
+  (defun markdown-preview--kill-hook ()
+    "Buffer-local kill hook that calls the appropriate cleanup."
+    (if markdown-preview--source-buffer
+        ;; We're in the preview buffer
+        (markdown-preview--cleanup-preview)
+      ;; We're in the source buffer
+      (markdown-preview--cleanup-source)))
+#+end_src
+
+** Enable/Disable
+#+begin_src emacs-lisp
+  (defun markdown-preview--enable ()
+    "Enable markdown live preview for current buffer."
+    (message "[md-preview] enable called")
+    (unless (derived-mode-p 'markdown-mode 'gfm-mode)
+      (user-error "Markdown preview requires markdown-mode or gfm-mode"))
+    (let* ((source (current-buffer))
+           (html (markdown-preview--to-html))
+           (preview (get-buffer-create markdown-preview-buffer-name)))
+      (message "[md-preview] source=%s preview=%s" source preview)
+      ;; Save window config
+      (let ((source-window (selected-window)))
+        ;; Display preview in other window
+        (message "[md-preview] calling display-buffer")
+        (display-buffer preview '(display-buffer-pop-up-window))
+        (message "[md-preview] display-buffer returned, setting up preview buffer")
+        ;; Set up preview buffer
+        (with-current-buffer preview
+          (markdown-preview--render-html html)
+          (setq-local markdown-preview--source-buffer source)
+          (add-hook 'kill-buffer-hook #'markdown-preview--kill-hook nil t))
+        ;; Set up source buffer
+        (with-current-buffer source
+          (setq-local markdown-preview--preview-buffer preview)
+          (add-hook 'after-change-functions #'markdown-preview--after-change nil t)
+          (add-hook 'kill-buffer-hook #'markdown-preview--kill-hook nil t))
+        ;; Return to source window
+        (message "[md-preview] enable complete, returning to source window")
+        (select-window source-window))))
+
+  (defun markdown-preview--disable ()
+    "Disable markdown live preview for current buffer."
+    ;; Cancel timer
+    (when (timerp markdown-preview--timer)
+      (cancel-timer markdown-preview--timer))
+    ;; Remove hooks
+    (remove-hook 'after-change-functions #'markdown-preview--after-change t)
+    (remove-hook 'kill-buffer-hook #'markdown-preview--kill-hook t)
+    ;; Clean up preview buffer
+    (when (buffer-live-p markdown-preview--preview-buffer)
+      (markdown-preview--delete-window-or-frame markdown-preview--preview-buffer)
+      (kill-buffer markdown-preview--preview-buffer))
+    ;; Clear state
+    (setq markdown-preview--preview-buffer nil))
+
+  (define-minor-mode markdown-preview-mode
+    "Toggle live markdown preview mode.
+
+When enabled, displays an HTML preview of the current markdown buffer.
+The preview updates as you type. Uses `shr-render-buffer' for in-Emacs
+rendering without temporary files.
+
+Behavior on source buffer kill:
+- If preview window is only window in frame: delete frame
+- Otherwise: delete just preview window
+
+Killing preview buffer disables this mode."
+    :lighter " MD-Preview"
+    :keymap (make-sparse-keymap)
+    (if markdown-preview-mode
+        (markdown-preview--enable)
+      (markdown-preview--disable)))
+#+end_src
+
+** Interactive Command
+#+begin_src emacs-lisp
+  (defun ep3c-markdown-preview ()
+    "Toggle markdown live preview for current buffer.
+
+Creates a preview window showing rendered HTML. Updates in real-time.
+
+Error if not in `markdown-mode' or `gfm-mode'."
+    (interactive)
+    (if (derived-mode-p 'markdown-mode 'gfm-mode)
+        (markdown-preview-mode (if markdown-preview-mode -1 1))
+      (user-error "Current buffer is not in markdown-mode or gfm-mode")))
+#+end_src
+
+** Keybindings
+#+begin_src emacs-lisp
+  (defun markdown-preview--setup-keys ()
+    "Setup keybindings for markdown preview."
+    (evil-define-key '(normal visual motion) markdown-mode-map
+      (kbd "SPC m p") 'ep3c-markdown-preview))
+
+  (add-hook 'markdown-mode-hook #'markdown-preview--setup-keys)
+  (add-hook 'gfm-mode-hook #'markdown-preview--setup-keys)
+#+end_src
