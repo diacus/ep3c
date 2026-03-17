@@ -52,6 +52,9 @@ Preview updates in real-time as you type.
   ;; In source buffer: reference to preview buffer
   (defvar-local markdown-preview--preview-buffer nil)
 
+  ;; In source buffer: reference to preview window
+  (defvar-local markdown-preview--preview-window nil)
+
   ;; In preview buffer: reference to source buffer
   (defvar-local markdown-preview--source-buffer nil)
 
@@ -104,9 +107,11 @@ pre { background: #f5f5f5; padding: 1em; overflow-x: auto; }
   (defun markdown-preview--render-html (html)
     "Render HTML string into current buffer using shr.
 Argument HTML is the HTML string to render.
-Uses a temporary buffer for HTML input, then calls shr-render-buffer."
-    (message "[md-preview] render-html called, current-buffer: %s" (current-buffer))
+Uses a temporary buffer for HTML input, then calls shr-render-buffer.
+Preserves the original buffer name after rendering."
+    (message "[md-preview] render-html called, current-buffer: %s, name: %s" (current-buffer) (buffer-name))
     (let ((inhibit-read-only t)
+          (original-name (buffer-name))
           (temp-buffer (generate-new-buffer " *md-html*")))
       (unwind-protect
           (progn
@@ -115,7 +120,10 @@ Uses a temporary buffer for HTML input, then calls shr-render-buffer."
             (message "[md-preview] calling shr-render-buffer on temp-buffer: %s" temp-buffer)
             (erase-buffer)
             (shr-render-buffer temp-buffer)
-            (message "[md-preview] shr-render-buffer completed, buffer contents: %d chars" (buffer-size))
+            (message "[md-preview] after shr-render-buffer, buffer name is: %s" (buffer-name))
+            ;; shr-render-buffer may rename the buffer, restore original name
+            (rename-buffer original-name t)
+            (message "[md-preview] after rename-buffer, buffer name is: %s" (buffer-name))
             (goto-char (point-min)))
         (kill-buffer temp-buffer))))
 #+end_src
@@ -157,6 +165,45 @@ Argument PREVIEW-BUF is the preview buffer to refresh."
     (markdown-preview--schedule-refresh))
 #+end_src
 
+** Scroll Synchronization
+#+begin_src emacs-lisp
+  (defun markdown-preview--sync-scroll (window)
+    "Sync preview buffer scroll position with source buffer.
+Argument WINDOW is the window being scrolled."
+    (when (and markdown-preview-mode
+               markdown-preview--preview-buffer
+               (buffer-live-p markdown-preview--preview-buffer)
+               (window-live-p markdown-preview--preview-window))
+      (let* ((source-buffer (window-buffer window))
+             (preview-buffer markdown-preview--preview-buffer)
+             (preview-window markdown-preview--preview-window))
+        (message "[md-preview] sync-scroll: syncing scroll, preview-window live=%s"
+                 (window-live-p preview-window))
+        (when (buffer-live-p source-buffer)
+          ;; Calculate proportional scroll position
+          (let* ((source-total (count-lines (point-min) (point-max) source-buffer))
+                 (source-start (window-start window))
+                 (source-line (line-number-at-pos source-start source-buffer))
+                 (preview-total (count-lines (point-min) (point-max) preview-buffer))
+                 ;; Calculate target line proportionally
+                 (target-line (if (zerop source-total)
+                                  1
+                                (max 1 (floor (* (/ (float source-line) source-total)
+                                                 preview-total))))))
+            (message "[md-preview] sync-scroll: syncing line %d/%d -> %d/%d"
+                     source-line source-total target-line preview-total)
+            ;; Set preview window start position
+            (with-selected-window preview-window
+              (save-excursion
+                (goto-char (point-min))
+                (forward-line (1- target-line))
+                (set-window-start preview-window (point)))))))))
+
+  (defun markdown-preview--sync-scroll-hook (&rest _)
+    "Hook for window-scroll-functions to sync scroll positions."
+    (markdown-preview--sync-scroll (selected-window)))
+#+end_src
+
 ** Cleanup
 #+begin_src emacs-lisp
   (defun markdown-preview--delete-window-or-frame (buffer)
@@ -176,16 +223,17 @@ Otherwise delete just the window."
       ;; Cancel timer
       (when (timerp markdown-preview--timer)
         (cancel-timer markdown-preview--timer))
-      ;; Remove change hook
+      ;; Remove hooks
       (remove-hook 'after-change-functions #'markdown-preview--after-change t)
-      ;; Remove kill hook
       (remove-hook 'kill-buffer-hook #'markdown-preview--cleanup-source t)
+      (remove-hook 'window-scroll-functions #'markdown-preview--sync-scroll-hook t)
       ;; Clean up preview buffer
       (when (buffer-live-p markdown-preview--preview-buffer)
         (markdown-preview--delete-window-or-frame markdown-preview--preview-buffer)
         (kill-buffer markdown-preview--preview-buffer))
       ;; Clear state
-      (setq markdown-preview--preview-buffer nil)))
+      (setq markdown-preview--preview-buffer nil
+            markdown-preview--preview-window nil)))
 
   (defun markdown-preview--cleanup-preview ()
     "Cleanup when preview buffer is killed."
@@ -199,9 +247,11 @@ Otherwise delete just the window."
             ;; Remove hooks
             (remove-hook 'after-change-functions #'markdown-preview--after-change t)
             (remove-hook 'kill-buffer-hook #'markdown-preview--cleanup-source t)
+            (remove-hook 'window-scroll-functions #'markdown-preview--sync-scroll-hook t)
             ;; Clear mode
             (setq markdown-preview-mode nil
-                  markdown-preview--preview-buffer nil))))))
+                  markdown-preview--preview-buffer nil
+                  markdown-preview--preview-window nil))))))
 
   (defun markdown-preview--kill-hook ()
     "Buffer-local kill hook that calls the appropriate cleanup."
@@ -219,29 +269,31 @@ Otherwise delete just the window."
     (message "[md-preview] enable called")
     (unless (derived-mode-p 'markdown-mode 'gfm-mode)
       (user-error "Markdown preview requires markdown-mode or gfm-mode"))
+    ;; Kill any existing preview buffer to avoid naming conflicts
+    (when-let ((existing (get-buffer markdown-preview-buffer-name)))
+      (kill-buffer existing))
     (let* ((source (current-buffer))
            (html (markdown-preview--to-html))
-           (preview (get-buffer-create markdown-preview-buffer-name)))
-      (message "[md-preview] source=%s preview=%s" source preview)
-      ;; Save window config
-      (let ((source-window (selected-window)))
-        ;; Display preview in other window
-        (message "[md-preview] calling display-buffer")
-        (display-buffer preview '(display-buffer-pop-up-window))
-        (message "[md-preview] display-buffer returned, setting up preview buffer")
-        ;; Set up preview buffer
-        (with-current-buffer preview
-          (markdown-preview--render-html html)
-          (setq-local markdown-preview--source-buffer source)
-          (add-hook 'kill-buffer-hook #'markdown-preview--kill-hook nil t))
-        ;; Set up source buffer
-        (with-current-buffer source
-          (setq-local markdown-preview--preview-buffer preview)
-          (add-hook 'after-change-functions #'markdown-preview--after-change nil t)
-          (add-hook 'kill-buffer-hook #'markdown-preview--kill-hook nil t))
-        ;; Return to source window
-        (message "[md-preview] enable complete, returning to source window")
-        (select-window source-window))))
+           (preview (get-buffer-create markdown-preview-buffer-name))
+           (source-window (selected-window))
+           (preview-window (display-buffer preview '(display-buffer-pop-up-window)))
+           (actual-preview (window-buffer preview-window)))
+      (message "[md-preview] source=%s preview=%s actual=%s" source preview actual-preview)
+      ;; Set up preview buffer
+      (with-current-buffer actual-preview
+        (markdown-preview--render-html html)
+        (setq-local markdown-preview--source-buffer source)
+        (add-hook 'kill-buffer-hook #'markdown-preview--kill-hook nil t))
+      ;; Set up source buffer - store both buffer AND window
+      (with-current-buffer source
+        (setq-local markdown-preview--preview-buffer actual-preview)
+        (setq-local markdown-preview--preview-window preview-window)
+        (add-hook 'after-change-functions #'markdown-preview--after-change nil t)
+        (add-hook 'kill-buffer-hook #'markdown-preview--kill-hook nil t)
+        (add-hook 'window-scroll-functions #'markdown-preview--sync-scroll-hook nil t))
+      ;; Return to source window
+      (message "[md-preview] enable complete")
+      (select-window source-window)))
 
   (defun markdown-preview--disable ()
     "Disable markdown live preview for current buffer."
@@ -251,12 +303,14 @@ Otherwise delete just the window."
     ;; Remove hooks
     (remove-hook 'after-change-functions #'markdown-preview--after-change t)
     (remove-hook 'kill-buffer-hook #'markdown-preview--kill-hook t)
+    (remove-hook 'window-scroll-functions #'markdown-preview--sync-scroll-hook t)
     ;; Clean up preview buffer
     (when (buffer-live-p markdown-preview--preview-buffer)
       (markdown-preview--delete-window-or-frame markdown-preview--preview-buffer)
       (kill-buffer markdown-preview--preview-buffer))
     ;; Clear state
-    (setq markdown-preview--preview-buffer nil))
+    (setq markdown-preview--preview-buffer nil
+          markdown-preview--preview-window nil))
 
   (define-minor-mode markdown-preview-mode
     "Toggle live markdown preview mode.
