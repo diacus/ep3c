@@ -5,7 +5,7 @@
     (use-package typescript-mode
       :ensure t
       :mode "\\.ts\\'"
-      :hook (typescript-mode . lsp-deferred))
+      :hook (typescript-mode . eglot-ensure))
 
     (use-package rjsx-mode
       :ensure t

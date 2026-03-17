@@ -3,20 +3,10 @@
 
 Most of the IDE configuration for C/C++ is taken from [[https://emacs-lsp.github.io/lsp-mode/tutorials/CPP-guide/][this guide]].
 
-#+begin_src emacs-lisp
-  (add-hook 'c-mode-hook #'lsp)
-  (add-hook 'c++-mode-hook #'lsp)
+Eglot provides LSP support via clangd. The server arguments are configured
+in lsp.org.
 
-  ;; Main settings for clangd
-  (with-eval-after-load 'lsp-mode
-    (setq lsp-clients-clangd-args
-	  '("--background-index"
-	    "--compile-commands-dir=."  ;; Search in current directory
-	    "--header-insertion=never"
-	    "--clang-tidy"
-	    "--all-scopes-completion"
-	    "--completion-style=detailed"
-	    "--pch-storage=memory"
-	    "--fallback-style=llvm"
-	    "--header-insertion-decorators=0")))
+#+begin_src emacs-lisp
+  (add-hook 'c-mode-hook 'eglot-ensure)
+  (add-hook 'c++-mode-hook 'eglot-ensure)
 #+end_src

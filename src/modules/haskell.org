@@ -1,4 +1,4 @@
-#+TITLE:Haskell settings
+#+TITLE: Haskell settings
 #+AUTHOR: Diacus Magnuz
 * Haskell mode
 The [[https://wiki.haskell.org/Emacs][haskell-mode]] package is a set of major modes for writing Haskell
@@ -26,32 +26,25 @@ guess how to compile the program associated to the current buffer.
 
   (use-package haskell-mode
     :ensure t
-    :hook ((haskell-mode . lsp-deferred)
-  	 (haskell-mode . (lambda ()
-  			   (haskell-mode-key-bindings
-  			    haskell-mode-map)))
-  	 (haskell-cabal-mode . (lambda ()
-  				 (haskell-mode-key-bindings
-  				  haskell-cabal-mode-map)))))
+    :hook ((haskell-mode . eglot-ensure)
+           (haskell-mode . (lambda ()
+                             (haskell-mode-key-bindings
+                              haskell-mode-map)))
+           (haskell-cabal-mode . (lambda ()
+                                   (haskell-mode-key-bindings
+                                    haskell-cabal-mode-map)))))
 #+end_src
 
 * Haskell Language Server
-The [[https://haskell-language-server.readthedocs.io/en/latest/what-is-hls.html][Haskell Language Server (HLS)]] is an implementation of a server for
-[[https://microsoft.github.io/language-server-protocol/][LSP]]
+The [[https://haskell-language-server.readthedocs.io/en/latest/what-is-hls.html][Haskell Language Server (HLS)]] provides LSP support for Haskell.
+Eglot has built-in support - just ensure =haskell-language-server= is
+installed system-wide.
 
-See detailed instrucctions [[https://emacs-lsp.github.io/lsp-haskell/][here]].
 #+begin_src emacs-lisp
-  (use-package lsp-haskell
-    :ensure t
-    :after lsp-mode
-    :config
-    (setq lsp-haskell-process-path-hie "haskell-language-server-wrapper")
-    (setq lsp-haskell-process-args-hie '()))
-
-  (add-hook 'haskell-mode-hook #'lsp)
-
-  (with-eval-after-load 'lsp-mode
-    (setq flycheck-checker 'lsp)
-    (setq lsp-diagnostics-provider :flycheck)
-    (flycheck-disable-checker 'haskell-ghc))
+  ;; Eglot handles Haskell automatically via haskell-language-server
+  ;; No additional configuration needed - the hook above enables eglot-ensure
+  ;;
+  ;; Install HLS:
+  ;;   - ghcup install hls
+  ;;   - or: cabal install haskell-language-server
 #+end_src

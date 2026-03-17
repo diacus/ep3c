@@ -1,8 +1,11 @@
 #+TITLE: .NET Core Development
 
+C# and .NET development via eglot. Requires OmniSharp or csharp-ls
+language server installed.
+
 #+begin_src emacs-lisp
-  (use-package omnisharp
+  (use-package csharp-mode
     :ensure t
-    :after lsp-mode
-    :hook (csharp-mode . lsp-deferred))
+    :mode "\\.cs\\'"
+    :hook (csharp-mode . eglot-ensure))
 #+end_src

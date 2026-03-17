@@ -64,8 +64,10 @@ without further integrations.
 * Consult
   The [[https://github.com/minad/consult][consult]] package provides lots of commands that are enhanced
   variants of basic, built-in functionality. One of the headline
-  features is tis preview facility, where it shows in another window
+  features is its preview facility, where it shows in another window
   the context of what is currently matched in the minibuffer.
+
+  Works with eglot via built-in xref and imenu integration.
   #+begin_src emacs-lisp
     (use-package consult
       :ensure t
@@ -74,14 +76,9 @@ without further integrations.
        ("M-s M-f" . consult-find)     ;; Search for file names recursively
        ("M-s M-o" . consult-outline)  ;; Search through the headlines of a file
        ("M-s M-l" . consult-line)     ;; Search in the current buffer
-       ("M-s M-b" . consult-buffer))) ;; Switch to another buffer
-  #+end_src
-
-  Consult with LSP:
-  #+begin_src emacs-lisp
-    (use-package consult-lsp
-      :ensure t
-      :after lsp-mode)
+       ("M-s M-b" . consult-buffer)   ;; Switch to another buffer
+       ("M-s M-s" . consult-imenu)     ;; Jump to symbol (works with eglot)
+       ("M-s M-d" . consult-xref)))   ;; Search xref (works with eglot)
   #+end_src
 
 * Orderless

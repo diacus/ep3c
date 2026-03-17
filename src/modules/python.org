@@ -19,7 +19,7 @@ environment for Python development.
     (load "elpy-refactor")
     (load "elpy-django"))
 
-  (add-hook 'python-mode-hook #'lsp)
+  (add-hook 'python-mode-hook 'eglot-ensure)
 #+end_src
 
 * Virtual environments
@@ -35,11 +35,12 @@ Use [[https://github.com/aiguofer/pyenv.el][pyenv.el]] to manage your Python ver
 #+end_src
 
 * Debugging
+DAP support for Python via debugpy.
+
 #+begin_src emacs-lisp
   (use-package dap-python
-    :ensure nil
+    :ensure nil  ; Built into dap-mode
     :after python
-    :init
+    :config
     (setq dap-python-debugger 'debugpy))
 #+end_src
-

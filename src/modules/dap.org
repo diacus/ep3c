@@ -1,0 +1,58 @@
+#+TITLE: DAP Settings
+#+AUTHOR: Diacus Magnuz
+
+[[https://emacs-lsp.github.io/dap-mode/][DAP Mode]] provides Debug Adapter Protocol support for Emacs. It works
+independently of the LSP client (compatible with both lsp-mode and eglot).
+
+* Core DAP Mode
+#+begin_src emacs-lisp
+  (use-package dap-mode
+    :ensure t
+    :hook ((prog-mode . dap-mode)
+           (prog-mode . dap-ui-mode))
+    :config
+    (dap-mode 1)
+    (dap-ui-mode 1)
+    (dap-tooltip-mode 1))
+#+end_src
+
+* Key Bindings
+#+begin_src emacs-lisp
+  (add-hook 'dap-mode-hook
+            (lambda ()
+              (evil-define-key '(normal visual emacs) dap-mode-map
+                (kbd "SPC d d") 'dap-debug
+                (kbd "SPC d c") 'dap-continue
+                (kbd "SPC d e") 'dap-debug-edit-template
+                (kbd "SPC d n") 'dap-next
+                (kbd "SPC d i") 'dap-step-in
+                (kbd "SPC d o") 'dap-step-out
+                (kbd "SPC d b") 'dap-breakpoint-toggle
+                (kbd "SPC d B") 'dap-ui-breakpoints
+                (kbd "SPC d l") 'dap-ui-locals
+                (kbd "SPC d s") 'dap-ui-sessions
+                (kbd "SPC d r") 'dap-ui-repl)))
+#+end_src
+
+* Yasnippet Support
+Required for DAP templates.
+
+#+begin_src emacs-lisp
+  (use-package yasnippet
+    :ensure t
+    :after dap-mode
+    :config
+    (yas-global-mode 1))
+#+end_src
+
+* Language-Specific Adapters
+
+** C/C++ (cpptools)
+#+begin_src emacs-lisp
+  (use-package dap-cpptools
+    :ensure nil  ; Built into dap-mode
+    :after dap-mode)
+#+end_src
+
+** Python (debugpy)
+Configured in python.org module.

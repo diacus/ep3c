@@ -1,57 +1,74 @@
-#+TITLE: LSP Settings
-The client for [[https://github.com/Microsoft/language-server-protocol/][Language Server Protocol]], [[https://emacs-lsp.github.io/lsp-mode/][lsp-mode]] aims to provide
-IDE-like experience by providing optional integration with the most
-popular Emacs packages like =company=, =flycheck= and =projectile=.
+#+TITLE: Eglot LSP Settings
+#+AUTHOR: Diacus Magnuz
+
+[[https://www.gnu.org/software/emacs/manual/html_node/eglot/][Eglot]] is a lightweight LSP client built into Emacs 29+. It provides
+essential Language Server Protocol functionality with minimal configuration
+compared to the more feature-heavy lsp-mode.
+
+* Performance Tuning
+Settings to improve responsiveness (analogous to lsp-mode settings).
 
 #+begin_src emacs-lisp
-  (use-package lsp-mode
-    :ensure t
-    :after projectile
-    :hook ((prog-mode . lsp))
-    :init
-    (setq gc-cons-threshold (* 100 1024 1024)
-  	  read-process-output-max (* 1024 1024)
-  	  treemacs-space-between-root-nodes nil
-  	  company-idle-delay 0.0
-  	  company-minimum-prefix-length 1
-  	  lsp-idle-delay 0.1))
-
-  (use-package lsp-ivy
-    :ensure t
-    :after ivy)
+  (setq gc-cons-threshold (* 100 1024 1024))
+  (setq read-process-output-max (* 1024 1024))
 #+end_src
 
+* Core Configuration
 #+begin_src emacs-lisp
-  (use-package dap-mode
-    :ensure t
-    :after lsp-mode
-    :hook ((lsp-mode . dap-mode))
+  (use-package eglot
+    :ensure nil  ; Built into Emacs 29+
     :config
-    (dap-mode 1)
-    (dap-ui-mode 1)
-    (dap-tooltip-mode 1))
-
-  (add-hook 'dap-mode-hook
-	    (lambda ()
-	      (evil-define-key '(normal visual emacs) dap-mode-map (kbd "SPC d d") 'dap-debug)
-	      (evil-define-key '(normal visual emacs) dap-mode-map (kbd "SPC d c") 'dap-continue)
-	      (evil-define-key '(normal visual emacs) dap-mode-map (kbd "SPC d e") 'dap-debug-edit-template)
-	      (evil-define-key '(normal visual emacs) dap-mode-map (kbd "SPC d n") 'dap-next)
-	      (evil-define-key '(normal visual emacs) dap-mode-map (kbd "SPC d i") 'dap-step-in)
-	      (evil-define-key '(normal visual emacs) dap-mode-map (kbd "SPC d o") 'dap-step-out)
-	      (evil-define-key '(normal visual emacs) dap-mode-map (kbd "SPC d b") 'dap-breakpoint-toggle)
-	      (evil-define-key '(normal visual emacs) dap-mode-map (kbd "SPC d B") 'dap-ui-breakpoints)
-	      (evil-define-key '(normal visual emacs) dap-mode-map (kbd "SPC d l") 'dap-ui-locals)
-	      (evil-define-key '(normal visual emacs) dap-mode-map (kbd "SPC d s") 'dap-ui-sessions)
-	      (evil-define-key '(normal visual emacs) dap-mode-map (kbd "SPC d r") 'dap-ui-repl)))
-
-  (use-package yasnippet
-    :ensure t
-    :after dap-mode)
-
-  (use-package dap-cpptools
-    :ensure nil
-    :after lsp-mode
-    :hook ((lsp-mode . lsp-enable-which-key-integration))
-    :init (yas-global-mode))
+    (setq eglot-sync-connect 1)              ; Sync connect timeout (seconds)
+    (setq eglot-autoshutdown t)               ; Shutdown server when last buffer closes
+    (setq eglot-send-changes-idle-time 0.1))  ; Send changes quickly
 #+end_src
+
+* Company Integration
+Eglot uses company-capf (completion-at-point) backend.
+
+#+begin_src emacs-lisp
+  (setq company-idle-delay 0.0)
+  (setq company-minimum-prefix-length 1)
+
+  (with-eval-after-load 'company
+    (cl-pushnew 'company-capf company-backends))
+#+end_src
+
+* Keybindings
+#+begin_src emacs-lisp
+  (defun eglot--key-bindings ()
+    "Define key bindings for eglot."
+    (evil-define-key '(normal visual motion) 'global
+      (kbd "SPC l r") 'eglot-rename
+      (kbd "SPC l f") 'eglot-format
+      (kbd "SPC l a") 'eglot-code-actions
+      (kbd "SPC l F") 'eglot-format-buffer))
+
+  (add-hook 'eglot-managed-mode-hook 'eglot--key-bindings)
+#+end_src
+
+* Language Server Configuration
+Configure language servers that require custom arguments.
+
+#+begin_src emacs-lisp
+  (with-eval-after-load 'eglot
+    ;; Clangd for C/C++
+    (add-to-list 'eglot-server-programs
+                 '((c-mode c++-mode)
+                   . ("clangd"
+                      "--background-index"
+                      "--compile-commands-dir=."
+                      "--header-insertion=never"
+                      "--clang-tidy"
+                      "--all-scopes-completion"
+                      "--completion-style=detailed"
+                      "--pch-storage=memory"
+                      "--fallback-style=llvm"))))
+#+end_src
+
+* Notes
+- Language servers must be installed system-wide (no auto-install)
+- Use ~M-.~ (xref-find-definitions) for go-to-definition
+- Use ~M-,~ (xref-pop-marker-stack) to jump back
+- Use ~M-?~ (xref-find-references) for references
+- Works with built-in imenu and consult integration
