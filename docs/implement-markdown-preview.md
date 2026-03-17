@@ -49,6 +49,10 @@ When user kills `*markdown-preview*` buffer:
 1. Preview mode is automatically disabled in the source buffer
 2. Hooks are cleaned up
 
+## Expected behaviors
+
+When
+
 ## Customization
 
 - `markdown-preview-buffer-name` - Name of preview buffer (default: `*markdown-preview*`)
