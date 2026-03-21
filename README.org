@@ -11,6 +11,12 @@ See the settings [[file:src/modules/*.org][here]].
     (ep3c--setup)
   #+end_src
 
+  When installation is done, =*Customize Option: Ep3c Modules*= buffer
+  will display, you can select the modules you want to load from there.
+
+  Once the Ep3c Modules option is ready for you, restart Emacs the way
+  you usually do.
+
 * Remove configuration
   To get rid of everything just delete =user-emacs-directory=
   #+name: remove-everything
