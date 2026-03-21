@@ -1,6 +1,15 @@
 #+TITLE: Emacs Pretty Personal Portable Configuration
 #+AUTHOR: Diacus Mágnuz
 #+STARTUP: logdrawer
+
+EP3C (Emacs Pretty Personal Portable Configuration) is a modular,
+batteries-included Emacs configuration. It uses =use-package= for
+declarative package management and organizes settings into independent
+modules written in Org mode.
+
+Modules are loaded via =org-babel-load-file= and can be enabled or
+disabled through Emacs' customization interface.
+
 See the settings [[file:src/modules/*.org][here]].
 
 * Installation
