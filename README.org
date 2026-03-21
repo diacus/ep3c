@@ -4,29 +4,11 @@
 See the settings [[file:src/modules/*.org][here]].
 
 * Installation
-  To install the settings just copy =init.el= and =settings.org= files
-  to the =user-emacs-directory= folder.
+  To install the settings, load =src/install.el= and call =(ep3c--setup)=:
 
-  #+name: install-ep3c
   #+begin_src emacs-lisp :results none
     (load-file (file-name-concat default-directory "src" "install.el"))
-    (unless (file-directory-p user-emacs-directory)
-      (make-directory user-emacs-directory))
-
-    (setq installed-modules
-          (let* ((init-package (file-name-concat default-directory "src" "init.el"))
-    	     (modules-wildcard (file-name-concat default-directory "src" "modules" "*.org")))
-    	(install-ep3c init-package modules-wildcard)))
-
-    (setq custom-file (file-name-concat user-emacs-directory "custom.el"))
-
-    (defcustom ep3c-modules
-      installed-modules
-      "List of available EP3C modules. Disable any module by deleting it from this list."
-      :type '(repeat (file :must-match nil))
-      :group 'ep3c)
-
-    (customize-option 'ep3c-modules)
+    (ep3c--setup)
   #+end_src
 
 * Remove configuration
