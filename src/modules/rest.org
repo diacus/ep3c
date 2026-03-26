@@ -10,5 +10,6 @@ See the [[https://camo.githubusercontent.com/f5bdb86b992801f56ba59a1a5c938f456f1
   (use-package restclient
     :ensure t
     :mode ("\\.http\\'"))
-  (use-package ob-restclient :ensure t)
+  (use-package ob-restclient
+    :quelpa (ob-restclient :fetcher github :repo "alf/ob-restclient.el"))
 #+end_src
