@@ -32,6 +32,12 @@ project, to have the development environment encapsulated.
   (add-hook 'prog-mode-hook #'prog-mode--project-temp-dir)
 #+end_src
 
+* Compilation buffer
+#+begin_src emacs-lisp
+  (use-package ansi-color
+    :hook (compilation-filter . ansi-color-compilation-filter))
+#+end_src
+
 * Syntax checking
 For syntax checking, [[https://www.flycheck.org/en/latest/][Flycheck]] is a modenr on-the-fly syntax checking
 extension for GNU Emacs, intended as replacement for the older Flymake
