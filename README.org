@@ -41,3 +41,120 @@ See the settings [[file:src/modules/*.org][here]].
     (delete-file (file-name-concat user-emacs-directory "init.el"))
     (delete-directory (file-name-concat user-emacs-directory "modules") t)
   #+end_src
+
+* Keybindings
+** Leader Key: =SPC=
+Most keybindings use the spacebar as a leader key in Evil normal state.
+
+*** Projects (=SPC p=)
+| Key     | Command                                 | Description                |
+|---------+-----------------------------------------+----------------------------|
+| =SPC p p= | projectile-switch-project               | Switch project             |
+| =SPC p f= | projectile-find-file                    | Find file in project       |
+| =SPC p F= | projectile-find-file-other-frame        | Find file in other frame   |
+| =SPC p b= | projectile-switch-to-buffer             | Switch buffer in project   |
+| =SPC p B= | projectile-switch-to-buffer-other-frame | Switch buffer other frame  |
+| =SPC p k= | projectile-kill-buffers                 | Kill project buffers       |
+| =SPC p c= | projectile-compile-project              | Compile project            |
+| =SPC p t= | projectile-run-vterm-other-window       | Terminal in project (Unix) |
+| =SPC p T= | projectile-run-vterm                    | Terminal in project (Unix) |
+
+*** Git/Magit (=SPC g=)
+| Key     | Command                     | Description           |
+|---------+-----------------------------+-----------------------|
+| =SPC g g= | magit                       | Open Magit status     |
+| =SPC g f= | magit-find-file             | Find file in git      |
+| =SPC g F= | magit-find-file-other-frame | Find file other frame |
+| =SPC g l= | magit-log-current           | Log current branch    |
+| =SPC g t= | magit-log-all-branches      | Log all branches      |
+
+*** Org Mode (=SPC o=)
+| Key     | Command                   | Description                 |
+|---------+---------------------------+-----------------------------|
+| =SPC o a= | org-agenda                | Open agenda                 |
+| =SPC o c= | org-capture               | Capture                     |
+| =SPC o r= | haskell-interactive-bring | Haskell REPL (haskell-mode) |
+
+*** Shell/Terminal (=SPC o=)
+| Key     | Command                                  | Description        |
+|---------+------------------------------------------+--------------------|
+| =SPC o t= | vterm-other-window / eshell-other-window | Open terminal      |
+| =SPC o T= | multi-vterm / eshell                     | New terminal       |
+| =SPC o e= | eshell-other-window                      | Open eshell (Unix) |
+| =SPC o E= | eshell                                   | New eshell (Unix)  |
+
+*** Debug/DAP (=SPC d=)
+| Key     | Command               | Description         |
+|---------+-----------------------+---------------------|
+| =SPC d d= | dap-debug             | Start debug session |
+| =SPC d c= | dap-continue          | Continue execution  |
+| =SPC d n= | dap-next              | Step over           |
+| =SPC d i= | dap-step-in           | Step into           |
+| =SPC d o= | dap-step-out          | Step out            |
+| =SPC d b= | dap-breakpoint-toggle | Toggle breakpoint   |
+| =SPC d B= | dap-ui-breakpoints    | Show breakpoints    |
+| =SPC d l= | dap-ui-locals         | Show locals         |
+| =SPC d s= | dap-ui-sessions       | Show sessions       |
+| =SPC d r= | dap-ui-repl           | Debug REPL          |
+
+*** Compile
+| Key     | Command         | Description            |
+|---------+-----------------+------------------------|
+| =SPC c c= | haskell-compile | Compile (haskell-mode) |
+
+*** Programming
+| Key            | Command                     | Description       |
+|----------------+-----------------------------+-------------------|
+| =SPC ;= (visual) | comment-or-uncomment-region | Comment selection |
+
+** Global Keybindings
+*** Treemacs
+| Key       | Command                       |
+|-----------+-------------------------------|
+| =M-0=       | treemacs-select-window        |
+| =C-x t t=   | treemacs                      |
+| =C-x t 1=   | treemacs-delete-other-windows |
+| =C-x t d=   | treemacs-select-directory     |
+| =C-x t B=   | treemacs-bookmark             |
+| =C-x t C-t= | treemacs-find-file            |
+| =C-x t M-t= | treemacs-find-tag             |
+
+*** Docker
+| Key   | Command |
+|-------+---------|
+| =C-c d= | docker  |
+
+*** Engine Mode
+| Key   | Command                  |
+|-------+--------------------------|
+| =C-x /= | engine-mode-prefixed-map |
+
+** Minibuffer/Completion
+*** Counsel
+| Key              | Command                    |
+|------------------+----------------------------|
+| =M-x=              | counsel-M-x                |
+| =C-x C-f=          | counsel-find-file          |
+| =<f1> f=           | counsel-describe-function  |
+| =<f1> v=           | counsel-describe-variable  |
+| =<f1> o=           | counsel-describe-symbol    |
+| =C-c g=            | counsel-git                |
+| =C-c j=            | counsel-git-grep           |
+| =C-c k=            | counsel-ag                 |
+| =C-r= (minibuffer) | counsel-minibuffer-history |
+
+*** Consult
+| Key     | Command         |
+|---------+-----------------|
+| =M-s M-g= | consult-grep    |
+| =M-s M-f= | consult-find    |
+| =M-s M-o= | consult-outline |
+| =M-s M-l= | consult-line    |
+| =M-s M-b= | consult-buffer  |
+
+** Mode-Specific
+*** Perl (cperl-mode)
+| Key     | Command                 |
+|---------+-------------------------|
+| =C-c C-z= | inf-perl-run            |
+| =C-c C-d= | spawn-run-perl-debugger |
