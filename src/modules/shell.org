@@ -38,7 +38,7 @@ The [[https://github.com/suonlight/multi-vterm][multi-vterm.el]] package allows 
   (unless (member system-type '(ms-dos windows-nt cygwin))
     (use-package multi-vterm
       :ensure t
-      :after vterm
+      :after (vterm projectile)
       :config
       (evil-define-key '(normal visual) 'global (kbd "SPC o T") 'multi-vterm)))
 #+end_src

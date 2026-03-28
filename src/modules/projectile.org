@@ -1,6 +1,7 @@
 [[https://docs.projectile.mx/projectile/index.html][Projectile]] is a project integration library for Emacs. Its goal is to
 provide features operating on a project level without introducing
 external dependencies (when feasable).
+
 #+begin_src emacs-lisp
   (use-package projectile
     :ensure t
@@ -11,9 +12,19 @@ external dependencies (when feasable).
     (evil-define-key 'normal 'global (kbd "SPC p F") 'projectile-find-file-other-frame)
     (evil-define-key 'normal 'global (kbd "SPC p b") 'projectile-switch-to-buffer)
     (evil-define-key 'normal 'global (kbd "SPC p B") 'projectile-switch-to-buffer-other-frame)
-    (evil-define-key 'normal 'global (kbd "SPC p t") 'projectile-run-vterm-other-window)
-    (evil-define-key 'normal 'global (kbd "SPC p T") 'projectile-run-vterm)
     (evil-define-key 'normal 'global (kbd "SPC p c") 'projectile-compile-project)
     (projectile-mode +1)
-    (setq projectile-completion-system 'ivy))
+    ;; Use default completion instead of ivy, since ivy is not installed.
+    ;; This prevents "Cannot load projectile" error during startup.
+    (setq projectile-completion-system 'default))
+
+  ;; Vterm integration for running terminals in project context.
+  ;; These keybindings are deferred until vterm loads because:
+  ;; 1. projectile-run-vterm-* functions require vterm to be defined
+  ;; 2. vterm is only available on Unix-like systems (not Windows)
+  ;; Using with-eval-after-load prevents load failures when vterm is unavailable.
+  (unless (member system-type '(ms-dos windows-nt cygwin))
+    (with-eval-after-load 'vterm
+      (evil-define-key 'normal 'global (kbd "SPC p t") 'projectile-run-vterm-other-window)
+      (evil-define-key 'normal 'global (kbd "SPC p T") 'projectile-run-vterm)))
 #+end_src
