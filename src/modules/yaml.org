@@ -3,11 +3,10 @@
 
 #+begin_src emacs-lisp
   (use-package yaml-mode
-    :defer t
     :ensure t
+    :defer t
     :mode
     ("\\.yaml\\'" "\\.yml\\'")
     :custom-face
-    (font-lock-variable-name-face ((t (:foreground "#cba6f7"))))
-    :config)
+    (font-lock-variable-name-face ((t (:foreground "#cba6f7")))))
 #+end_src

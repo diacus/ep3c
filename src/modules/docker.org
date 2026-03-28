@@ -35,8 +35,8 @@ See [[https://www.rahuljuliato.com/posts/emacs-docker-podman][this article]] for
 
 #+begin_src emacs-lisp
   (use-package dockerfile-mode
-    :defer t
     :ensure t
+    :defer t
     :config
     (setq dockerfile-mode-command "docker"))
 #+end_src
