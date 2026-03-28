@@ -8,7 +8,7 @@ Emacs, available at any time and uniformly in any buffer.
 #+end_quote
 
 * ChatGPT
-You need to get an [[https://platform.openai.com/account/api-keys][OpenAI API Key]] to use GhatGPT, once you get it,
+You need to get an [[https://platform.openai.com/account/api-keys][OpenAI API Key]] to use ChatGPT, once you get it,
 store it in [[file:~/.authinfo.gpg][~/authinfo.gpg]] like this:
 
 #+begin_export ascii
@@ -16,7 +16,7 @@ machine api.openaio.com login api_key password YOUR-API-KEY
 #+end_export
 
 Once you have an API KEY add the corresponding backend following the
-example bellow.
+example below.
 #+begin_example emacs-lisp
   (use-package gptel
     :ensure t

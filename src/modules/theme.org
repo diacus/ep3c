@@ -1,11 +1,11 @@
 #+TITLE: Theme
-#+AUTHOR: Diacus Mágnuz
+#+AUTHOR: Diacus Mï¿½gnuz
 * Cursor line
-By default the cursorline hightlighting is underlined, I don't like it.
+By default the cursorline highlighting is underlined, I don't like it.
 #+begin_src emacs-lisp
    (use-package hl-line
      :config
-     (set-face-underline 'hl-line nil))
+     (set-face-attribute 'hl-line nil :underline nil))
 #+end_src
 
 * Colors for Linux and BSD
@@ -31,7 +31,7 @@ Installing Nord theme included in [[https://github.com/doomemacs/themes?tab=read
 #+end_src
 
 * Colors for Windows
-According to its author, Nimbus theme is something beautiful, slihtly
+According to its author, Nimbus theme is something beautiful, slightly
 retro, yet readable and easy on the eyes. See more at [[https://github.com/mrcnski/nimbus-theme][Github.com]].
 #+begin_src emacs-lisp
   (when (eq system-type 'windows-nt)
