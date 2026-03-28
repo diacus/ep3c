@@ -40,6 +40,24 @@ The [[https://haskell-language-server.readthedocs.io/en/latest/what-is-hls.html]
 [[https://microsoft.github.io/language-server-protocol/][LSP]]
 
 See detailed instrucctions [[https://emacs-lsp.github.io/lsp-haskell/][here]].
+
+** Configuration details
+The flycheck integration uses nested =with-eval-after-load= blocks to ensure
+proper loading order:
+
+- The outer block waits for =lsp-mode= to load before setting
+  =lsp-diagnostics-provider=, which configures LSP to use flycheck for
+  diagnostics.
+
+- The inner block waits for =flycheck= to load before configuring
+  =flycheck-checker= and disabling the =haskell-ghc= checker. This nesting is
+  necessary because flycheck functions require the package to be fully loaded.
+
+- We use =add-to-list 'flycheck-disabled-checkers= instead of
+  =flycheck-disable-checker= because the latter requires an active flycheck
+  buffer (throws an error during initial package loading). The variable-based
+  approach works at configuration time without an active buffer.
+
 #+begin_src emacs-lisp
   (use-package lsp-haskell
     :ensure t
@@ -51,7 +69,8 @@ See detailed instrucctions [[https://emacs-lsp.github.io/lsp-haskell/][here]].
   (add-hook 'haskell-mode-hook #'lsp)
 
   (with-eval-after-load 'lsp-mode
-    (setq flycheck-checker 'lsp)
     (setq lsp-diagnostics-provider :flycheck)
-    (flycheck-disable-checker 'haskell-ghc))
+    (with-eval-after-load 'flycheck
+      (setq flycheck-checker 'lsp)
+      (add-to-list 'flycheck-disabled-checkers 'haskell-ghc)))
 #+end_src
