@@ -21,7 +21,8 @@ but created on-demand and stored in memory
   #+begin_src emacs-lisp
     (require 'org)
 
-    (org-add-link-type "pdf" 'org-utils/open-link-with-default-app nil)
+    (org-link-set-parameters "pdf"
+      :follow #'org-utils/open-link-with-default-app)
 
     (defun org-utils/open-link-with-default-app (link)
       "Spawn the system's default application to open the file pointed by LINK"
