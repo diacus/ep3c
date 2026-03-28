@@ -10,9 +10,8 @@ See Evil Collection repository for details.
   (use-package evil
     :ensure t
     :init
-    (setq evil-want-integration t)
-    (setq evil-want-keybinding nil)
-    :init
+    (setq evil-want-integration t
+	  evil-want-keybinding nil)
     (evil-mode 1))
 
   (use-package evil-collection
@@ -23,28 +22,15 @@ See Evil Collection repository for details.
 #+end_src
 
 * Evil Org
-[[https://github.com/Somelauw/evil-org-mode][evil-org]] package adds key-bindings to Emacs org-mode
-#+begin_src emacs-lisp
-  (use-package evil-org
-    :ensure t
-    :after org
-    :hook (org-mode . evil-org-mode)
-    :config
-    (require 'evil-org-agenda)
-    (evil-org-agenda-set-keys))
-#+end_src
+[[https://github.com/Somelauw/evil-org-mode][evil-org]] package adds key-bindings to Emacs org-mode.
 
+*NOTE:* The evil-org configuration is defined in the [[file:orgmode.org][orgmode module]] to keep
+all org-related configuration together.
+
+* Terminal TAB Key Handling
 If Emacs runs inside a terminal, =TAB= key might not work as expected
 (being bound to =evil-jump-forward= instead of =org-tab= or
 =org-cycle=).
 
-#+begin_src emacs-lisp
-  (add-hook 'org-mode-hook
-	    (lambda ()
-	      ;; Only apply this in terminal mode
-	      (unless (display-graphic-p)
-		;; Prevent Evil from binding C-i (Tab) to evil-jump-forward
-		(setq evil-want-C-i-jump nil)
-		;; Bind TAB to org-cycle in normal state
-		(evil-define-key 'normal 'global (kbd "TAB") 'org-cycle))))
-#+end_src
+*NOTE:* The TAB key handling for terminal mode is defined in the
+[[file:orgmode.org][orgmode module]] to keep all org-related configuration together.
