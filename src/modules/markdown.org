@@ -30,6 +30,11 @@ Converts markdown to HTML via pandoc and renders directly in Emacs using
 `shr-render-buffer'. This approach avoids temporary files and HTTP servers.
 Preview updates in real-time as you type.
 
+** Dependencies
+#+begin_src emacs-lisp
+  (require 'shr)
+#+end_src
+
 ** Customization
 #+begin_src emacs-lisp
   (defgroup markdown-preview nil
@@ -202,6 +207,36 @@ Argument WINDOW is the window being scrolled."
   (defun markdown-preview--sync-scroll-hook (&rest _)
     "Hook for window-scroll-functions to sync scroll positions."
     (markdown-preview--sync-scroll (selected-window)))
+
+  (defun markdown-preview--reverse-sync-scroll (window)
+    "Sync source buffer scroll position with preview buffer.
+Argument WINDOW is the preview window being scrolled."
+    (when (and markdown-preview--source-buffer
+               (buffer-live-p markdown-preview--source-buffer))
+      (let* ((preview-buffer (window-buffer window))
+             (source-buffer markdown-preview--source-buffer)
+             (source-windows (get-buffer-window-list source-buffer nil t)))
+        (when source-windows
+          (let* ((preview-total (count-lines (point-min) (point-max) preview-buffer))
+                 (preview-start (window-start window))
+                 (preview-line (line-number-at-pos preview-start preview-buffer))
+                 (source-total (count-lines (point-min) (point-max) source-buffer))
+                 (target-line (if (zerop preview-total)
+                                  1
+                                (max 1 (floor (* (/ (float preview-line) preview-total)
+                                                 source-total))))))
+            (message "[md-preview] reverse-sync: syncing line %d/%d -> %d/%d"
+                     preview-line preview-total target-line source-total)
+            (dolist (source-win source-windows)
+              (with-selected-window source-win
+                (save-excursion
+                  (goto-char (point-min))
+                  (forward-line (1- target-line))
+                  (set-window-start source-win (point))))))))))
+
+  (defun markdown-preview--reverse-sync-scroll-hook (&rest _)
+    "Hook for window-scroll-functions in preview buffer to sync back to source."
+    (markdown-preview--reverse-sync-scroll (selected-window)))
 #+end_src
 
 ** Cleanup
@@ -237,6 +272,8 @@ Otherwise delete just the window."
 
   (defun markdown-preview--cleanup-preview ()
     "Cleanup when preview buffer is killed."
+    ;; Remove reverse sync hook from preview buffer
+    (remove-hook 'window-scroll-functions #'markdown-preview--reverse-sync-scroll-hook t)
     (when-let ((source markdown-preview--source-buffer))
       (when (buffer-live-p source)
         (with-current-buffer source
@@ -283,7 +320,8 @@ Otherwise delete just the window."
       (with-current-buffer actual-preview
         (markdown-preview--render-html html)
         (setq-local markdown-preview--source-buffer source)
-        (add-hook 'kill-buffer-hook #'markdown-preview--kill-hook nil t))
+        (add-hook 'kill-buffer-hook #'markdown-preview--kill-hook nil t)
+        (add-hook 'window-scroll-functions #'markdown-preview--reverse-sync-scroll-hook nil t))
       ;; Set up source buffer - store both buffer AND window
       (with-current-buffer source
         (setq-local markdown-preview--preview-buffer actual-preview)
