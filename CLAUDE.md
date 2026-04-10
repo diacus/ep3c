@@ -45,7 +45,7 @@ All modules in `src/modules/*.org` follow the same pattern:
 - `quelpa-use-package` for packages from Git repositories
 - Package priority configured for Emacs versions < 30
 
-### Keybinding Conventions
+## Keybinding Conventions
 - Uses `evil-define-key` with states `'(normal visual motion)` or `'global`
 - Leader-style bindings use `SPC` prefix (e.g., `SPC o t` for terminal)
 - Language-specific bindings defined in mode hooks
