@@ -47,8 +47,8 @@ See the settings [[file:src/modules/*.org][here]].
 Most keybindings use the spacebar as a leader key in Evil normal state.
 
 *** Projects (=SPC p=)
-| Key     | Command                                 | Description                |
-|---------+-----------------------------------------+----------------------------|
+| Key       | Command                                 | Description                |
+|-----------+-----------------------------------------+----------------------------|
 | =SPC p p= | projectile-switch-project               | Switch project             |
 | =SPC p f= | projectile-find-file                    | Find file in project       |
 | =SPC p F= | projectile-find-file-other-frame        | Find file in other frame   |
@@ -60,8 +60,8 @@ Most keybindings use the spacebar as a leader key in Evil normal state.
 | =SPC p T= | projectile-run-vterm                    | Terminal in project (Unix) |
 
 *** Git/Magit (=SPC g=)
-| Key     | Command                     | Description           |
-|---------+-----------------------------+-----------------------|
+| Key       | Command                     | Description           |
+|-----------+-----------------------------+-----------------------|
 | =SPC g g= | magit                       | Open Magit status     |
 | =SPC g f= | magit-find-file             | Find file in git      |
 | =SPC g F= | magit-find-file-other-frame | Find file other frame |
@@ -69,23 +69,23 @@ Most keybindings use the spacebar as a leader key in Evil normal state.
 | =SPC g t= | magit-log-all-branches      | Log all branches      |
 
 *** Org Mode (=SPC o=)
-| Key     | Command                   | Description                 |
-|---------+---------------------------+-----------------------------|
+| Key       | Command                   | Description                 |
+|-----------+---------------------------+-----------------------------|
 | =SPC o a= | org-agenda                | Open agenda                 |
 | =SPC o c= | org-capture               | Capture                     |
 | =SPC o r= | haskell-interactive-bring | Haskell REPL (haskell-mode) |
 
 *** Shell/Terminal (=SPC o=)
-| Key     | Command                                  | Description        |
-|---------+------------------------------------------+--------------------|
+| Key       | Command                                  | Description        |
+|-----------+------------------------------------------+--------------------|
 | =SPC o t= | vterm-other-window / eshell-other-window | Open terminal      |
 | =SPC o T= | multi-vterm / eshell                     | New terminal       |
 | =SPC o e= | eshell-other-window                      | Open eshell (Unix) |
 | =SPC o E= | eshell                                   | New eshell (Unix)  |
 
 *** Debug/DAP (=SPC d=)
-| Key     | Command               | Description         |
-|---------+-----------------------+---------------------|
+| Key       | Command               | Description         |
+|-----------+-----------------------+---------------------|
 | =SPC d d= | dap-debug             | Start debug session |
 | =SPC d c= | dap-continue          | Continue execution  |
 | =SPC d n= | dap-next              | Step over           |
