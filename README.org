@@ -47,8 +47,8 @@ See the settings [[file:src/modules/*.org][here]].
 Most keybindings use the spacebar as a leader key in Evil normal state.
 
 *** Projects (=SPC p=)
-| Key       | Command                                 | Description                |
-|-----------+-----------------------------------------+----------------------------|
+| Key     | Command                                 | Description                |
+|---------+-----------------------------------------+----------------------------|
 | =SPC p p= | projectile-switch-project               | Switch project             |
 | =SPC p f= | projectile-find-file                    | Find file in project       |
 | =SPC p F= | projectile-find-file-other-frame        | Find file in other frame   |
