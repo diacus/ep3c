@@ -112,6 +112,47 @@
     (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1)))
   #+end_src
 
+** Org modern
+   [[https://github.com/minad/org-modern][org-modern]] for modern styling of timestamps, tags, progress, and TODO
+   keywords. Bullet styling is disabled to allow org-bullets to handle
+   heading markers.
+   #+begin_src emacs-lisp
+     (use-package org-modern
+       :ensure t
+       :after org
+       :hook (org-mode . org-modern-mode)
+       :config
+       ;; Disable bullet styling - let org-bullets handle it
+       (setq org-modern-star nil
+             org-modern-hide-stars nil
+             org-modern-table nil
+             org-modern-block-name nil)
+
+       ;; Modern faces for various elements
+       (custom-theme-set-faces
+        'user
+        '(org-modern-label ((t (:inherit fixed-pitch :height 0.8))))
+        '(org-modern-date-active ((t (:inherit (org-date fixed-pitch) :box (:line-width -1)))))
+        '(org-modern-date-inactive ((t (:inherit (org-date fixed-pitch shadow) :box (:line-width -1)))))
+        '(org-modern-time-active ((t (:inherit (org-date fixed-pitch) :box (:line-width -1)))))
+        '(org-modern-time-inactive ((t (:inherit (org-date fixed-pitch shadow) :box (:line-width -1)))))
+        '(org-modern-tag ((t (:inherit (fixed-pitch shadow) :box (:line-width -1) :height 0.8))))
+        '(org-modern-todo ((t (:inherit (org-todo fixed-pitch) :box (:line-width -1)))))
+        '(org-modern-done ((t (:inherit (org-done fixed-pitch) :box (:line-width -1)))))
+        '(org-modern-priority ((t (:inherit fixed-pitch :box (:line-width -1) :height 0.8))))
+        '(org-modern-progress ((t (:inherit fixed-pitch :height 0.8)))))
+
+       ;; Agenda styling
+       (setq org-agenda-tags-column 0
+             org-agenda-block-separator ?─
+             org-agenda-time-grid
+             '((daily today require-timed)
+               (800 1000 1200 1400 1600 1800 2000)
+               " ┄┄┄┄┄ " "┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄")
+             org-agenda-current-time-string
+             "⭠ now ─────────────────────────────────────────────────"))
+   #+end_src
+
 * Orgmode babel
   Org [[https://orgmode.org/worg/org-contrib/babel/languages/index.html][Babel]] supports a growing number of programming languages.
   #+begin_src emacs-lisp
