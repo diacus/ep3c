@@ -11,6 +11,16 @@
 ;;; Code:
 (require 'cl-lib)
 
+(defun ep3c--module-title (module-file)
+  "Read the #+TITLE: property from MODULE-FILE.
+If not found, return a fallback based on the module name."
+  (with-temp-buffer
+    (insert-file-contents module-file)
+    (goto-char (point-min))
+    (if (re-search-forward "^#\\+TITLE:[ \t]*\\(.*\\)" nil t)
+        (match-string 1)
+      (capitalize (replace-regexp-in-string "-" " " (file-name-base module-file))))))
+
 (defmacro init--with-ensure-frame-ready (fn &rest args)
   "Call FN is called with optional ARGS when a graphical frame is ready.
 
@@ -94,9 +104,14 @@ Executes FN right away otherwise."
         (cl-remove-if-not (lambda (m) (memq m available-modules)) ep3c-modules)))
   (put 'ep3c-modules 'custom-type
        `(set :greedy t
-             :value (,@(mapcar (lambda (m)
-                                 `(const :tag ,(format "%s" m) ,m))
-                               available-modules))))
+             ,@(mapcar (lambda (m)
+                         (let ((module-file (expand-file-name
+                                            (format "%s.org" m) modules-dir)))
+                           `(const :tag ,(format "%-20s - %s"
+                                                 m
+                                                 (ep3c--module-title module-file))
+                                   ,m)))
+                       available-modules)))
   (set-default 'ep3c-modules valid-modules))
 
 ;; Convert symbols to file paths before loading

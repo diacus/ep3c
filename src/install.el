@@ -8,6 +8,32 @@
 
 (require 'cl-lib)
 
+(defun ep3c--module-title (module-file)
+  "Read the #+TITLE: property from MODULE-FILE.
+If not found, return a fallback based on the module name."
+  (with-temp-buffer
+    (insert-file-contents module-file)
+    (goto-char (point-min))
+    (if (re-search-forward "^#\\+TITLE:[ \t]*\\(.*\\)" nil t)
+        (match-string 1)
+      (capitalize (replace-regexp-in-string "-" " " (file-name-base module-file))))))
+
+(defun ep3c--modules-custom-type (modules-dir)
+  "Generate custom type for modules in MODULES-DIR."
+  (let ((modules (mapcar #'intern
+                          (mapcar #'file-name-base
+                                  (file-expand-wildcards
+                                   (file-name-concat modules-dir "*.org"))))))
+    `(set :greedy t
+          :value ,@(mapcar (lambda (m)
+                              (let ((module-file (expand-file-name
+                                                 (format "%s.org" m) modules-dir)))
+                                `(const :tag ,(format "%-20s - %s"
+                                                      m
+                                                      (ep3c--module-title module-file))
+                                        ,m)))
+                            modules))))
+
 (defun ep3c--migrate-modules-value (value)
   "Convert VALUE to new symbol-based format if needed."
   (cond
@@ -17,13 +43,6 @@
               (intern (file-name-base s)))
             value))
    (t nil)))
-
-(defun ep3c--modules-custom-type (modules)
-  "Generate custom type for MODULES list."
-  `(set :greedy t
-        :value (,@(mapcar (lambda (module)
-                            `(const :tag ,(format "%s" module) ,module))
-                          modules))))
 
 (defun ep3c--set-modules (sym value)
   "Setter for ep3c-modules.
@@ -38,7 +57,7 @@ VALUE is the new value being assigned."
          (value (delq nil (mapcar (lambda (m)
                                     (if (memq m available-modules) m))
                                   value))))
-    (put sym 'custom-type (ep3c--modules-custom-type available-modules))
+    (put sym 'custom-type (ep3c--modules-custom-type default-directory))
     (put sym 'standard-value (list value))
     (set-default sym value)))
 
@@ -107,7 +126,7 @@ the available module paths"
          (valid-modules
           (cl-remove-if-not (lambda (m) (memq m available-modules)) current-value)))
     (put 'ep3c-modules 'custom-type
-         (ep3c--modules-custom-type available-modules))
+         (ep3c--modules-custom-type modules-dir))
     (set-default 'ep3c-modules valid-modules))
 
   (customize-option 'ep3c-modules))
