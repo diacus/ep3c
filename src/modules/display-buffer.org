@@ -6,8 +6,8 @@ by =<Protesilaos Stavrou>= for details and a demo about this feature.
 #+begin_src emacs-lisp
   (setq display-buffer-alist
 	'(
-	  ;; Anatomy o fan entry
-	  ;; (BUFFER-MATCHER 
+	  ;; Anatomy of an entry
+	  ;; (BUFFER-MATCHER
 	  ;;  LIST-OF-DISPLAY-FUNCTIONS
 	  ;;  &optional PARAMETERS)
 
