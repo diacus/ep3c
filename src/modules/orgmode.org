@@ -12,8 +12,11 @@
     ;; Enable indent mode
     (add-hook 'org-mode-hook (lambda () (org-indent-mode 1)))
 
-    ;; Disable flycheck in =org-src= mode
-    (add-hook 'org-src-mode-hook (lambda () (flycheck-mode -1)))
+    ;; Disable flycheck in org-src mode (only if flycheck is loaded)
+    (add-hook 'org-src-mode-hook
+              (lambda ()
+                (when (bound-and-true-p flycheck-mode)
+                  (flycheck-mode -1))))
   #+end_src
 
   Include =.org.gpg= files in =org-agenda-files= following [[https://emacs.stackexchange.com/questions/36542/include-org-gpg-files-in-org-agenda][StackExchange
