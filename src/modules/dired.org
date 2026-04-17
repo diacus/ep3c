@@ -1,3 +1,5 @@
+#+TITLE: Dired file manager settings
+#+AUTHOR: Diacus Magnuz
 Use Emacs as a file manager with =dired=. Enable the follwing setting
 to copy/move files between distant directories. [[https://emacs.stackexchange.com/questions/5603/how-to-quickly-copy-move-file-in-emacs-dired][Source]].
 

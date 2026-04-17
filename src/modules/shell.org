@@ -1,4 +1,4 @@
-#+TITLE: Shell
+#+TITLE: Shell integrtion: vterm, eshell
 #+AUTHOR: Diacus Magnuz
 
 Configuration settings to invoke a *Shell* window, defines two key bindings:

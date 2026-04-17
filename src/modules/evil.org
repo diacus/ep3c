@@ -1,3 +1,5 @@
+#+TITLE: Evil (Vim emulation)
+#+AUTHOR: Diacus Magnuz
 * Emulate Vim editing style
 Evil is an extensible vi layer for Emacs, plus [[https://github.com/emacs-evil/evil-collection][evil-collection]] package
 installs a collection of Evil bindings for the parts of Emacs that

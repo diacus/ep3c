@@ -1,4 +1,4 @@
-#+TITLE: Windows settings
+#+TITLE: Settings specific to MS Windows
 #+AUTHOR: Diacus Magnuz
 
 If the operating system is Windows:

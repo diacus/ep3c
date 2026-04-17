@@ -1,3 +1,5 @@
+#+TITLE: Completion framework settings (company)
+#+AUTHOR: Diacus Magnuz
 [[https://company-mode.github.io/][Company]] is a text and code completion framework for Emacs. It uses
 pluggable backends and frontends to retreive and display completion
 candidates.
