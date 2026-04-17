@@ -9,6 +9,8 @@
 ;; End:
 ;;
 ;;; Code:
+(require 'cl-lib)
+
 (defmacro init--with-ensure-frame-ready (fn &rest args)
   "Call FN is called with optional ARGS when a graphical frame is ready.
 
@@ -72,14 +74,37 @@ Executes FN right away otherwise."
   (load custom-file))
 
 (unless (boundp 'ep3c-modules)
-  (let ((modules-wildcard (file-name-concat user-emacs-directory "modules" "*.org")))
-    (defcustom ep3c-modules
-      (file-expand-wildcards modules-wildcard)
-      "List of available EP3C modules. Disable any module by deleting it from this list"
-      :type '(repeat (file :must-match nil))
-      :group 'ep3c)))
+  (defcustom ep3c-modules
+    (mapcar #'intern
+            (mapcar #'file-name-base
+                    (file-expand-wildcards
+                     (file-name-concat user-emacs-directory "modules" "*.org"))))
+    "List of EP3C modules to load. Check modules to enable them."
+    :type '(set :greedy t (const :tag "dummy" nil))
+    :group 'ep3c))
 
-(mapcar 'org-babel-load-file ep3c-modules)
+;; Validate modules and update custom type
+(let* ((modules-dir (file-name-concat user-emacs-directory "modules"))
+       (available-modules
+        (mapcar #'intern
+                (mapcar #'file-name-base
+                        (file-expand-wildcards
+                         (file-name-concat modules-dir "*.org")))))
+       (valid-modules
+        (cl-remove-if-not (lambda (m) (memq m available-modules)) ep3c-modules)))
+  (put 'ep3c-modules 'custom-type
+       `(set :greedy t
+             :value (,@(mapcar (lambda (m)
+                                 `(const :tag ,(format "%s" m) ,m))
+                               available-modules))))
+  (set-default 'ep3c-modules valid-modules))
+
+;; Convert symbols to file paths before loading
+(let ((module-directory (file-name-concat user-emacs-directory "modules")))
+  (mapcar (lambda (m)
+            (org-babel-load-file
+             (expand-file-name (format "%s.org" m) module-directory)))
+          ep3c-modules))
 
 (provide 'init)
 ;;; init.el ends here
