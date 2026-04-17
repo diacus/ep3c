@@ -26,6 +26,30 @@
     (unless (string-match-p "\\.gpg" org-agenda-file-regexp)
       (setq org-agenda-file-regexp "\\`[^.].*\\.org\\\(\\.gpg\\\)?\\'"))
   #+end_src
+
+* TODO Keywords
+  Custom TODO keywords with semantic faces (theme-agnostic):
+  - TODO :: Things selected to do at some point (shadow, light)
+  - NEXT :: Things selected to do in the short term (warning, normal)
+  - WORK :: Things in progress (success, bold)
+  - WAIT :: Things in progress but waiting some event (error, bold)
+  - DONE :: Things completed (success, strikethrough)
+  - KILL :: Things canceled (shadow, strikethrough)
+
+  #+begin_src emacs-lisp
+    (setq org-todo-keywords
+          '((sequence "TODO(t)" "NEXT(n)" "WORK(i)" "WAIT(w)" "|" "DONE(d)" "KILL(k)")))
+
+    ;; Faces for agenda view (org-modern doesn't apply there)
+    (setq org-todo-keyword-faces
+          '(("TODO" . (:inherit shadow :weight light))
+            ("NEXT" . (:inherit warning :weight normal))
+            ("WORK" . (:inherit success :weight bold))
+            ("WAIT" . (:inherit error :weight bold))
+            ("DONE" . (:inherit success :strike-through t))
+            ("KILL" . (:inherit shadow :strike-through t))))
+  #+end_src
+
 * Org Agenda
   Sometimes I need to focus only in one or a few org agenda topics,
   these functions help out manipulate =org-agenda-files= list easily.
@@ -131,19 +155,29 @@
              org-modern-table nil
              org-modern-block-name nil)
 
+       ;; Per-keyword TODO faces for org-modern (all 4 chars for uniform box width)
+       (setq org-modern-todo-faces
+             '(("TODO" . (:inherit shadow :weight light :box (:line-width -1)))
+               ("NEXT" . (:inherit warning :weight normal :box (:line-width -1)))
+               ("WORK" . (:inherit success :weight bold :box (:line-width -1)))
+               ("WAIT" . (:inherit error :weight bold :box (:line-width -1)))
+               ("DONE" . (:inherit success :strike-through t :box (:line-width -1)))
+               ("KILL" . (:inherit shadow :strike-through t :box (:line-width -1)))))
+
        ;; Modern faces for various elements
+       ;; Removed :height so they scale with heading levels
        (custom-theme-set-faces
         'user
-        '(org-modern-label ((t (:inherit fixed-pitch :height 0.8))))
+        '(org-modern-label ((t (:inherit fixed-pitch))))
         '(org-modern-date-active ((t (:inherit (org-date fixed-pitch) :box (:line-width -1)))))
         '(org-modern-date-inactive ((t (:inherit (org-date fixed-pitch shadow) :box (:line-width -1)))))
         '(org-modern-time-active ((t (:inherit (org-date fixed-pitch) :box (:line-width -1)))))
         '(org-modern-time-inactive ((t (:inherit (org-date fixed-pitch shadow) :box (:line-width -1)))))
-        '(org-modern-tag ((t (:inherit (fixed-pitch shadow) :box (:line-width -1) :height 0.8))))
+        '(org-modern-tag ((t (:inherit (fixed-pitch shadow) :box (:line-width -1)))))
         '(org-modern-todo ((t (:inherit (org-todo fixed-pitch) :box (:line-width -1)))))
         '(org-modern-done ((t (:inherit (org-done fixed-pitch) :box (:line-width -1)))))
-        '(org-modern-priority ((t (:inherit fixed-pitch :box (:line-width -1) :height 0.8))))
-        '(org-modern-progress ((t (:inherit fixed-pitch :height 0.8)))))
+        '(org-modern-priority ((t (:inherit fixed-pitch :box (:line-width -1)))))
+        '(org-modern-progress ((t (:inherit fixed-pitch)))))
 
        ;; Agenda styling
        (setq org-agenda-tags-column 0
