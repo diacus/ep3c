@@ -69,10 +69,7 @@ VALUE is the new value being assigned."
                      (get 'ep3c-modules 'customized-value))))
     (if saved
         (ep3c--migrate-modules-value (car (cdr saved)))
-      (mapcar #'intern
-              (mapcar #'file-name-base
-                      (file-expand-wildcards
-                       (file-name-concat default-directory "src/modules/*.org")))))))
+      '())))
 
 (defun ep3c--install (init-package modules-wildcard)
   "Main Installation routine.

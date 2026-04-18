@@ -85,10 +85,7 @@ Executes FN right away otherwise."
 
 (unless (boundp 'ep3c-modules)
   (defcustom ep3c-modules
-    (mapcar #'intern
-            (mapcar #'file-name-base
-                    (file-expand-wildcards
-                     (file-name-concat user-emacs-directory "modules" "*.org"))))
+    '()
     "List of EP3C modules to load. Check modules to enable them."
     :type '(set :greedy t (const :tag "dummy" nil))
     :group 'ep3c))
