@@ -13,8 +13,15 @@ disabled through Emacs' customization interface.
 See the settings [[file:src/modules/*.org][here]].
 
 * Installation
-  To install the settings, load =src/install.el= and call =(ep3c--setup)=:
+To install the settings, load =src/install.el= and call
+=(ep3c--setup)=. Follow these steps:
 
+1. Clone the reepository and open this =README.org= file.
+2. Jump to the installer source code block: =C-s installer-script C-s RET=
+3. Execute the installer: =C-c C-c=
+4. When promped /Evaluate this emacs-lisp code block... (yes or no)/ reply *yes* and hit =RET=
+
+#+NAME: installer-script
   #+begin_src emacs-lisp :results none
     (load-file (file-name-concat default-directory "src" "install.el"))
     (ep3c--setup)
