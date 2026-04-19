@@ -147,7 +147,8 @@
      (use-package org-modern
        :ensure t
        :after org
-       :hook (org-mode . org-modern-mode)
+       :hook ((org-mode . org-modern-mode)
+              (org-agenda-finalize . org-modern-agenda))
        :config
        ;; Disable bullet styling - let org-bullets handle it
        (setq org-modern-star nil
@@ -187,7 +188,46 @@
                (800 1000 1200 1400 1600 1800 2000)
                " ┄┄┄┄┄ " "┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄")
              org-agenda-current-time-string
-             "⭠ now ─────────────────────────────────────────────────"))
+             "⭠ now ─────────────────────────────────────────────────")
+
+       ;; Progress bar styling in agenda (org-modern doesn't handle progress in agenda)
+       (defvar org-modern-agenda-progress-width 12
+         "Width in characters for progress bars in agenda.")
+
+       (defun org-modern-agenda--progress ()
+         "Add progress bar styling to agenda buffer."
+         (save-excursion
+           (save-match-data
+             (goto-char (point-min))
+             (while (re-search-forward
+                     " \\(\\[\\(?:\\([0-9]+\\)%\\|\\([0-9]+\\)/\\([0-9]+\\)\\)]\\)"
+                     nil 'noerror)
+               (let* ((beg (match-beginning 1))
+                      (end (match-end 1))
+                      (val (min 1.0
+                            (if (match-beginning 2)
+                                (* 0.01 (string-to-number (match-string 2)))
+                              (let ((q (string-to-number (match-string 4))))
+                                (if (= q 0) 1.0
+                                  (/ (* 1.0 (string-to-number (match-string 3))) q))))))
+                      (w org-modern-agenda-progress-width)
+                      (complete (floor (* w val)))
+                      (w0 (- end beg 2))
+                      (w1 (/ (- w w0) 2))
+                      (bar (concat (make-string w1 ?\s)
+                                   (buffer-substring-no-properties (1+ beg) (1- end))
+                                   (make-string (- w w1 w0) ?\s))))
+                 (put-text-property 0 complete 'face 'org-modern-progress-complete bar)
+                 (put-text-property complete w 'face 'org-modern-progress-incomplete bar)
+                 (put-text-property beg end 'face 'org-modern-label)
+                 (put-text-property beg (1+ beg) 'display (substring bar 0 w1))
+                 (dotimes (i w0)
+                   (put-text-property (+ 1 beg i) (+ 2 beg i)
+                                      'display (substring bar (+ w1 i) (+ w1 i 1))))
+                 (put-text-property (1- end) end 'display (substring bar (+ w1 w0) w)))))))
+
+       ;; Add progress bars to agenda after org-modern-agenda runs
+       (advice-add 'org-modern-agenda :after #'org-modern-agenda--progress))
    #+end_src
 
 * Orgmode babel
