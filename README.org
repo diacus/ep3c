@@ -22,10 +22,10 @@ To install the settings, load =src/install.el= and call
 4. When promped /Evaluate this emacs-lisp code block... (yes or no)/ reply *yes* and hit =RET=
 
 #+NAME: installer-script
-  #+begin_src emacs-lisp :results none
+#+begin_src emacs-lisp :results none
     (load-file (file-name-concat default-directory "src" "install.el"))
     (ep3c--setup)
-  #+end_src
+#+end_src
 
   When installation is done, =*Customize Option: Ep3c Modules*= buffer
   will display, you can select the modules you want to load from there.
