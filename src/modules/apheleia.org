@@ -1,0 +1,40 @@
+#+TITLE: Code Formatting with Apheleia
+#+AUTHOR: Diacus Magnuz
+
+[[https://github.com/raxod502/apheleia][Apheleia]] is a code formatting package that runs formatters
+asynchronously on save without blocking Emacs.
+
+* Global Configuration
+#+begin_src emacs-lisp
+  (use-package apheleia
+    :ensure t
+    :config
+    (apheleia-global-mode +1))
+#+end_src
+
+* AWK
+The default formatter for AWK uses =TAB= characters. This configuration
+uses spaces instead.
+
+- gawk: uses =--pretty-print= for formatting plus tab conversion
+- mawk/other: uses =expand= for tab-to-space conversion only (no smart
+  indentation)
+
+#+begin_src emacs-lisp
+  (with-eval-after-load 'apheleia
+    (setf (alist-get 'gawk apheleia-formatters)
+          (if (executable-find "gawk")
+              '("sh" "-c" "gawk -f - --pretty-print=- | expand -t 2")
+            '("expand" "--tabs=2"))))
+#+end_src
+
+* Web (TypeScript/TSX)
+Configure prettier for TypeScript and TSX files.
+
+#+begin_src emacs-lisp
+  (with-eval-after-load 'apheleia
+    (setf (alist-get 'typescript-ts-mode apheleia-mode-alist)
+          '(prettier))
+    (setf (alist-get 'tsx-ts-mode apheleia-mode-alist)
+          '(prettier)))
+#+end_src

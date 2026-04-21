@@ -21,15 +21,6 @@
   #+begin_src emacs-lisp
     (setq js-indent-level 2)
     (setq typescript-indent-level 2)
-
-    (use-package apheleia
-      :ensure t
-      :config
-      (setf (alist-get 'typescript-ts-mode apheleia-mode-alist)
-	    '(prettier))
-      (setf (alist-get 'tsx-ts-mode apheleia-mode-alist)
-	    '(prettier))
-      (apheleia-global-mode +1))
   #+end_src
 
 * Node.js REPL
