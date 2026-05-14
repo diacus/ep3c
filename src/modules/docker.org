@@ -1,6 +1,6 @@
 #+TITLE: Docker settings
 #+AUTHOR: Diacus Mágnuz
-* Docker
+* Docker mode
 Add support for managing Docker containers, images, volumes, networks,
 contexts and docker-compose
 
@@ -13,8 +13,8 @@ contexts and docker-compose
 Use =M-x docker=, select a resource then mark or unmark items using
 the following keybindings (for more possibilities, check out [[https://github.com/politza/tablist][tablist]]):
 
-| Binding   | Description          |
-|-----------+----------------------|
+| Binding | Description          |
+|---------+----------------------|
 | =?=       | List actions         |
 | =l=       | Configure listing    |
 | =m=       | MarkItem             |
@@ -27,7 +27,7 @@ the following keybindings (for more possibilities, check out [[https://github.co
 | =>=       | Enlarge column       |
 | =C-c C-e= | Export to CSV        |
 
-*** Editing Dockerfiles
+* Editing Dockerfiles
 Writing Dockerfiles is made easier with =dockerfile-mode=, which
 provides syntax hightlighting, indentation, and command customization.
 
@@ -40,6 +40,3 @@ See [[https://www.rahuljuliato.com/posts/emacs-docker-podman][this article]] for
     :config
     (setq dockerfile-mode-command "docker"))
 #+end_src
-
-#+RESULTS:
-
