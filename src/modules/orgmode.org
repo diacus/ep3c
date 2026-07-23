@@ -61,8 +61,12 @@
   #+end_src
 
 * Org Agenda
-  Sometimes I need to focus only in one or a few org agenda topics,
-  these functions help out manipulate =org-agenda-files= list easily.
+Sometimes I need to focus only in one or a few org agenda topics,
+these functions help out manipulate =org-agenda-files= list easily.
+  
+** TODO Teak =*Org Agenda*= buffer
+Implement settings like the ones at [[https://librephoenix.com/2023-12-30-making-org-agenda-look-beautiful][Making Org Agenda Look Beautiful]]
+by [[https://www.youtube.com/watch?v=a_WNtuefREM][LibrePhenix]].
 
 * Evil Org
   [[https://github.com/Somelauw/evil-org-mode][evil-org]] package adds key-bindings to Emacs org-mode
@@ -251,6 +255,9 @@
     (use-package org-utils
       :quelpa (org-utils :fetcher github :repo "diacus/org-utils"))
   #+end_src
+
+** TODO Add org-agenda helper functions to org-utils package
+
 * Key bindings
   | Bind key | to function |
   |----------+-------------|
