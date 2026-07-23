@@ -68,6 +68,33 @@ these functions help out manipulate =org-agenda-files= list easily.
 Implement settings like the ones at [[https://librephoenix.com/2023-12-30-making-org-agenda-look-beautiful][Making Org Agenda Look Beautiful]]
 by [[https://www.youtube.com/watch?v=a_WNtuefREM][LibrePhenix]].
 
+** Category Icons
+#+begin_src emacs-lisp
+  ;; Set category icons
+  (setq org-agenda-category-icon-alist
+        `(("learn"  ,(list (all-the-icons-faicon   "graduation-cap" :height 0.8)) nil nil :ascent center)
+  	("home"   ,(list (all-the-icons-faicon   "home" :v-adjust 0.005)) nil nil :ascent center)
+  	("travel" ,(list (all-the-icons-faicon   "plane" :v-adjust 0.005)) nil nil :ascent center)
+  	("book"   ,(list (all-the-icons-faicon   "book" :height 0.9)) nil nil :ascent center)
+  	("notes"  ,(list (all-the-icons-faicon   "sticky-note" :height 0.9)) nil nil :ascent center)
+  	("govern" ,(list (all-the-icons-faicon   "building-o" :height 0.9)) nil nil :ascent center)
+  	("self"   ,(list (all-the-icons-material "person" :height 0.9)) nil nil :ascent center)
+  	("family" ,(list (all-the-icons-material "people" :height 0.9)) nil nil :ascent center)
+  	("auto"   ,(list (all-the-icons-material "directions_car" :height 0.9)) nil nil :ascent center)
+  	("cine"   ,(list (all-the-icons-material "local_movies" :height 0.9)) nil nil :ascent center)
+  	("money"  ,(list (all-the-icons-material "attach_money" :height 0.9)) nil nil :ascent center)
+  	("fit"    ,(list (all-the-icons-material "fitness_center" :height 0.9)) nil nil :ascent center)
+  	))
+
+  ;; Remove category names and scheduling type from agenda view
+  (when org-agenda-category-icon-alist
+    (setq org-agenda-prefix-format
+  	'((agenda . "  %?-2i %t ")
+  	  (todo   . "  %?-2i %t")
+  	  (tags   . "  %-12:c")
+  	  (search . "  %-12:c"))))
+#+end_src
+
 * Evil Org
   [[https://github.com/Somelauw/evil-org-mode][evil-org]] package adds key-bindings to Emacs org-mode
   #+begin_src emacs-lisp

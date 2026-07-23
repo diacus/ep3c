@@ -11,3 +11,9 @@ Hide details by default
 #+begin_src emacs-lisp
   (add-hook 'dired-mode-hook 'dired-hide-details-mode)
 #+end_src
+
+All the icons for =dired-mode=
+#+begin_src emacs-lisp
+  (use-package all-the-icons-dired
+    :ensure t)
+#+end_src
