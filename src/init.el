@@ -118,5 +118,13 @@ Executes FN right away otherwise."
              (expand-file-name (format "%s.org" m) module-directory)))
           ep3c-modules))
 
+;; Load org-init.el module if present in org-agenda-files directory
+;; This assumes org-agenda-files variable only contains directories, review other scenarios
+(when (boundp 'org-agenda-files)
+  (dolist (org-agenda-file org-agenda-files)
+    (let ((org-init-file (expand-file-name "org-init.el" org-agenda-file)))
+      (when (file-exists-p org-init-file)
+	(load-file org-init-file)))))
+
 (provide 'init)
 ;;; init.el ends here
