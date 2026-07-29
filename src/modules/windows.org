@@ -7,7 +7,7 @@ First define a powershell executable detector =use-powershell7=.
     "Set the default shell to Powershell 7 when available."
     (let* ((powershell-candidates '("~/AppData/Local/Microsoft/WindowsApps/pwsh.exe"
   				  "C:/Program Files/Powershell/7/pwsh.exe"))
-  	 (powershell-executable (set-some
+  	 (powershell-executable (seq-some
   				 (lambda (x) (if (file-exists-p x) x nil))
   				 powershell-candidates)))
       (when powershell-executable (setq explicit-shell-file-name powershell-executable))))
