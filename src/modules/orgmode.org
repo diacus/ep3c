@@ -37,6 +37,11 @@
       (setq org-agenda-file-regexp "\\`[^.].*\\.org\\\(\\.gpg\\\)?\\'"))
   #+end_src
 
+
+Use [[https://orgmode.org/manual/Handling-Links.html#DOCF30][org-id]] to link to org headings by ID
+  #+begin_src emacs-lisp
+    (require 'org-id)
+  #+end_src
 * *TODO* Keywords
   Custom TODO keywords with semantic faces (theme-agnostic):
   - TODO :: Things selected to do at some point (shadow, light)
