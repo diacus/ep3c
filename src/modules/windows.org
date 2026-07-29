@@ -1,27 +1,31 @@
 #+TITLE: Settings specific to MS Windows
 #+AUTHOR: Diacus Magnuz
 
-If the operating system is Windows:
-1. Install PowerShell package
-2. Setup KQL mode for kusto queries
-3. Explicitly set shell to Powershell 7
+First define a powershell executable detector =use-powershell7=.
 #+begin_src emacs-lisp
   (defun use-powershell7 ()
-    "Set the default shell to Powershel 7 when available"
-    (let ((xlist
-           '(
-             "~/AppData/Local/Microsoft/WindowsApps/pwsh.exe"
-             "C:/Program Files/Powershell/7/pwsh.exe"
-             ))
-          (setq xfound (seq-some (lambda (x) (if (file-exists-p x) x nil)) xlist))
-          (when xfound (setq explicit-shell-file-name xfound)))))
+    "Set the default shell to Powershell 7 when available."
+    (let* ((powershell-candidates '("~/AppData/Local/Microsoft/WindowsApps/pwsh.exe"
+  				  "C:/Program Files/Powershell/7/pwsh.exe"))
+  	 (powershell-executable (set-some
+  				 (lambda (x) (if (file-exists-p x) x nil))
+  				 powershell-candidates)))
+      (when powershell-executable (setq explicit-shell-file-name powershell-executable))))
+#+end_src
 
-
+When the operating system is Windows:
+1. Install PowerShell package
+2. Explicitly set shell to Powershell 7 if available
+3. Setup KQL mode for kusto queries
+#+begin_src emacs-lisp
   (when (member system-type '(ms-dos windows-nt cygwin))
-    (use-package powershell :ensure t)
+    (use-package powershell
+      :ensure t
+      :config
+      (use-powershell7))
     (use-package kql-mode
       :ensure t
       :config
       (add-to-list 'auto-mode-alist '("\\.kql\\'" . kql-mode)))
-    (use-powershell7))
+    )
 #+end_src
