@@ -4,6 +4,9 @@ windows. See [[https://www.youtube.com/watch?v=1-UIzYPn38s][Emacs: control where
 by =<Protesilaos Stavrou>= for details and a demo about this feature.
 
 #+begin_src emacs-lisp
+  ;; Open org source-edit buffer in a new frame (C-c C-' in org).
+  (setq org-src-window-setup 'other-frame)
+
   (setq display-buffer-alist
 	'(
 	  ;; Anatomy of an entry

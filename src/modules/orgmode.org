@@ -16,8 +16,7 @@
     ;; Basic settings
     (setq org-goto-interface 'outline-path-completion
           org-goto-max-level 10
-          org-outline-path-complete-in-steps nil
-          org-src-window-setup 'other-frame)
+          org-outline-path-complete-in-steps nil)
 
     ;; Enable indent mode
     (add-hook 'org-mode-hook (lambda () (org-indent-mode 1)))
