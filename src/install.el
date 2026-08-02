@@ -79,9 +79,9 @@ the available module paths"
 	 (modules-target-directory (file-name-as-directory (file-name-concat
 							    user-emacs-directory
 							    "modules"))))
-    (when (file-directory-p modules-target-directory)
-      (delete-directory modules-target-directory t))
-    (make-directory modules-target-directory)
+    (unless (file-directory-p modules-target-directory)
+      (make-directory modules-target-directory))
+
     (copy-file init-package user-emacs-directory t)
 
     (dolist (module modules)
