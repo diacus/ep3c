@@ -1,5 +1,6 @@
 #+TITLE: Python Settings
 #+AUTHOR: Diacus Mágnuz
+#+STARTUP: overview
 
 * Virtual environments
 Use [[https://github.com/aiguofer/pyenv.el][pyenv.el]] to manage your Python version within Emacs using pyenv

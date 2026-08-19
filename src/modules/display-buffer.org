@@ -1,4 +1,6 @@
 #+TITLE: Display Buffer Rules
+#+STARTUP: overview
+
 This is the space to configure how Emacs displays buffers and manages
 windows. See [[https://www.youtube.com/watch?v=1-UIzYPn38s][Emacs: control where buffers are displayed]] Youtube video
 by =<Protesilaos Stavrou>= for details and a demo about this feature.

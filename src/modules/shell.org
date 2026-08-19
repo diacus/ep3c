@@ -1,5 +1,6 @@
 #+TITLE: Shell integrtion: vterm, eshell
 #+AUTHOR: Diacus Magnuz
+#+STARTUP: overview
 
 Configuration settings to invoke a *Shell* window, defines two key bindings:
 - =SPC= + =o= + =t= :: opens shell in bottom window

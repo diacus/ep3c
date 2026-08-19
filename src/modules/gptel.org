@@ -1,5 +1,7 @@
 #+TITLE: Gptel settings
 #+AUTHOR: Diacus Magnuz
+#+STARTUP: overview
+
 * Gptel
 #+begin_quote
 [[https://github.com/karthink/gptel?tab=readme-ov-file#gptel-a-simple-llm-client-for-emacs][gptel]] is a simple Large Language Model chat client for Emacs, whith

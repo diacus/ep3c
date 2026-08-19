@@ -1,5 +1,7 @@
 #+TITLE: Version control integration settings
 #+AUTHOR: Diacus Magnuz
+#+STARTUP: overview
+
 [[https://magit.vc/][Magit]] is a complete text based user interface to [[https://git-scm.com/][Git]].
 #+begin_src emacs-lisp
   (use-package magit

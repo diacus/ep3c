@@ -1,5 +1,7 @@
 #+TITLE: Web development settings
 #+AUTHOR: Diacus Magnuz
+#+STARTUP: overview
+
 * Support for JSX/TSX
   #+begin_src emacs-lisp
     (use-package typescript-mode

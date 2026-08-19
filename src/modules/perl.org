@@ -1,5 +1,6 @@
 #+TITLE: Perl settings
 #+AUTHOR: Diacus Magnuz
+#+STARTUP: overview
 
 * Major mode
 [[http://xahlee.info/emacs/emacs/emacs_perl_vs_cperl_mode.html][CPerl mode]] is an enhanced mode for Perl development. It was designed

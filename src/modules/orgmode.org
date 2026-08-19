@@ -1,5 +1,7 @@
 #+TITLE: Orgmode settings
 #+AUTHOR: Diacus Magnuz
+#+STARTUP: overview
+
 * General settings
   #+begin_src emacs-lisp
     (use-package org

@@ -1,5 +1,6 @@
 #+TITLE: REST Client settings
 #+AUTHOR: Diacus Magnuz
+#+STARTUP: overview
 
 The [[https://github.com/emacsorphanage/restclient][restclient.el]] package is a tool to explore and test HTTP REST web
 services. Runs queries from a plain-text query sheet.

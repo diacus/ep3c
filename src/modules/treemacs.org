@@ -1,5 +1,6 @@
 #+TITLE: Treemacs settings
 #+AUTHOR: Diacus Magnuz
+#+STARTUP: overview
 
 Treemacs is a file and project explorer similar to NeoTree or vim’s
 NerdTree, but largely inspired by the Project Explorer in Eclipse. It

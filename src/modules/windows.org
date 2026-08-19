@@ -1,5 +1,6 @@
 #+TITLE: Settings specific to MS Windows
 #+AUTHOR: Diacus Magnuz
+#+STARTUP: overview
 
 First define a powershell executable detector =use-powershell7=.
 #+begin_src emacs-lisp

@@ -1,5 +1,7 @@
 #+TITLE: PDF tools
 #+AUTHOR: Diacus Magnuz
+#+STARTUP: overview
+
 The [[https://pdftools.wiki/][PDF Tools]] package among other things is a replacement of DocView
 for PDF files. The key differences is that pages are not pre-rendered
 but created on-demand and stored in memory

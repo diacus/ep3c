@@ -1,5 +1,6 @@
 #+TITLE: Ledger settings
 #+AUTHOR: Diacus Magnuz
+#+STARTUP: overview
 
 #+begin_src emacs-lisp
   (use-package ledger-mode :ensure t)

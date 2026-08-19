@@ -1,5 +1,6 @@
 #+TITLE: C/C++ settings
 #+AUTHOR: Diacus Magnuz
+#+STARTUP: overview
 
 Most of the IDE configuration for C/C++ is taken from [[https://emacs-lsp.github.io/lsp-mode/tutorials/CPP-guide/][this guide]].
 

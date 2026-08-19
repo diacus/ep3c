@@ -1,6 +1,6 @@
 #+TITLE: LaTeX settings
 #+AUTHOR: Diacus Mágnuz
-#+STARTUP: latexpreview
+#+STARTUP: latexpreview overview
 
 For $\TeX$ and $\LaTeX$ use *AUCTeX*, a program offering many featues
 and configuration options. Take a look to its [[https://www.gnu.org/software/auctex/manual/auctex.html#Editing-Facilities][quick start]] guide for

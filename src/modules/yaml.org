@@ -1,5 +1,6 @@
 #+TITLE: YAML settings
 #+AUTHOR: Diacus Magnuz
+#+STARTUP: overview
 
 #+begin_src emacs-lisp
   (use-package yaml-mode

@@ -1,5 +1,6 @@
 #+TITLE: Code Formatting with Apheleia
 #+AUTHOR: Diacus Magnuz
+#+STARTUP: overview
 
 [[https://github.com/raxod502/apheleia][Apheleia]] is a code formatting package that runs formatters
 asynchronously on save without blocking Emacs.

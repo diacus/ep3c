@@ -1,5 +1,6 @@
 #+TITLE: Prog mode settings
 #+AUTHOR: Diacus Magnuz
+#+STARTUP: overview
 
 * Key bindings
 Many programming language modes (see [[https://www.gnu.org/software/emacs/manual/html_node/elisp/Derived-Modes.html#Derived-Modes][Derived Modes]] for details) run

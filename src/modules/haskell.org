@@ -1,5 +1,7 @@
 #+TITLE:Haskell settings
 #+AUTHOR: Diacus Magnuz
+#+STARTUP: overview
+
 * Haskell mode
 The [[https://wiki.haskell.org/Emacs][haskell-mode]] package is a set of major modes for writing Haskell
 code and working with Haskell projects. Features syntax hightlighting,

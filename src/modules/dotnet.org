@@ -1,4 +1,5 @@
 #+TITLE: .NET Core Development
+#+STARTUP: overview
 
 #+begin_src emacs-lisp
   (use-package omnisharp

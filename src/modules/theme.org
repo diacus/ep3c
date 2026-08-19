@@ -1,5 +1,7 @@
 #+TITLE: Theme
-#+AUTHOR: Diacus M�gnuz
+#+AUTHOR: Diacus Mágnuz
+#+STARTUP: overview
+
 * Cursor line
 By default the cursorline highlighting is underlined, I don't like it.
 #+begin_src emacs-lisp

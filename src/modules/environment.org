@@ -1,5 +1,7 @@
 #+TITLE: Environment from Shell
 #+AUTHOR: Diacus Magnuz
+#+STARTUP: overview
+
 * Exec PATH
 See [[https://github.com/purcell/exec-path-from-shell][exec-path-from-shell]] package Github page for details
 #+begin_src emacs-lisp

@@ -1,4 +1,6 @@
 #+TITLE: Minibuffer settings
+#+STARTUP: overview
+
 * Vertico
 The [[https://github.com/minad/vertico][vertico]] package applies vertical layout to the minibuffer. It also
 pops up the minibuffer eagerly so we can see the available options

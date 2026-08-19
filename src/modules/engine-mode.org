@@ -1,4 +1,6 @@
 #+TITLE: engine-mode settings
+#+STARTUP: overview
+
 [[https://github.com/hrs/engine-mode][engine-mode]] is a global minor mode for Emacs. It enables you to easily
 define search engines, bind them to keybindings, and query them from
 the comfort of your editor. Want to see it in action before? check it

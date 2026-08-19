@@ -1,5 +1,7 @@
 #+TITLE: Docker settings
 #+AUTHOR: Diacus Mágnuz
+#+STARTUP: overview
+
 * Docker
 Add support for managing Docker containers, images, volumes, networks,
 contexts and docker-compose

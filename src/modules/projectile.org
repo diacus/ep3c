@@ -1,5 +1,7 @@
 #+TITLE: Projectile integration library settings
 #+AUTHOR: Diacus Magnuz
+#+STARTUP: overview
+
 [[https://docs.projectile.mx/projectile/index.html][Projectile]] is a project integration library for Emacs. Its goal is to
 provide features operating on a project level without introducing
 external dependencies (when feasable).
