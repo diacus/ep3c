@@ -1,4 +1,4 @@
-#+TITLE: Evil (Vim emulation)
+#+TITLE: Evil settings for Vim emulation
 #+AUTHOR: Diacus Magnuz
 #+STARTUP: overview
 
