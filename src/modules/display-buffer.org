@@ -1,4 +1,5 @@
 #+TITLE: Display Buffer Rules
+#+AUTHOR: Diacus Magnuz
 #+STARTUP: overview
 
 This is the space to configure how Emacs displays buffers and manages

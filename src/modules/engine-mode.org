@@ -1,4 +1,5 @@
 #+TITLE: engine-mode settings
+#+AUTHOR: Diacus Magnuz
 #+STARTUP: overview
 
 [[https://github.com/hrs/engine-mode][engine-mode]] is a global minor mode for Emacs. It enables you to easily

@@ -1,4 +1,5 @@
 #+TITLE: .NET Core Development
+#+AUTHOR: Diacus Magnuz
 #+STARTUP: overview
 
 #+begin_src emacs-lisp

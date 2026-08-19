@@ -1,4 +1,5 @@
 #+TITLE: Minibuffer settings
+#+AUTHOR: Diacus Magnuz
 #+STARTUP: overview
 
 * Vertico
