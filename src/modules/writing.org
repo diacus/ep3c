@@ -1,0 +1,24 @@
+#+TITLE: Writing mode settings
+#+AUTHOR: Diacus Mágnuz
+#+STARTUP: overview logdrawer
+
+* Writing mode setup
+For writing text documents enable margins and line wrapping.
+
+~visual-fill-column-mode~ requires ~visual-line-mode~, so both are
+turned on together; this gives a centered reading column for prose
+instead of hard wrapping at ~fill-column~.
+
+#+begin_src emacs-lisp
+  (use-package visual-fill-column
+    :ensure t
+    :hook ((text-mode . ep3c--writing-mode-setup)
+  	 (org-mode  . ep3c--writing-mode-setup))
+    :config
+    (defun ep3c--writing-mode-setup ()
+      (message "setting up EP3C writing mode")
+      (visual-line-mode 1)
+      (visual-fill-column-mode 1)
+      (message "EP3C writing mode set up")
+      ))
+#+end_src
