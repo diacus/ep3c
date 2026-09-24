@@ -5,9 +5,9 @@
 * Writing mode setup
 For writing text documents enable margins and line wrapping.
 
-~visual-fill-column-mode~ requires ~visual-line-mode~, so both are
-turned on together; this gives a centered reading column for prose
-instead of hard wrapping at ~fill-column~.
+~visual-fill-column-mode~ requires ~visual-line-mode~, so both are turned on together; this gives a centered reading column for prose instead of hard wrapping at ~fill-column~.
+
+In org buffers headings are excluded from the wrapping. Emacs decides wrapping buffer-wide (~truncate-lines~), so body text and heading lines cannot mix wrap and truncate; instead a font-lock rule display-truncates each heading at the edge of the reading column with an ellipsis (~…~). The hidden text stays in the buffer and can still be edited. Tags are right-aligned at that same edge by setting ~org-tags-column~ to the negated column width; existing files need ~M-x org-align-all-tags~ once to move already-saved tags into the column.
 
 #+begin_src emacs-lisp
   (use-package visual-fill-column
@@ -19,6 +19,46 @@ instead of hard wrapping at ~fill-column~.
       (message "setting up EP3C writing mode")
       (visual-line-mode 1)
       (visual-fill-column-mode 1)
-      (message "EP3C writing mode set up")
-      ))
+      (when (derived-mode-p 'org-mode)
+        (ep3c--truncate-org-headings))
+      (message "EP3C writing mode set up"))
+
+    (defun ep3c--truncate-org-headings ()
+      "Display-truncate org headings at the edge of the reading column."
+      (let ((width (or visual-fill-column-width fill-column)))
+        ;; Right-align tags at the reading column edge so they stay
+        ;; inside the truncation limit
+        (setq-local org-tags-column (- width))
+        (add-to-invisibility-spec 'ep3c-heading)
+        (font-lock-add-keywords
+         nil
+         `((,org-complex-heading-regexp
+            (0 (ep3c--truncate-heading)))))))
+
+    (defun ep3c--truncate-heading ()
+      "Replace the part of the heading matched at point beyond the
+reading column with an ellipsis."
+      (let* ((beg (match-beginning 0))
+             (end (match-end 0))
+             (limit (or visual-fill-column-width fill-column)))
+        ;; Clear truncation from a previous fontification pass
+        (remove-text-properties beg end '(invisible ep3c-heading))
+        (let ((pos beg))
+          (while (< pos end)
+            (when (equal (get-text-property pos 'display) "…")
+              (remove-text-properties pos (1+ pos) '(display)))
+            (setq pos (1+ pos))))
+        ;; Hide everything past the first character over the limit
+        (let ((pos beg) (col 0) cut)
+          (while (and (< pos end) (not cut))
+            (let ((w (string-width (buffer-substring-no-properties
+                                    pos (1+ pos)))))
+              (when (> (+ col w) limit)
+                (setq cut pos))
+              (setq col (+ col w)
+                    pos (1+ pos))))
+          (when cut
+            (put-text-property cut (1+ cut) 'display "…")
+            (put-text-property (1+ cut) end 'invisible 'ep3c-heading))))
+      nil))
 #+end_src
