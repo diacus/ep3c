@@ -9,17 +9,8 @@
 ;; End:
 ;;
 ;;; Code:
-(require 'cl-lib)
-
-(defun ep3c--module-title (module-file)
-  "Read the #+TITLE: property from MODULE-FILE.
-If not found, return a fallback based on the module name."
-  (with-temp-buffer
-    (insert-file-contents module-file)
-    (goto-char (point-min))
-    (if (re-search-forward "^#\\+TITLE:[ \t]*\\(.*\\)" nil t)
-        (match-string 1)
-      (capitalize (replace-regexp-in-string "-" " " (file-name-base module-file))))))
+;; Load core.el, installed alongside this file in `user-emacs-directory'.
+(require 'core (expand-file-name "core" user-emacs-directory))
 
 (defmacro init--with-ensure-frame-ready (fn &rest args)
   "Call FN is called with optional ARGS when a graphical frame is ready.
@@ -91,25 +82,9 @@ Executes FN right away otherwise."
     :group 'ep3c))
 
 ;; Validate modules and update custom type
-(let* ((modules-dir (file-name-concat user-emacs-directory "modules"))
-       (available-modules
-        (mapcar #'intern
-                (mapcar #'file-name-base
-                        (file-expand-wildcards
-                         (file-name-concat modules-dir "*.org")))))
-       (valid-modules
-        (cl-remove-if-not (lambda (m) (memq m available-modules)) ep3c-modules)))
-  (put 'ep3c-modules 'custom-type
-       `(set :greedy t
-             ,@(mapcar (lambda (m)
-                         (let ((module-file (expand-file-name
-                                            (format "%s.org" m) modules-dir)))
-                           `(const :tag ,(format "%-20s - %s"
-                                                 m
-                                                 (ep3c--module-title module-file))
-                                   ,m)))
-                       available-modules)))
-  (set-default 'ep3c-modules valid-modules))
+(let ((modules-dir (file-name-concat user-emacs-directory "modules")))
+  (put 'ep3c-modules 'custom-type (ep3c--modules-custom-type modules-dir))
+  (set-default 'ep3c-modules (ep3c--valid-modules ep3c-modules modules-dir)))
 
 ;; Convert symbols to file paths before loading
 (let ((module-directory (file-name-concat user-emacs-directory "modules")))

@@ -42,12 +42,13 @@ To get rid of everything just delete =user-emacs-directory=
   (delete-directory user-emacs-directory t t)
 #+end_src
 
-To delete the settings but keep the rest, only delete =init.el= file
-and =modules= folder.
+To delete the settings but keep the rest, only delete the =init.el=
+and =core.el= files and the =modules= folder.
 
 #+name: delete-settings-only
 #+begin_src emacs-lisp :results none
   (delete-file (file-name-concat user-emacs-directory "init.el"))
+  (delete-file (file-name-concat user-emacs-directory "core.el"))
   (delete-directory (file-name-concat user-emacs-directory "modules") t)
 #+end_src
 

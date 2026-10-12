@@ -6,58 +6,22 @@
 ;;
 ;;; Code:
 
-(require 'cl-lib)
-
-(defun ep3c--module-title (module-file)
-  "Read the #+TITLE: property from MODULE-FILE.
-If not found, return a fallback based on the module name."
-  (with-temp-buffer
-    (insert-file-contents module-file)
-    (goto-char (point-min))
-    (if (re-search-forward "^#\\+TITLE:[ \t]*\\(.*\\)" nil t)
-        (match-string 1)
-      (capitalize (replace-regexp-in-string "-" " " (file-name-base module-file))))))
-
-(defun ep3c--modules-custom-type (modules-dir)
-  "Generate custom type for modules in MODULES-DIR."
-  (let ((modules (mapcar #'intern
-                          (mapcar #'file-name-base
-                                  (file-expand-wildcards
-                                   (file-name-concat modules-dir "*.org"))))))
-    `(set :greedy t
-          :value ,@(mapcar (lambda (m)
-                              (let ((module-file (expand-file-name
-                                                 (format "%s.org" m) modules-dir)))
-                                `(const :tag ,(format "%-20s - %s"
-                                                      m
-                                                      (ep3c--module-title module-file))
-                                        ,m)))
-                            modules))))
-
-(defun ep3c--migrate-modules-value (value)
-  "Convert VALUE to new symbol-based format if needed."
-  (cond
-   ((and (listp value) (symbolp (car value))) value)
-   ((and (listp value) (stringp (car value)))
-    (mapcar (lambda (s)
-              (intern (file-name-base s)))
-            value))
-   (t nil)))
+;; Load core.el from the same directory this file was loaded from.
+;; Fall back to the repository layout via `default-directory' when
+;; `load-file-name' is not bound (e.g. byte-compiling).
+(require 'core
+         (expand-file-name "core" (file-name-directory
+                                   (or load-file-name buffer-file-name
+                                       default-directory))))
 
 (defun ep3c--set-modules (sym value)
   "Setter for ep3c-modules.
 SYM is the custom variable being set.
 VALUE is the new value being assigned."
-  (let* ((value (or (ep3c--migrate-modules-value value) value))
-         (available-modules
-          (mapcar #'intern
-                  (mapcar #'file-name-base
-                          (file-expand-wildcards
-                           (file-name-concat default-directory "src/modules/*.org")))))
-         (value (delq nil (mapcar (lambda (m)
-                                    (if (memq m available-modules) m))
-                                  value))))
-    (put sym 'custom-type (ep3c--modules-custom-type default-directory))
+  (let* ((modules-dir (file-name-concat default-directory "src" "modules"))
+         (value (or (ep3c--migrate-modules-value value) value))
+         (value (ep3c--valid-modules value modules-dir)))
+    (put sym 'custom-type (ep3c--modules-custom-type modules-dir))
     (put sym 'standard-value (list value))
     (set-default sym value)))
 
@@ -71,10 +35,10 @@ VALUE is the new value being assigned."
         (ep3c--migrate-modules-value (car (cdr saved)))
       '())))
 
-(defun ep3c--install (init-package modules-wildcard)
+(defun ep3c--install (init-package core-package modules-wildcard)
   "Main Installation routine.
-INIT-PACKAGE contain the path to init.el while MODULES-WILDCARD matches
-the available module paths"
+INIT-PACKAGE contains the path to init.el, CORE-PACKAGE the path to
+core.el while MODULES-WILDCARD matches the available module paths"
   (let* ((modules (file-expand-wildcards modules-wildcard))
 	 (modules-target-directory (file-name-as-directory (file-name-concat
 							    user-emacs-directory
@@ -83,6 +47,7 @@ the available module paths"
       (make-directory modules-target-directory))
 
     (copy-file init-package user-emacs-directory t)
+    (copy-file core-package user-emacs-directory t)
 
     (dolist (module modules)
       (when (file-exists-p module)
@@ -102,8 +67,9 @@ the available module paths"
 
   (let* ((source-directory (file-name-concat default-directory "src"))
 	 (init-package (file-name-concat source-directory "init.el"))
+	 (core-package (file-name-concat source-directory "core.el"))
 	 (modules-wildcard (file-name-concat source-directory "modules" "*.org")))
-    (ep3c--install init-package modules-wildcard))
+    (ep3c--install init-package core-package modules-wildcard))
 
   (defcustom ep3c-modules
     (ep3c--modules-default)
@@ -113,18 +79,12 @@ the available module paths"
     :group 'ep3c)
 
   ;; Validate modules after defcustom is defined
-  (let* ((modules-dir (file-name-concat default-directory "src/modules"))
-         (available-modules
-          (mapcar #'intern
-                  (mapcar #'file-name-base
-                          (file-expand-wildcards
-                           (file-name-concat modules-dir "*.org")))))
-         (current-value (default-value 'ep3c-modules))
-         (valid-modules
-          (cl-remove-if-not (lambda (m) (memq m available-modules)) current-value)))
+  (let ((modules-dir (file-name-concat default-directory "src/modules")))
     (put 'ep3c-modules 'custom-type
          (ep3c--modules-custom-type modules-dir))
-    (set-default 'ep3c-modules valid-modules))
+    (set-default 'ep3c-modules
+                 (ep3c--valid-modules (default-value 'ep3c-modules)
+                                      modules-dir)))
 
   (customize-option 'ep3c-modules))
 

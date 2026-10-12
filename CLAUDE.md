@@ -13,6 +13,7 @@ EP3C (Emacs Pretty Personal Portable Configuration) is a modular, batteries-incl
 ├── README.org                # User-facing docs (org-mode source)
 ├── LICENSE
 └── src/
+    ├── core.el               # Shared helpers (module scanning/validation) used by install.el and init.el
     ├── install.el            # One-shot installer — copies files into user-emacs-directory
     ├── init.el               # Loaded by Emacs on every startup (after install)
     └── modules/              # Org-mode modules, each tangling into a .el file at load time
