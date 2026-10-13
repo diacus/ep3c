@@ -52,6 +52,28 @@ and =core.el= files and the =modules= folder.
   (delete-directory (file-name-concat user-emacs-directory "modules") t)
 #+end_src
 
+* Testing
+The test suite is written with ERT and runs without a graphical
+session. To check the repository, from the project root run:
+
+#+name: run-tests
+#+begin_src sh :results none
+  emacs -Q --batch -l test/run.el
+#+end_src
+
+The command exits with status 0 when every test passes and 1
+otherwise, which makes it usable as a CI entry point.
+
+The suite covers the modules under =src/modules/= and the installer:
+
+- every module tangles into balanced Emacs Lisp, using the same
+  tangling semantics =org-babel-load-file= applies at startup;
+- every module carries the =#+TITLE=, =#+AUTHOR= and =#+STARTUP:
+  overview= properties;
+- the installer copies =init.el=, =core.el= and all modules into a
+  temporary =user-emacs-directory=, and unknown or legacy modules
+  are validated correctly.
+
 * Keybindings
 ** Leader Key: =SPC=
 Most keybindings use the spacebar as a leader key in Evil normal state.

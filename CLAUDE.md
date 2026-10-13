@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project overview
 
-EP3C (Emacs Pretty Personal Portable Configuration) is a modular, batteries-included Emacs configuration. It is **not a typical software project**: there is no build system, no test suite, no package manifest beyond what `package.el`/`quelpa`/`use-package` fetch at install time. The repository's purpose is to be cloned by users, then installed into their `user-emacs-directory` via the installer.
+EP3C (Emacs Pretty Personal Portable Configuration) is a modular, batteries-included Emacs configuration. It is **not a typical software project**: there is no build system and no package manifest beyond what `package.el`/`quelpa`/`use-package` fetch at install time. The repository's purpose is to be cloned by users, then installed into their `user-emacs-directory` via the installer.
 
 ## Repository layout
 
@@ -51,6 +51,9 @@ EP3C (Emacs Pretty Personal Portable Configuration) is a modular, batteries-incl
         ├── password-store.org # GnuPG pinentry + WSL pass wrapper
         ├── docker.org        # docker, dockerfile-mode
         └── .gitignore        # Ignores tangled *.el + ltximg/
+└── test/
+    ├── run.el                # Batch ERT runner, exits 0/1 — CI entry point
+    └── ep3c-test.el          # Module-integrity + install smoke tests
 ```
 
 Each module is a single `.org` file with `#+begin_src emacs-lisp … #+end_src` blocks. There are no `.el` files checked in for modules — `org-babel-load-file` tangles and loads them at startup.
@@ -114,11 +117,24 @@ These are baked into the modules because the underlying packages have ordering b
 
 ## Common operations
 
-There are no test, lint, or build commands — this repo has no CI. Day-to-day work is editing `.org` files and verifying by restarting Emacs.
+There is no build step or linting. Day-to-day work is editing `.org` files; correctness is checked with the test suite below and by restarting Emacs.
+
+### Test suite (ERT)
+
+```sh
+emacs -Q --batch -l test/run.el
+```
+
+`test/run.el` runs the ERT suite in `test/ep3c-test.el` and exits 0/1, so it doubles as a CI entry point. The suite covers:
+
+- **Module integrity**: every `src/modules/*.org` tangles into balanced Emacs Lisp (tangled with the same semantics `org-babel-load-file` uses at startup: all `emacs-lisp` blocks, per-block `:tangle` overrides ignored), and carries the house metadata `#+TITLE:`, `#+AUTHOR:` and `#+STARTUP: overview`.
+- **Install smoke test**: `ep3c--setup` is run into a throwaway `user-emacs-directory`; init.el, core.el and all modules must land there, and `ep3c--set-modules` must migrate legacy string values to symbols and drop unknown modules.
+
+Tangling uses `org-babel-tangle-file` with `:tangle` forced to `"yes"` via a let-bound `org-babel-default-header-args`, because a bare `org-babel-tangle-file` on a module with no `:tangle` header tangles **nothing** (the default is `"no"`; `org-babel-load-file` forces it).
 
 ### Validate Emacs Lisp (best-effort, no test runner)
 
-The closest things to "tests" available without running Emacs interactively:
+Beyond the ERT suite, for ad-hoc checks without running Emacs interactively:
 
 ```sh
 # Byte-compile a single tangled file (tangle first, or load the .org via emacs -Q)
