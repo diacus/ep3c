@@ -61,6 +61,10 @@ session. To check the repository, from the project root run:
   emacs -Q --batch -l test/run.el
 #+end_src
 
+If projectile is available, use =M-x projectile-test-project RET= then
+type the test command and hit =RET.= The test results will be available
+in the =*compilation*= buffer.
+
 The command exits with status 0 when every test passes and 1
 otherwise, which makes it usable as a CI entry point.
 
