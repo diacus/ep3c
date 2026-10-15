@@ -7,7 +7,7 @@ For writing text documents enable margins and line wrapping.
 
 ~visual-fill-column-mode~ requires ~visual-line-mode~, so both are turned on together; this gives a centered reading column for prose instead of hard wrapping at ~fill-column~.
 
-In org buffers headings are excluded from the wrapping. Emacs decides wrapping buffer-wide (~truncate-lines~), so body text and heading lines cannot mix wrap and truncate; instead a font-lock rule display-truncates each heading at the edge of the reading column with an ellipsis (~…~). The hidden text stays in the buffer and can still be edited. Tags are right-aligned at that same edge by setting ~org-tags-column~ to the negated column width; existing files need ~M-x org-align-all-tags~ once to move already-saved tags into the column.
+In org buffers headings are excluded from the wrapping. Emacs decides wrapping buffer-wide (~truncate-lines~), so body text and heading lines cannot mix wrap and truncate; instead ~ep3c-org-heading-display-mode~ (enabled automatically by the setup, toggleable per buffer with ~M-x~) fontifies each heading so that its tags are fully hidden and the heading text is display-truncated at the edge of the reading column with an ellipsis (~…~). The hidden text stays in the buffer and can still be edited. Toggling the mode off restores the stock org heading display; existing files may then want ~M-x org-align-all-tags~ once to tidy tags at the default column.
 
 #+begin_src emacs-lisp
   (use-package visual-fill-column
@@ -20,37 +20,57 @@ In org buffers headings are excluded from the wrapping. Emacs decides wrapping b
       (visual-line-mode 1)
       (visual-fill-column-mode 1)
       (when (derived-mode-p 'org-mode)
-        (ep3c--truncate-org-headings))
+        (ep3c-org-heading-display-mode 1))
       (message "EP3C writing mode set up"))
 
-    (defun ep3c--truncate-org-headings ()
-      "Display-truncate org headings at the edge of the reading column."
-      (let ((width (or visual-fill-column-width fill-column)))
-        ;; Right-align tags at the reading column edge so they stay
-        ;; inside the truncation limit
-        (setq-local org-tags-column (- width))
-        (add-to-invisibility-spec 'ep3c-heading)
-        (font-lock-add-keywords
-         nil
-         `((,org-complex-heading-regexp
-            (0 (ep3c--truncate-heading)))))))
+    (defvar ep3c--org-heading-font-lock-keyword
+      '((ep3c--search-org-heading (0 (ep3c--fontify-org-heading))))
+      "Font-lock keyword that hides org heading tags and truncates
+heading text.  The matcher is a function so the buffer-local
+`org-complex-heading-regexp' is re-read on every fontification
+pass.")
 
-    (defun ep3c--truncate-heading ()
-      "Replace the part of the heading matched at point beyond the
-reading column with an ellipsis."
+    (defun ep3c--search-org-heading (limit)
+      "Match the next org heading up to LIMIT, for font-lock."
+      (re-search-forward org-complex-heading-regexp limit t))
+
+    (defun ep3c--clear-org-heading-props (beg end)
+      "Remove EP3C truncation/hiding text properties between BEG and END.
+`display' and `invisible' are not font-lock-managed by default, so
+leftovers from earlier fontification passes have to be swept
+here."
+      (let ((pos beg))
+        (while (< pos end)
+          (when (equal (get-text-property pos 'display) "…")
+            (remove-text-properties pos (1+ pos) '(display)))
+          (when (eq (get-text-property pos 'invisible) 'ep3c-heading)
+            (remove-text-properties pos (1+ pos) '(invisible)))
+          (setq pos (1+ pos)))))
+
+    (defun ep3c--fontify-org-heading ()
+      "Hide the tags of the org heading matched at point and
+truncate its text at the edge of the reading column."
       (let* ((beg (match-beginning 0))
              (end (match-end 0))
-             (limit (or visual-fill-column-width fill-column)))
-        ;; Clear truncation from a previous fontification pass
-        (remove-text-properties beg end '(invisible ep3c-heading))
-        (let ((pos beg))
-          (while (< pos end)
-            (when (equal (get-text-property pos 'display) "…")
-              (remove-text-properties pos (1+ pos) '(display)))
-            (setq pos (1+ pos))))
-        ;; Hide everything past the first character over the limit
+             (limit (or visual-fill-column-width fill-column))
+             ;; Tags, found the same way `org-activate-tags' finds
+             ;; them; the regexp match starts at the whitespace run
+             ;; that right-aligns them, so the padding is hidden
+             ;; along with the tags.
+             (tag-beg (save-excursion
+                        (save-match-data
+                          (goto-char beg)
+                          (and (re-search-forward org-tag-group-re end t)
+                               (match-beginning 0)))))
+             ;; Heading text visible before the tags
+             (text-end (or tag-beg end)))
+        (ep3c--clear-org-heading-props beg end)
+        ;; Tags (and the padding before them) are fully hidden
+        (when tag-beg
+          (put-text-property tag-beg end 'invisible 'ep3c-heading))
+        ;; Display-truncate the heading text
         (let ((pos beg) (col 0) cut)
-          (while (and (< pos end) (not cut))
+          (while (and (< pos text-end) (not cut))
             (let ((w (string-width (buffer-substring-no-properties
                                     pos (1+ pos)))))
               (when (> (+ col w) limit)
@@ -60,5 +80,38 @@ reading column with an ellipsis."
           (when cut
             (put-text-property cut (1+ cut) 'display "…")
             (put-text-property (1+ cut) end 'invisible 'ep3c-heading))))
-      nil))
+      nil)
+
+    (defun ep3c--sweep-org-heading-props ()
+      "Sweep EP3C heading properties out of every org heading in the
+buffer."
+      (with-silent-modifications
+        (goto-char (point-min))
+        (while (re-search-forward org-complex-heading-regexp nil t)
+          (ep3c--clear-org-heading-props (match-beginning 0)
+                                         (match-end 0)))))
+
+    (define-minor-mode ep3c-org-heading-display-mode
+      "Buffer-local looks for org headings under visual line mode.
+Fontifies org headings so that tags are fully hidden and the
+heading text is display-truncated at the edge of the reading
+column with an ellipsis.  Only meaningful in `org-mode' buffers.
+Toggling the mode off restores the stock heading fontification."
+      :init-value nil
+      :lighter ""
+      (cond
+       (ep3c-org-heading-display-mode
+        (if (not (derived-mode-p 'org-mode))
+            ;; The setup hook is org-only; manual toggles elsewhere
+            ;; no-op.
+            (setq ep3c-org-heading-display-mode nil)
+          (add-to-invisibility-spec 'ep3c-heading)
+          (font-lock-add-keywords nil ep3c--org-heading-font-lock-keyword)
+          (font-lock-flush)))
+       (t
+        (font-lock-remove-keywords nil ep3c--org-heading-font-lock-keyword)
+        (when (derived-mode-p 'org-mode)
+          (ep3c--sweep-org-heading-props))
+        (remove-from-invisibility-spec 'ep3c-heading)
+        (font-lock-flush)))))
 #+end_src

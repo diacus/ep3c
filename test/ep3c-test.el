@@ -106,7 +106,7 @@ failures are reported together at the end."
 
 (defconst ep3c-test-defining-forms
   '(defun defun* cl-defun defsubst defmacro defvar defvar-local
-    defconst defcustom defface defalias)
+    defconst defcustom defface defalias define-minor-mode)
   "Special forms whose cadr is the symbol they define.")
 
 (defun ep3c-test--house-symbol-p (obj)
