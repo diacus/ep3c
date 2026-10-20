@@ -10,20 +10,59 @@ Instead of the default init screen, check out this [[https://github.com/emacs-da
     :config
     (setq dashboard-startup-banner 'logo
           dashboard-items '((bookmarks . 5)
-  			  (recents   . 5)
-  			  (projects  . 5)
-  			  (registers . 5))
-  	dashboard-center-content t
-  	dashboard-vertically-center-content t
-  	)
+                            (recents   . 5)
+                            (projects  . 5)
+                            (registers . 5))
+          dashboard-center-content t
+          dashboard-vertically-center-content t)
     (dashboard-setup-startup-hook))
 #+end_src
 
-When running on daemon mode, switch to =*dashboard*= buffer on every new
-frame created.
+Keep the =*dashboard*= buffer in one frame only: any other frame shows
+a =*scratch*= buffer instead.  When the frame displaying the dashboard
+is deleted, the next one created becomes the dashboard frame.
+
+A frame cloned off the dashboard frame, ~C-x 5 2~, inherits the same
+buffer, hence the ~after-make-frame-functions~ hook.  In a daemon the
+hidden startup frame parks the dashboard in its window via
+~emacs-startup-hook~ yet is no client, so only client frames may claim
+the dashboard there.
 
 #+begin_src emacs-lisp
+  (defvar ep3c--dashboard-client-frame nil
+    "Frame that currently displays the *dashboard* buffer, or nil.")
+
+  (defun ep3c--dashboard-claimable-frame-p (frame)
+    "Return t when FRAME may claim the *dashboard* buffer.
+
+In a daemon only client frames may claim it, so that the hidden
+startup frame showing the dashboard through `emacs-startup-hook'
+never steals it from the first client."
+    (and (frame-live-p frame)
+         (if (daemonp)
+             (frame-parameter frame 'client)
+           t)))
+
+  (defun ep3c--dashboard-single-frame (frame)
+    "Keep the *dashboard* buffer in a single frame.
+
+Bound to `after-make-frame-functions'.  A frame cloned off the
+frame displaying *dashboard* inherits the same buffer; while the
+dashboard frame is live, switch FRAME to *scratch*."
+    (when (and (frame-live-p ep3c--dashboard-client-frame)
+               (not (eq frame ep3c--dashboard-client-frame))
+               (get-buffer-window dashboard-buffer-name frame))
+      (set-window-buffer
+       (get-buffer-window dashboard-buffer-name frame)
+       (get-scratch-buffer-create))))
+
+  (add-hook 'after-make-frame-functions #'ep3c--dashboard-single-frame)
+
   (setq initial-buffer-choice
         (lambda ()
-  	(get-buffer-create dashboard-buffer-name)))
+          (if (frame-live-p ep3c--dashboard-client-frame)
+              (get-scratch-buffer-create)
+            (when (ep3c--dashboard-claimable-frame-p (selected-frame))
+              (setq ep3c--dashboard-client-frame (selected-frame)))
+            (get-buffer-create dashboard-buffer-name))))
 #+end_src
