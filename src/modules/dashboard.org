@@ -27,6 +27,13 @@ eligible frame displays it.  So the dashboard frame may switch itself
 to =*scratch*= — the next frame created then becomes the dashboard
 frame, with the page freshly rendered on display.
 
+Switching the =*dashboard*= buffer explicitly in some window always
+wins: the window's frame takes the dashboard over, every other frame
+displaying it falls back to =*scratch*=.  Last one wins — the frame
+you asked for the dashboard in keeps it, whatever passive display
+preceded it.  Frame creation does not count as a claim; there the
+=initial-buffer-choice= rule above stays in charge.
+
 A frame cloned off the dashboard frame, ~C-x 5 2~, inherits the same
 buffer, hence the ~after-make-frame-functions~ hook.  In a daemon the
 hidden startup frame parks the dashboard in its window via
@@ -76,6 +83,28 @@ FRAME's window to *scratch*."
       (set-window-buffer window (get-scratch-buffer-create))))
 
   (add-hook 'after-make-frame-functions #'ep3c--dashboard-single-frame)
+
+  (defun ep3c--dashboard-single-display (frame)
+    "Let FRAME take over the *dashboard* buffer from other frames.
+
+Bound to `window-buffer-change-functions'.  When a claimable
+FRAME displays the dashboard while another claimable frame does
+too, FRAME wins: every other frame's dashboard windows fall back
+to *scratch*.  An explicit buffer switch made in FRAME counts as
+the latest claim of the dashboard, whatever passive display
+preceded it.  Non-claimable frames — the hidden startup frame in
+a daemon, keeping the dashboard parked — never trigger the
+transfer, otherwise they would reclaim it from clients at every
+redisplay of their own window tree."
+    (when-let* (((ep3c--dashboard-claimable-frame-p frame))
+                (dashboard (get-buffer dashboard-buffer-name))
+                ((get-buffer-window dashboard frame)))
+      (dolist (other (delq frame (ep3c--dashboard-claimable-frames)))
+        (dolist (window (window-list other 'no-minibuffer))
+          (when (eq (window-buffer window) dashboard)
+            (set-window-buffer window (get-scratch-buffer-create)))))))
+
+  (add-hook 'window-buffer-change-functions #'ep3c--dashboard-single-display)
 
   (setq initial-buffer-choice
         (lambda ()
