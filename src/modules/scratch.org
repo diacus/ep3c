@@ -1,0 +1,152 @@
+#+TITLE: Scratch buffer settings
+#+AUTHOR: Diacus Magnuz
+#+STARTUP: overview
+
+The standard =*scratch*= buffer evaluates the s-expression before
+point with ~C-j~ (~eval-print-last-sexp~): the result starts a new
+line below, and the cursor jumps under it.
+
+#+begin_example
+(+ 3 4)                       (+ 3 4)
+                          →   7
+                              ␣
+#+end_example
+
+Here the printed output and the value are appended as trailing
+comments instead — the value prefixed with ~;; =>~, the rest of the
+output with ~;;~ — and point stays exactly where it was, so the buffer
+grows as a file of expressions with their results:
+
+#+begin_example
+(+ 3 4)                       (+ 3 4) ;; => 7
+                              ␣
+#+end_example
+
+Re-evaluating an expression replaces the result comment of its
+previous run instead of pushing a second one below: a stale comment
+next to point — standing between the expression and the old result,
+or right after the old result's last line — is dropped before the
+evaluation.  Stale comments are recognized by shape: the first line
+carries the ~;; =~ mark, continuations start with the plain ~;;~.
+
+The implementation lets ~eval-print-last-sexp~ do the evaluation —
+errors keep their original behaviour, an error message in the echo
+area and the buffer untouched — and then rewrites the block the
+command inserted into a trailing comment.  With a prefix argument
+the original command runs unchanged.
+
+#+begin_src emacs-lisp
+  (defun ep3c--scratch-commented (text)
+    "Prefix the lines of TEXT as trailing Emacs Lisp comments.
+
+TEXT is what `eval-print-last-sexp' inserts: a leading newline,
+the printed output and the value, and a trailing one.  The first
+line gets a `;; =>' prefix, the rest a plain `;', so multi-line
+output keeps reading as a comment; the trailing newline is put
+back, so whatever follows the insertion point starts its own
+line."
+    (let ((prefix " ;; => ")
+          (body (if (string-prefix-p "\n" text)
+                    (substring text 1)
+                  text)))
+      (when (string-suffix-p "\n" body)
+        (setq body (substring body 0 -1)))
+      (concat
+       (mapconcat
+        (lambda (line)
+          (prog1 (concat prefix line) (setq prefix " ;; ")))
+        (split-string body "\n")
+        "\n")
+       "\n")))
+
+  (defun ep3c--scratch-stale-result-at (pos)
+    "Delete a stale result comment starting right at POS; return its start.
+
+The comment the previous evaluation left at POS — first line
+carrying the `;; =>' mark, continuations of a multi-line result
+starting with ` ;; ' — is deleted.  Return POS, or nil when no
+comment is there."
+    (save-excursion
+      (goto-char pos)
+      (when (looking-at-p "[ \t]* ;; =>")
+        (forward-line 1)
+        (while (looking-at-p " ;; ")
+          (forward-line 1))
+        (delete-region pos (point))
+        pos)))
+
+  (defun ep3c--scratch-stale-result-before (pos)
+    "Delete a stale result comment ending right before POS; return its start.
+
+When POS stands at the beginning of the line after the comment's
+last one — cursor left where the earlier evaluation put it — the
+block starts on an earlier line: the first one upwards whose text
+carries the `;; =>' mark, every line in between starting with
+` ;; '.  Return the position where the comment began, or nil when
+there is none."
+    (save-excursion
+      (goto-char pos)
+      (and (bolp) (not (bobp))
+           (let (start)
+             (catch 'top
+               (while (not (bobp))
+                 (forward-line -1)
+                 (cond
+                  ;; First line of the block: it carries the mark.
+                  ((re-search-forward " ;; =>" (line-end-position) t)
+                   (setq start (match-beginning 0))
+                   (throw 'top t))
+                  ;; Continuation line of a multi-line result.
+                  ((looking-at-p " ;; "))
+                  ;; Anything else is not ours.
+                  (t (throw 'top t)))))
+             (when start
+               (delete-region start pos)
+               start)))))
+
+  (defun ep3c-scratch-eval-print-as-comment (arg)
+    "Evaluate the s-expression before point and comment the result.
+
+A variant of `eval-print-last-sexp' for the *scratch* buffer: the
+printed output and the value are added at the end of the current
+line, commented out, and point stays where it was before the
+evaluation.  A stale result comment next to point is replaced.
+Errors from the evaluated expression keep the original behaviour:
+an error message in the echo area, buffer untouched.  With a
+prefix argument, ARG, the original command runs unchanged, result
+on a new line and all."
+    (interactive "P")
+    (if arg
+        (eval-print-last-sexp t)
+      (let* ((stale-before (ep3c--scratch-stale-result-before (point)))
+             (anchor (or stale-before
+                         (ep3c--scratch-stale-result-at (point))
+                         (point)))
+             ;; Keep the cursor where it stands relative to the
+             ;; surrounding text: right before it when the stale
+             ;; comment sat behind point, right before the comment
+             ;; when the stale one sat ahead of point.
+             (cursor (copy-marker (point) (and stale-before t))))
+        (unwind-protect
+            (save-excursion
+              (goto-char anchor)
+              (let* ((start (copy-marker (point) nil))
+                     end text)
+                ;; The original command inserts the printed output
+                ;; and the value at point and leaves point at the
+                ;; end of what it inserted.
+                (eval-print-last-sexp t)
+                (setq end (copy-marker (point))
+                      text (buffer-substring-no-properties
+                            start end))
+                (delete-region start end)
+                (insert (ep3c--scratch-commented text))))
+          (goto-char cursor)))))
+
+  ;; ~C-j~ is bound directly to `eval-print-last-sexp' in
+  ;; `lisp-interaction-mode-map', so a `remap' entry would never win:
+  ;; the key has to be rebound explicitly.
+  (define-key lisp-interaction-mode-map
+              (kbd "C-j")
+              #'ep3c-scratch-eval-print-as-comment)
+#+end_src
