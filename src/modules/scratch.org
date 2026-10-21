@@ -150,3 +150,21 @@ on a new line and all."
               (kbd "C-j")
               #'ep3c-scratch-eval-print-as-comment)
 #+end_src
+
+* No syntax checking
+
+The =*scratch*= buffer inherits =flycheck-mode= because
+=lisp-interaction-mode= derives from =prog-mode= — the mode the
+[[file:prog-mode.org][prog-mode module]] hooks =flycheck-mode= on.  A scratch pad is not
+code to be checked, so switch the minor mode off again.  Mode hooks
+of a derived mode run after their parent's, so the hook below lands
+after the =prog-mode-hook= from =flycheck-mode= and wins.
+
+#+begin_src emacs-lisp
+  (defun ep3c--scratch-no-flycheck ()
+    "The *scratch* buffer is a playground, not code to lint."
+    (when (fboundp 'flycheck-mode)
+      (flycheck-mode -1)))
+
+  (add-hook 'lisp-interaction-mode-hook #'ep3c--scratch-no-flycheck)
+#+end_src
