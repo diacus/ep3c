@@ -28,7 +28,18 @@ See Evil Collection repository for details.
     ;; inserting, which looks like a hung shell: the command never
     ;; runs and only newlines pile up.  S-RET still inserts a newline.
     (setq evil-collection-repl-submit-state 'insert)
-    (evil-collection-init))
+    (evil-collection-init)
+    ;; ielm evaluates via `ielm-send-input' (comint-send-input +
+    ;; ielm-eval-input), but evil-collection's generic comint binding puts
+    ;; `comint-send-input' on RET in an auxiliary keymap, which shadows
+    ;; ielm's own RET (`ielm-return'): the input line is recorded into
+    ;; `ielm-input' and dropped, so every RET looks like a no-op.  Rebind
+    ;; ielm's own entry point in both states; other comint buffers
+    ;; (shell, ...) are unaffected.  [return] covers the event the GUI
+    ;; (pgtk) Return key produces; (kbd "RET") covers "\C-m".
+    (evil-define-key '(normal insert) inferior-emacs-lisp-mode-map
+      (kbd "RET") #'ielm-return
+      [return]    #'ielm-return))
 #+end_src
 
 * Evil Org
