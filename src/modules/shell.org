@@ -44,6 +44,125 @@ The [[https://github.com/suonlight/multi-vterm][multi-vterm.el]] package allows 
       (evil-define-key '(normal visual) 'global (kbd "SPC o T") 'multi-vterm)))
 #+end_src
 
+The shell's current command line can be edited in a separate buffer,
+like readline's =C-x C-e= (=edit-and-execute-command=): the text after
+the prompt is opened for editing in its own frame when Emacs is
+graphic.  With =C-c C-c= the edited line is placed back on the shell
+prompt, without executing it; =C-c C-k= (or plain =C-x k=) discards the
+edit.
+#+begin_src emacs-lisp
+  (defvar vterm--edit-counter 0
+    "Counter to generate unique names for vterm edit buffers.")
+
+  (defvar-local vterm--edit-source nil
+    "The vterm buffer whose command line is being edited.")
+
+  (defvar-local vterm--edit-frame nil
+    "The frame `vterm--edit-command-line' created for this buffer, or nil.")
+
+  (defun vterm--edit-read-line ()
+    "Return the shell's current command line in this vterm buffer.
+Readline's =C-a= is sent first, so the terminal cursor sits at the
+start of the input, right after the prompt; the command line is
+read from there to the end of the line, without depending on any
+shell integration or prompt detection.  The side effect is that
+the shell's cursor moves to the start of its input line."
+    (vterm-send-key "a" nil nil t)
+    (when vterm--process
+      (accept-process-output vterm--process 0.5))
+    (vterm-reset-cursor-point)
+    (let ((beg (vterm--get-cursor-point))
+          (end (vterm--get-end-of-line)))
+      (substring-no-properties
+       (buffer-substring (min beg end) (max beg end)))))
+
+  (defun vterm--edit-display (buffer)
+    "Display BUFFER for editing.
+
+Pop up a fresh frame when Emacs is graphic (the usual case when
+it runs as a daemon); on TTY frames fall back to the default
+window display.  Return the frame that was created, or nil when
+BUFFER went to a window of the current frame."
+    (if (display-graphic-p)
+        (let ((previous (selected-frame))
+              (window (display-buffer
+                       buffer
+                       '((display-buffer-pop-up-frame)
+                         (reusable-frames . nil)
+                         (dedicated . t)))))
+          (when (and (window-live-p window)
+                     (not (eq (window-frame window) previous)))
+            (select-frame-set-input-focus (window-frame window))
+            (window-frame window)))
+      (pop-to-buffer buffer)
+      nil))
+
+  (defun vterm--edit-close-frame ()
+    "Delete the frame created for this edit buffer, when it still shows it.
+Added to `kill-buffer-hook' by `vterm--edit-command-line'."
+    (when (and (frame-live-p vterm--edit-frame)
+               (memq (current-buffer)
+                     (mapcar #'window-buffer
+                             (window-list vterm--edit-frame 'never))))
+      (delete-frame vterm--edit-frame)))
+
+  (defun vterm--edit-accept ()
+    "Place the edited line back on the vterm prompt, without executing it.
+The shell's current input is discarded first, so the prompt is
+left with exactly the edits, ready to be run with RET."
+    (interactive)
+    (let ((source vterm--edit-source)
+          (text (string-trim-right
+                 (buffer-substring-no-properties
+                  (point-min) (point-max)))))
+      (if (not (and (buffer-live-p source)
+                    (with-current-buffer source
+                      (and (bound-and-true-p vterm--term)
+                           (process-live-p vterm--process)))))
+          (message "vterm edit: the shell is gone, discarding the edit")
+        (with-current-buffer source
+          (vterm-send-key "a" nil nil t) ; C-a: readline, start of input
+          (vterm-send-key "k" nil nil t) ; C-k: readline, kill to end
+          (when (> (length text) 0)
+            (vterm-insert text))
+          (vterm-reset-cursor-point))))
+    (kill-buffer (current-buffer)))
+
+  (defun vterm--edit-abort ()
+    "Leave the shell prompt untouched and discard the edit buffer."
+    (interactive)
+    (kill-buffer (current-buffer)))
+
+  (defun vterm--edit-command-line ()
+    "Edit the shell's current command line in a fresh buffer.
+Mirrors readline's `edit-and-execute-command': the command line
+after the prompt of this vterm is copied into a temporary buffer,
+shown in a new frame when Emacs is graphic.  There, C-c C-c puts
+the edited text back on the prompt and C-c C-k discards it;
+nothing is executed."
+    (interactive)
+    (unless (and (bound-and-true-p vterm--term)
+                 (process-live-p vterm--process))
+      (user-error "No running shell in this vterm buffer"))
+    (let ((vterm-buf (current-buffer))
+          (line (vterm--edit-read-line)))
+      (with-current-buffer
+          (generate-new-buffer
+           (format "*vterm edit %d*"
+                   (setq vterm--edit-counter (1+ vterm--edit-counter))))
+        (setq-local vterm--edit-source vterm-buf)
+        (setq-local vterm--edit-frame
+                    (vterm--edit-display (current-buffer)))
+        (add-hook 'kill-buffer-hook #'vterm--edit-close-frame)
+        (insert line)
+        (goto-char (point-max))
+        (local-set-key (kbd "C-c C-c") #'vterm--edit-accept)
+        (local-set-key (kbd "C-c C-k") #'vterm--edit-abort))))
+
+  (with-eval-after-load 'vterm
+    (define-key vterm-mode-map (kbd "C-x C-e") #'vterm--edit-command-line))
+#+end_src
+
 * Eshell
 #+begin_quote
 Eshell is a shell-like command interpreter implemented in Emacs
