@@ -6,7 +6,6 @@ Instead of the default init screen, check out this [[https://github.com/emacs-da
 #+begin_src emacs-lisp
   (use-package dashboard
     :ensure t
-    :after projectile
     :config
     (setq dashboard-startup-banner 'logo
           dashboard-items '((bookmarks . 5)
@@ -15,6 +14,18 @@ Instead of the default init screen, check out this [[https://github.com/emacs-da
                             (registers . 5))
           dashboard-center-content t
           dashboard-vertically-center-content t)
+    ;; Recent dashboard versions read the projects widget from project.el
+    ;; by default (project-known-project-roots), while ep3c tracks
+    ;; projects with projectile.  Modules load in `ep3c-modules' order,
+    ;; so this may execute before projectile.org: settle for project.el
+    ;; for now and upgrade to projectile the moment it loads —
+    ;; immediately when projectile.org ran first, during this init pass
+    ;; otherwise.  Either way the projects section has a data source.
+    (setq dashboard-projects-backend (if (locate-library "projectile")
+                                         'projectile
+                                       'project-el))
+    (with-eval-after-load 'projectile
+      (setq dashboard-projects-backend 'projectile))
     (dashboard-setup-startup-hook))
 #+end_src
 
@@ -40,52 +51,59 @@ hidden startup frame parks the dashboard in its window via
 ~emacs-startup-hook~ yet is no client, so only client frames may claim
 the dashboard there.
 
+Everything below hinges on the dashboard package, which the module
+installs but only loads when projectile is likewise available; without
+that guard the frame and refresh hooks would surface void-variable and
+void-function errors at every frame creation, and no dashboard buffer
+would ever exist.
+
 #+begin_src emacs-lisp
-  (defun ep3c--dashboard-claimable-frame-p (frame)
-    "Return t when FRAME may claim the *dashboard* buffer.
+  (when (locate-library "dashboard")
+    (defun ep3c--dashboard-claimable-frame-p (frame)
+      "Return t when FRAME may claim the *dashboard* buffer.
 
 In a daemon only client frames may claim it, so that the hidden
 startup frame showing the dashboard through `emacs-startup-hook'
 never steals it from the first client or keeps it captive later."
-    (and (frame-live-p frame)
-         (if (daemonp)
-             (frame-parameter frame 'client)
-           t)))
+      (and (frame-live-p frame)
+           (if (daemonp)
+               (frame-parameter frame 'client)
+             t)))
 
-  (defun ep3c--dashboard-claimable-frames ()
-    "Return the frames that may claim the *dashboard* buffer."
-    (let (frames)
-      (dolist (frame (frame-list) (nreverse frames))
-        (when (ep3c--dashboard-claimable-frame-p frame)
-          (push frame frames)))))
+    (defun ep3c--dashboard-claimable-frames ()
+      "Return the frames that may claim the *dashboard* buffer."
+      (let (frames)
+        (dolist (frame (frame-list) (nreverse frames))
+          (when (ep3c--dashboard-claimable-frame-p frame)
+            (push frame frames)))))
 
-  (defun ep3c--dashboard-displaying-window (&optional exclude)
-    "Return a window outside EXCLUDE displaying *dashboard*, or nil.
+    (defun ep3c--dashboard-displaying-window (&optional exclude)
+      "Return a window outside EXCLUDE displaying *dashboard*, or nil.
 
 Only windows on claimable frames count, so the hidden startup frame
 in a daemon never counts as displaying the dashboard."
-    (let (window)
-      (dolist (frame (ep3c--dashboard-claimable-frames) window)
-        (unless (eq frame exclude)
-          (setq window
-                (or (get-buffer-window dashboard-buffer-name frame)
-                    window))))))
+      (let (window)
+        (dolist (frame (ep3c--dashboard-claimable-frames) window)
+          (unless (eq frame exclude)
+            (setq window
+                  (or (get-buffer-window dashboard-buffer-name frame)
+                      window))))))
 
-  (defun ep3c--dashboard-single-frame (frame)
-    "Keep the *dashboard* buffer in a single frame.
+    (defun ep3c--dashboard-single-frame (frame)
+      "Keep the *dashboard* buffer in a single frame.
 
 Bound to `after-make-frame-functions'.  A frame cloned off the
 frame displaying *dashboard* inherits the same buffer; while
 another claimable frame still displays the dashboard, switch
 FRAME's window to *scratch*."
-    (when-let* ((window (get-buffer-window dashboard-buffer-name frame))
-                ((ep3c--dashboard-displaying-window frame)))
-      (set-window-buffer window (get-scratch-buffer-create))))
+      (when-let* ((window (get-buffer-window dashboard-buffer-name frame))
+                  ((ep3c--dashboard-displaying-window frame)))
+        (set-window-buffer window (get-scratch-buffer-create))))
 
-  (add-hook 'after-make-frame-functions #'ep3c--dashboard-single-frame)
+    (add-hook 'after-make-frame-functions #'ep3c--dashboard-single-frame)
 
-  (defun ep3c--dashboard-single-display (frame)
-    "Let FRAME take over the *dashboard* buffer from other frames.
+    (defun ep3c--dashboard-single-display (frame)
+      "Let FRAME take over the *dashboard* buffer from other frames.
 
 Bound to `window-buffer-change-functions'.  When a claimable
 FRAME displays the dashboard while another claimable frame does
@@ -96,28 +114,28 @@ preceded it.  Non-claimable frames — the hidden startup frame in
 a daemon, keeping the dashboard parked — never trigger the
 transfer, otherwise they would reclaim it from clients at every
 redisplay of their own window tree."
-    (when-let* (((ep3c--dashboard-claimable-frame-p frame))
-                (dashboard (get-buffer dashboard-buffer-name))
-                ((get-buffer-window dashboard frame)))
-      (dolist (other (delq frame (ep3c--dashboard-claimable-frames)))
-        (dolist (window (window-list other 'no-minibuffer))
-          (when (eq (window-buffer window) dashboard)
-            (set-window-buffer window (get-scratch-buffer-create)))))))
+      (when-let* (((ep3c--dashboard-claimable-frame-p frame))
+                  (dashboard (get-buffer dashboard-buffer-name))
+                  ((get-buffer-window dashboard frame)))
+        (dolist (other (delq frame (ep3c--dashboard-claimable-frames)))
+          (dolist (window (window-list other 'no-minibuffer))
+            (when (eq (window-buffer window) dashboard)
+              (set-window-buffer window (get-scratch-buffer-create)))))))
 
-  (add-hook 'window-buffer-change-functions #'ep3c--dashboard-single-display)
+    (add-hook 'window-buffer-change-functions #'ep3c--dashboard-single-display)
 
-  (setq initial-buffer-choice
-        (lambda ()
-          ;; Exclude the frame being decided: `server--create-frame'
-          ;; makes the client frame with `make-frame', which populates
-          ;; its window with the buffer of the frame selected at
-          ;; creation (the hidden startup frame, still showing the
-          ;; dashboard in a daemon).  Without the exclusion that
-          ;; inheritance makes every client think the dashboard is
-          ;; already displayed.
-          (if (ep3c--dashboard-displaying-window (selected-frame))
-              (get-scratch-buffer-create)
-            (get-buffer-create dashboard-buffer-name))))
+    (setq initial-buffer-choice
+          (lambda ()
+            ;; Exclude the frame being decided: `server--create-frame'
+            ;; makes the client frame with `make-frame', which populates
+            ;; its window with the buffer of the frame selected at
+            ;; creation (the hidden startup frame, still showing the
+            ;; dashboard in a daemon).  Without the exclusion that
+            ;; inheritance makes every client think the dashboard is
+            ;; already displayed.
+            (if (ep3c--dashboard-displaying-window (selected-frame))
+                (get-scratch-buffer-create)
+              (get-buffer-create dashboard-buffer-name)))))
 #+end_src
 
 Each time the =*dashboard*= buffer is displayed, re-render its items:
@@ -130,15 +148,16 @@ re-renders the buffer in place — the window keeps its buffer — so the
 hook is not re-entered.
 
 #+begin_src emacs-lisp
-  (defun ep3c--dashboard-refresh-displayed (frame)
-    "Refresh the *dashboard* buffer whenever FRAME displays it.
+  (when (locate-library "dashboard")
+    (defun ep3c--dashboard-refresh-displayed (frame)
+      "Refresh the *dashboard* buffer whenever FRAME displays it.
 
 Bound to `window-buffer-change-functions'.  Rendering a fresh page
 on every display keeps bookmarks, recents, projects and registers
 up to date instead of frozen at the last startup."
-    (when-let* ((window (get-buffer-window dashboard-buffer-name frame)))
-      (with-selected-window window
-        (dashboard-insert-startupify-lists t))))
+      (when-let* ((window (get-buffer-window dashboard-buffer-name frame)))
+        (with-selected-window window
+          (dashboard-insert-startupify-lists t))))
 
-  (add-hook 'window-buffer-change-functions #'ep3c--dashboard-refresh-displayed)
+    (add-hook 'window-buffer-change-functions #'ep3c--dashboard-refresh-displayed))
 #+end_src
