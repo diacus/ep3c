@@ -6,32 +6,32 @@ Configuration settings to invoke a *Shell* window, defines two key bindings:
 - =SPC= + =o= + =t= :: opens shell in bottom window
 - =SPC= + =o= + =T= :: opens shell in current window
 
+Both shells are shown in a *popup* window at the bottom of the frame,
+which closes on its own when the shell is gone. This is the job of
+[[https://github.com/diacus/popup.el][popup.el]], installed from GitHub with =quelpa=.
+
+#+begin_src emacs-lisp
+  (use-package popup
+    :quelpa (popup :fetcher github :repo "diacus/popup.el"))
+#+end_src
+
 * Vterm
 Emacs-libvterm ([[https://github.com/akermu/emacs-libvterm][vterm]]) is a fully-fleged terminal emulator inside GNU
 Emacs based on [[https://github.com/neovim/libvterm][libvterm]], a C library (UNIX like systems only)
 #+begin_src emacs-lisp
   (unless (member system-type '(ms-dos windows-nt cygwin))
+    (defun shell--popup-vterm ()
+      "Open vterm in a popup window at the bottom of the frame.
+The window closes by itself when the shell exits."
+      (interactive)
+      (funcall (make-repl-popup #'vterm)))
+
     (use-package vterm
       :ensure t
       :config (evil-define-key
   		'(normal visual)
   		'global (kbd "SPC o t")
-  		'vterm-other-window)))
-
-  (defun vterm--delete-window-on-exit (buffer _status)
-    "Delete vterm window when the shell process exits.
-  BUFFER is the vterm buffer, STATUS is the exit message."
-    (when (buffer-live-p buffer)
-      (with-current-buffer buffer
-  	(when (and vterm--process (not (process-live-p vterm--process)))
-  	  ;; Kill the buffer first to avoid window errors
-  	  (let ((window (get-buffer-window buffer)))
-  	    (kill-buffer buffer)
-  	    ;; only delete window if it exists and isn´t the only window
-  	    (when (and window (not (one-window-p)))
-  	      (delete-window window)))))))
-
-  (add-hook 'vterm-exit-functions #'vterm--delete-window-on-exit)
+  		#'shell--popup-vterm)))
 #+end_src
 
 The [[https://github.com/suonlight/multi-vterm][multi-vterm.el]] package allows managing multiple =vterm= buffers.
@@ -271,18 +271,18 @@ Since =vterm= doesn't support Windows operating system, the next viable
 choice for a command line interface is presicely *eshell.*
 
 #+begin_src emacs-lisp
-  (defun eshell--other-window ()
-    "Open eshell in other window"
+  (defun shell--popup-eshell ()
+    "Open eshell in a popup window at the bottom of the frame.
+Like `shell--popup-vterm' for vterm: popup.el closes the window
+when the shell is gone."
     (interactive)
-    (let ((window (split-window-below)))
-      (select-window window)
-      (eshell)))
+    (funcall (make-repl-popup #'eshell)))
 
   (if (member system-type '(ms-dos windows-nt cygwin))
       (progn
-        (evil-define-key '(normal visual) 'global (kbd "SPC o t") 'eshell--other-window)
+        (evil-define-key '(normal visual) 'global (kbd "SPC o t") 'shell--popup-eshell)
         (evil-define-key '(normal visual) 'global (kbd "SPC o T") 'eshell))
     (progn
-        (evil-define-key '(normal visual) 'global (kbd "SPC o e") 'eshell--other-window)
+        (evil-define-key '(normal visual) 'global (kbd "SPC o e") 'shell--popup-eshell)
         (evil-define-key '(normal visual) 'global (kbd "SPC o E") 'eshell)))
 #+end_src

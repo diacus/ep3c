@@ -114,9 +114,9 @@ Most keybindings use the spacebar as a leader key in Evil normal state.
 *** Shell/Terminal (=SPC o=)
 | Key     | Command                                  | Description        |
 |---------+------------------------------------------+--------------------|
-| =SPC o t= | vterm-other-window / eshell-other-window | Open terminal      |
+| =SPC o t= | shell--popup-vterm / shell--popup-eshell | Open terminal in a popup window      |
 | =SPC o T= | multi-vterm / eshell                     | New terminal       |
-| =SPC o e= | eshell-other-window                      | Open eshell (Unix) |
+| =SPC o e= | shell--popup-eshell                      | Open eshell (Unix) |
 | =SPC o E= | eshell                                   | New eshell (Unix)  |
 
 *** Debug/DAP (=SPC d=)
