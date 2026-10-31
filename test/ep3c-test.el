@@ -18,6 +18,9 @@
 ;; - install smoke test: ep3c--setup installs init.el, core.el and
 ;;   every module into a throwaway user-emacs-directory, and the
 ;;   module-set validation drops unknown modules.
+;; - functional vterm test: C-x C-e (vterm--edit-command-line)
+;;   round-trips the shell's command line against a real /bin/bash
+;;   vterm process; skipped when vterm/evil are not installed.
 ;;
 ;;; Code:
 
@@ -275,6 +278,164 @@ that the module-set validation keeps only known modules."
           (ep3c--set-modules 'ep3c-modules '(evil bogus-module yaml))
           (should (equal (default-value 'ep3c-modules) '(evil yaml))))
       (delete-directory user-emacs-directory t))))
+
+;;; Functional test -- C-x C-e in vterm edits the shell command line
+;;;
+;;; Unlike the tests above this one exercises a real vterm process, so
+;;; it needs the runtime packages (vterm, evil) installed for this
+;;; user and a /bin/bash.  When any of them is missing it skips; a
+;;; bare CI environment is therefore unaffected.
+
+(defun ep3c-test--put-elpa-on-load-path (packages)
+  "Extend `load-path' with the installed directories of PACKAGES.
+Globs the subdirectories of `package-user-dir' by package name, in
+the same environment the user's Emacs runs its daemons in."
+  (require 'package)
+  (when (file-directory-p package-user-dir)
+    (dolist (package packages)
+      (dolist (dir (directory-files
+                    package-user-dir t
+                    (format "\\`%s\\(?:-[0-9.]+\\)?\\'"
+                            (regexp-quote (symbol-name package)))))
+        (when (file-directory-p dir)
+          (add-to-list 'load-path dir))))))
+
+(defun ep3c-test--vterm-functional-ready-p ()
+  "Return t when the functional vterm test can run on this machine.
+Puts the runtime packages on the `load-path' as a side effect, so
+the callers only require what fails to load when this returns t."
+  (and (executable-find "/bin/bash")
+       (progn
+         (ep3c-test--put-elpa-on-load-path
+          ;; multi-vterm only because the tangled shell module
+          ;; mentions it; the actual exercise needs vterm and evil.
+          '(vterm evil multi-vterm))
+         (and (require 'vterm nil t)
+              (require 'use-package nil t)
+              (require 'evil nil t)))))
+
+(defvar ep3c-test--vterm-module-file nil
+  "Temporary file the tangled shell.org module was loaded from.")
+
+(defun ep3c-test--load-vterm-module ()
+  "Load the tangled shell.org module once into the suite's Emacs.
+The runtime pieces are already ensured by
+`ep3c-test--vterm-functional-ready-p', which the test calls first."
+  (unless ep3c-test--vterm-module-file
+    (setq ep3c-test--vterm-module-file
+          (make-temp-file "ep3c-vterm-" nil ".el"))
+    (with-temp-file ep3c-test--vterm-module-file
+      (insert
+       (mapconcat #'identity
+                  (ep3c-test--tangle-module
+                   (expand-file-name "src/modules/shell.org" ep3c-test-root))
+                  "\n")))
+    (load ep3c-test--vterm-module-file nil t)))
+
+(defun ep3c-test--vterm-open ()
+  "Start a /bin/bash vterm process in a new buffer; return the buffer."
+  (let ((buffer (generate-new-buffer " *ep3c-test-vterm*")))
+    (with-current-buffer buffer
+      (let ((vterm-shell "/bin/bash"))
+        (vterm-mode)))
+    buffer))
+
+(defun ep3c-test--vterm-wait (buffer pattern)
+  "Wait up to ten seconds for the command line in BUFFER to match PATTERN.
+The shell output and redisplay settle asynchronously, so the
+waiters sleep instead of polling in a tight loop; they signal when
+the match never appears."
+  (let ((deadline (+ (float-time) 10)))
+    (while (and (< (float-time) deadline)
+                (not (ignore-errors
+                       (with-current-buffer buffer
+                         (string-match-p pattern
+                                         (vterm--edit-read-line))))))
+      (sleep-for 0.2))
+    (with-current-buffer buffer
+      (should (string-match-p pattern (vterm--edit-read-line))))))
+
+(defun ep3c-test--vterm-find-edit ()
+  "Return the youngest *vterm edit* buffer, or nil when none live."
+  (cl-find "*vterm edit " (buffer-list)
+           :test #'string-prefix-p :key #'buffer-name))
+
+(ert-deftest ep3c-test-vterm-edit-command-line ()
+  "Round-trip `vterm--edit-command-line' with a real shell.
+
+Checks against a live /bin/bash in vterm: the C-x C-e binding in
+the mode map, prompt-excluded extraction, the entry point wiring
+(fresh edit buffer backed by this vterm, no frame in batch mode),
+accepting an edit on the prompt, and that aborting leaves the
+prompt untouched."
+
+  (skip-unless (ep3c-test--vterm-functional-ready-p))
+  (ep3c-test--load-vterm-module)
+  (let* ((vterm-buffer (ep3c-test--vterm-open))
+         (edit-buffer nil))
+    (unwind-protect
+        (with-current-buffer vterm-buffer
+          ;; The feature binding shadows the global eval-last-sexp.
+          (should (eq (lookup-key vterm-mode-map (kbd "C-x C-e"))
+                      'vterm--edit-command-line))
+          ;; A fresh prompt edits as an empty line...
+          (should (string= (vterm--edit-read-line) ""))
+          ;; ...and whatever is typed is extracted, prompt left out
+          ;; (this works without any shell prompt tracking).
+          (vterm-insert "echo hello world")
+          (ep3c-test--vterm-wait vterm-buffer (regexp-quote
+                                               "echo hello world"))
+          (should (string= (vterm--edit-read-line) "echo hello world"))
+          ;; The entry point wires a fresh edit buffer back to this
+          ;; vterm; batch mode has no graphic display, so no frame.
+          (vterm--edit-command-line)
+          (setq edit-buffer (ep3c-test--vterm-find-edit))
+          (should (bufferp edit-buffer))
+          (should (eq (buffer-local-value 'vterm--edit-source edit-buffer)
+                      vterm-buffer))
+          (should (null (buffer-local-value 'vterm--edit-frame
+                                            edit-buffer)))
+          (with-current-buffer edit-buffer
+            (should (where-is-internal 'vterm--edit-accept
+                                       (list (current-local-map))))
+            (should (where-is-internal 'vterm--edit-abort
+                                       (list (current-local-map))))
+            (erase-buffer)
+            (insert "echo edited by the suite\n")
+            (vterm--edit-accept))
+          ;; The prompt carries the edit without the trailing newline.
+          (ep3c-test--vterm-wait vterm-buffer (regexp-quote
+                                               "echo edited by the suite"))
+          (with-current-buffer vterm-buffer
+            (should (string= (vterm--edit-read-line)
+                             "echo edited by the suite")))
+          ;; Accepting kills the edit buffer.
+          (should (null (buffer-live-p edit-buffer)))
+          ;; Aborting leaves the prompt exactly as it was.
+          (with-current-buffer vterm-buffer
+            (vterm-send-key "a" nil nil t)
+            (vterm-send-key "k" nil nil t)
+            (sleep-for 0.5)
+            (vterm-insert "echo keep me")
+            (ep3c-test--vterm-wait vterm-buffer (regexp-quote
+                                                 "echo keep me"))
+            (vterm--edit-command-line))
+          (setq edit-buffer (ep3c-test--vterm-find-edit))
+          (should (bufferp edit-buffer))
+          (with-current-buffer edit-buffer
+            (erase-buffer)
+            (insert "must never reach the prompt")
+            (vterm--edit-abort))
+          (sleep-for 0.5)
+          (with-current-buffer vterm-buffer
+            (should (string= (vterm--edit-read-line) "echo keep me")))
+          (should (null (buffer-live-p edit-buffer))))
+      (when (buffer-live-p edit-buffer)
+        (with-current-buffer edit-buffer
+          (remove-hook 'kill-buffer-hook #'vterm--edit-close-frame))
+        (kill-buffer edit-buffer))
+      (when (buffer-live-p vterm-buffer)
+        (kill-buffer vterm-buffer)))))
 
 (provide 'ep3c-test)
 ;;; ep3c-test.el ends here
