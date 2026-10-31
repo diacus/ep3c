@@ -333,11 +333,19 @@ The runtime pieces are already ensured by
     (load ep3c-test--vterm-module-file nil t)))
 
 (defun ep3c-test--vterm-open ()
-  "Start a /bin/bash vterm process in a new buffer; return the buffer."
-  (let ((buffer (generate-new-buffer " *ep3c-test-vterm*")))
+  "Start a /bin/bash vterm process in a new buffer; return the buffer.
+Rests only when the shell has drawn its first prompt: driving the
+readline bindings earlier sends keys the shell has not asked for
+yet, and the redraw race that follows is the one flake that
+matters."
+  (let ((buffer (generate-new-buffer " *ep3c-test-vterm*"))
+        (deadline (+ (float-time) 10)))
     (with-current-buffer buffer
       (let ((vterm-shell "/bin/bash"))
         (vterm-mode)))
+    (while (and (< (float-time) deadline)
+                (<= (buffer-size buffer) 40))
+      (sleep-for 0.2))
     buffer))
 
 (defun ep3c-test--vterm-wait (buffer pattern)
@@ -355,9 +363,21 @@ the match never appears."
     (with-current-buffer buffer
       (should (string-match-p pattern (vterm--edit-read-line))))))
 
-(defun ep3c-test--vterm-find-edit ()
-  "Return the youngest *vterm edit* buffer, or nil when none live."
-  (cl-find "*vterm edit " (buffer-list)
+(defun ep3c-test--eshell-wait-prompt (buffer)
+  "Wait up to ten seconds until the eshell BUFFER accepts input.
+The readiness predicate is `eshell--edit-prompting-p' itself --
+the prompt on the buffer's tail is what the feature needs."
+  (let ((deadline (+ (float-time) 10)))
+    (while (and (< (float-time) deadline)
+                (not (with-current-buffer buffer
+                       (eshell--edit-prompting-p))))
+      (sleep-for 0.2))
+    (with-current-buffer buffer
+      (should (eshell--edit-prompting-p)))))
+
+(defun ep3c-test--shell-find-edit ()
+  "Return the young *shell edit* buffer, or nil when none live."
+  (cl-find "*shell edit " (buffer-list)
            :test #'string-prefix-p :key #'buffer-name))
 
 (ert-deftest ep3c-test-vterm-edit-command-line ()
@@ -389,20 +409,20 @@ prompt untouched."
           ;; The entry point wires a fresh edit buffer back to this
           ;; vterm; batch mode has no graphic display, so no frame.
           (vterm--edit-command-line)
-          (setq edit-buffer (ep3c-test--vterm-find-edit))
+          (setq edit-buffer (ep3c-test--shell-find-edit))
           (should (bufferp edit-buffer))
-          (should (eq (buffer-local-value 'vterm--edit-source edit-buffer)
+          (should (eq (buffer-local-value 'shell--edit-source edit-buffer)
                       vterm-buffer))
-          (should (null (buffer-local-value 'vterm--edit-frame
+          (should (null (buffer-local-value 'shell--edit-frame
                                             edit-buffer)))
           (with-current-buffer edit-buffer
-            (should (where-is-internal 'vterm--edit-accept
+            (should (where-is-internal 'shell--edit-accept
                                        (list (current-local-map))))
-            (should (where-is-internal 'vterm--edit-abort
+            (should (where-is-internal 'shell--edit-abort
                                        (list (current-local-map))))
             (erase-buffer)
             (insert "echo edited by the suite\n")
-            (vterm--edit-accept))
+            (shell--edit-accept))
           ;; The prompt carries the edit without the trailing newline.
           (ep3c-test--vterm-wait vterm-buffer (regexp-quote
                                                "echo edited by the suite"))
@@ -420,22 +440,123 @@ prompt untouched."
             (ep3c-test--vterm-wait vterm-buffer (regexp-quote
                                                  "echo keep me"))
             (vterm--edit-command-line))
-          (setq edit-buffer (ep3c-test--vterm-find-edit))
+          (setq edit-buffer (ep3c-test--shell-find-edit))
           (should (bufferp edit-buffer))
           (with-current-buffer edit-buffer
             (erase-buffer)
             (insert "must never reach the prompt")
-            (vterm--edit-abort))
+            (shell--edit-abort))
           (sleep-for 0.5)
           (with-current-buffer vterm-buffer
             (should (string= (vterm--edit-read-line) "echo keep me")))
           (should (null (buffer-live-p edit-buffer))))
       (when (buffer-live-p edit-buffer)
         (with-current-buffer edit-buffer
-          (remove-hook 'kill-buffer-hook #'vterm--edit-close-frame))
+          (remove-hook 'kill-buffer-hook #'shell--edit-close-frame))
         (kill-buffer edit-buffer))
       (when (buffer-live-p vterm-buffer)
         (kill-buffer vterm-buffer)))))
+
+(ert-deftest ep3c-test-eshell-edit-command-line ()
+  "Round-trip `eshell--edit-command-line' with a real eshell.
+Unlike the vterm test this needs no pty -- eshell is a Lisp
+interpreter -- but it still loads the shared shell.org module, so
+it rides on the same readiness check.  Checks the C-x C-e binding,
+the marker-based extraction, the edit buffer wiring, accepting an
+edit on the prompt (which then runs through RET), the guard
+against editing while a command runs, and that aborting leaves
+the input intact."
+
+  (skip-unless (ep3c-test--vterm-functional-ready-p))
+  (ep3c-test--load-vterm-module)
+  ;; eshell is required before let-binding `eshell-buffer-name':
+  ;; in this lexical-binding file the let would otherwise capture
+  ;; the variable lexically, and the defcustom inside `(eshell)'
+  ;; then errors with "Defining as dynamic an already lexical var".
+  (require 'eshell)
+  (let* ((eshell-buffer (let ((eshell-buffer-name " *ep3c-test-eshell*"))
+                          (eshell)))
+         (edit-buffer nil))
+    (unwind-protect
+        (with-current-buffer eshell-buffer
+          ;; The feature binding shadows the global eval-last-sexp.
+          (should (eq (lookup-key eshell-mode-map (kbd "C-x C-e"))
+                      'eshell--edit-command-line))
+          ;; A fresh prompt has an empty pending input...
+          (ep3c-test--eshell-wait-prompt eshell-buffer)
+          (should (string= (eshell--edit-read-line) ""))
+          ;; ...and typing lands in it, prompt excluded.
+          (goto-char (point-max))
+          (insert "echo hello from eshell")
+          (should (string= (eshell--edit-read-line)
+                           "echo hello from eshell"))
+          ;; The edit buffer is wired back to this eshell buffer.
+          (eshell--edit-command-line)
+          (setq edit-buffer (ep3c-test--shell-find-edit))
+          (should (bufferp edit-buffer))
+          (should (eq (buffer-local-value 'shell--edit-source edit-buffer)
+                      eshell-buffer))
+          (should (null (buffer-local-value 'shell--edit-frame
+                                            edit-buffer)))
+          (with-current-buffer edit-buffer
+            (should (where-is-internal 'shell--edit-accept
+                                       (list (current-local-map))))
+            (should (where-is-internal 'shell--edit-abort
+                                       (list (current-local-map))))
+            (erase-buffer)
+            (insert "echo edited in eshell")
+            (shell--edit-accept))
+          ;; The prompt now carries the edit, and pressing RET runs
+          ;; it: the put-back left a submittable line.
+          (with-current-buffer eshell-buffer
+            (goto-char (point-max))
+            (should (string= (eshell--edit-read-line)
+                             "echo edited in eshell"))
+            (funcall (key-binding "\r"))
+            ;; Wait for the command's own output to land in the
+            ;; buffer, and the fresh prompt afterwards.
+            (let ((deadline (+ (float-time) 10)))
+              (while (and (< (float-time) deadline)
+                          (not (and (string-match-p "edited in eshell"
+                                                    (buffer-string))
+                                    (eshell--edit-prompting-p))))
+                (sleep-for 0.2))
+              (should (string-match-p "edited in eshell" (buffer-string)))
+              (should (eshell--edit-prompting-p))))
+          (should (null (buffer-live-p edit-buffer)))
+          ;; Editing is refused while a command runs: while eshell
+          ;; is busy the pending input region is empty and
+          ;; unprompted, and the next prompt only appears once the
+          ;; command completes.
+          (with-current-buffer eshell-buffer
+            (goto-char (point-max))
+            (insert "sleep 2")
+            (funcall (key-binding "\r"))
+            (should-error (eshell--edit-command-line)
+                          :type 'user-error)
+            (sleep-for 2.5)
+            (ep3c-test--eshell-wait-prompt eshell-buffer))
+          ;; Aborting leaves the pending input exactly as it was.
+          (with-current-buffer eshell-buffer
+            (goto-char (point-max))
+            (insert "echo keep me")
+            (eshell--edit-command-line))
+          (setq edit-buffer (ep3c-test--shell-find-edit))
+          (should (bufferp edit-buffer))
+          (with-current-buffer edit-buffer
+            (erase-buffer)
+            (insert "must never reach the prompt")
+            (shell--edit-abort))
+          (with-current-buffer eshell-buffer
+            (goto-char (point-max))
+            (should (string= (eshell--edit-read-line) "echo keep me")))
+          (should (null (buffer-live-p edit-buffer))))
+      (when (buffer-live-p edit-buffer)
+        (with-current-buffer edit-buffer
+          (remove-hook 'kill-buffer-hook #'shell--edit-close-frame))
+        (kill-buffer edit-buffer))
+      (when (buffer-live-p eshell-buffer)
+        (kill-buffer eshell-buffer)))))
 
 (provide 'ep3c-test)
 ;;; ep3c-test.el ends here

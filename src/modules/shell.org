@@ -51,14 +51,24 @@ graphic.  With =C-c C-c= the edited line is placed back on the shell
 prompt, without executing it; =C-c C-k= (or plain =C-x k=) discards the
 edit.
 #+begin_src emacs-lisp
-  (defvar vterm--edit-counter 0
-    "Counter to generate unique names for vterm edit buffers.")
+  ;; The editor itself works for every shell: it takes the command
+  ;; line text, shows it in a fresh buffer -- in its own frame when
+  ;; Emacs is graphic -- and hands the edit back to the shell on
+  ;; accept.  The shell specifics live in a `shell--edit-put-back'
+  ;; buffer-local function; vterm sends its edit through the pty
+  ;; below, eshell's through buffer edits (see the Eshell section).
 
-  (defvar-local vterm--edit-source nil
-    "The vterm buffer whose command line is being edited.")
+  (defvar shell--edit-counter 0
+    "Counter to generate unique names for shell edit buffers.")
 
-  (defvar-local vterm--edit-frame nil
-    "The frame `vterm--edit-command-line' created for this buffer, or nil.")
+  (defvar-local shell--edit-source nil
+    "The shell buffer whose command line is being edited.")
+
+  (defvar-local shell--edit-frame nil
+    "The frame `shell--edit-buffer' created for this buffer, or nil.")
+
+  (defvar-local shell--edit-put-back nil
+    "Function of \(SOURCE-BUFFER TEXT\) placing TEXT on the shell prompt.")
 
   (defun vterm--edit-read-line ()
     "Return the shell's current command line in this vterm buffer.
@@ -76,7 +86,24 @@ the shell's cursor moves to the start of its input line."
       (substring-no-properties
        (buffer-substring (min beg end) (max beg end)))))
 
-  (defun vterm--edit-display (buffer)
+  (defun vterm--edit-put-back (source text)
+    "Place TEXT on the vterm prompt of SOURCE, without executing it.
+Readline's C-a C-k discards the shell's current input first — the
+prompt is left with exactly the edits, ready to run with RET."
+    (if (not (with-current-buffer source
+               (and (bound-and-true-p vterm--term)
+                    (process-live-p vterm--process))))
+        (message "shell edit: the shell is gone, discarding the edit")
+      (with-current-buffer source
+        (vterm-send-key "a" nil nil t) ; C-a: readline, start of input
+        (vterm-send-key "k" nil nil t) ; C-k: readline, kill to end
+        (when (> (length text) 0)
+          (vterm-insert text))
+        ;; The final cursor sync races with the shell's redraw of
+        ;; the cleared line; it is cosmetic here.
+        (ignore-errors (vterm-reset-cursor-point)))))
+
+  (defun shell--edit-display (buffer)
     "Display BUFFER for editing.
 
 Pop up a fresh frame when Emacs is graphic (the usual case when
@@ -97,41 +124,56 @@ BUFFER went to a window of the current frame."
       (pop-to-buffer buffer)
       nil))
 
-  (defun vterm--edit-close-frame ()
+  (defun shell--edit-close-frame ()
     "Delete the frame created for this edit buffer, when it still shows it.
-Added to `kill-buffer-hook' by `vterm--edit-command-line'."
-    (when (and (frame-live-p vterm--edit-frame)
+Added to `kill-buffer-hook' by `shell--edit-buffer'."
+    (when (and (frame-live-p shell--edit-frame)
                (memq (current-buffer)
                      (mapcar #'window-buffer
-                             (window-list vterm--edit-frame 'never))))
-      (delete-frame vterm--edit-frame)))
+                             (window-list shell--edit-frame 'never))))
+      (delete-frame shell--edit-frame)))
 
-  (defun vterm--edit-accept ()
-    "Place the edited line back on the vterm prompt, without executing it.
-The shell's current input is discarded first, so the prompt is
-left with exactly the edits, ready to be run with RET."
+  (defun shell--edit-accept ()
+    "Place the edited line back on the shell prompt, without executing it.
+The transfer goes through `shell--edit-put-back'; running the
+command on the fresh line stays with the shell's own RET."
     (interactive)
-    (let ((source vterm--edit-source)
+    (let ((source shell--edit-source)
           (text (string-trim-right
                  (buffer-substring-no-properties
                   (point-min) (point-max)))))
-      (if (not (and (buffer-live-p source)
-                    (with-current-buffer source
-                      (and (bound-and-true-p vterm--term)
-                           (process-live-p vterm--process)))))
-          (message "vterm edit: the shell is gone, discarding the edit")
-        (with-current-buffer source
-          (vterm-send-key "a" nil nil t) ; C-a: readline, start of input
-          (vterm-send-key "k" nil nil t) ; C-k: readline, kill to end
-          (when (> (length text) 0)
-            (vterm-insert text))
-          (vterm-reset-cursor-point))))
+      (if (not (and shell--edit-put-back
+                    (bufferp source)
+                    (buffer-live-p source)))
+          (message "shell edit: the shell is gone, discarding the edit")
+        (funcall shell--edit-put-back source text)))
     (kill-buffer (current-buffer)))
 
-  (defun vterm--edit-abort ()
+  (defun shell--edit-abort ()
     "Leave the shell prompt untouched and discard the edit buffer."
     (interactive)
     (kill-buffer (current-buffer)))
+
+  (defun shell--edit-buffer (source line put-back)
+    "Open a fresh buffer with LINE, the command line of the SOURCE shell.
+PUT-BACK receives (SOURCE TEXT) when the edit is accepted.  The
+buffer is shown in its own frame when Emacs is graphic, and there
+C-c C-c accepts the edit while C-c C-k (or plain C-x k) discards
+it."
+    (with-current-buffer
+        (generate-new-buffer
+         (format "*shell edit %d*"
+                 (setq shell--edit-counter (1+ shell--edit-counter))))
+      (setq-local shell--edit-source source)
+      (setq-local shell--edit-put-back put-back)
+      (setq-local shell--edit-frame
+                  (shell--edit-display (current-buffer)))
+      (add-hook 'kill-buffer-hook #'shell--edit-close-frame)
+      (insert line)
+      (goto-char (point-max))
+      (local-set-key (kbd "C-c C-c") #'shell--edit-accept)
+      (local-set-key (kbd "C-c C-k") #'shell--edit-abort)
+      (current-buffer)))
 
   (defun vterm--edit-command-line ()
     "Edit the shell's current command line in a fresh buffer.
@@ -144,23 +186,76 @@ nothing is executed."
     (unless (and (bound-and-true-p vterm--term)
                  (process-live-p vterm--process))
       (user-error "No running shell in this vterm buffer"))
-    (let ((vterm-buf (current-buffer))
-          (line (vterm--edit-read-line)))
-      (with-current-buffer
-          (generate-new-buffer
-           (format "*vterm edit %d*"
-                   (setq vterm--edit-counter (1+ vterm--edit-counter))))
-        (setq-local vterm--edit-source vterm-buf)
-        (setq-local vterm--edit-frame
-                    (vterm--edit-display (current-buffer)))
-        (add-hook 'kill-buffer-hook #'vterm--edit-close-frame)
-        (insert line)
-        (goto-char (point-max))
-        (local-set-key (kbd "C-c C-c") #'vterm--edit-accept)
-        (local-set-key (kbd "C-c C-k") #'vterm--edit-abort))))
+    (shell--edit-buffer (current-buffer)
+                        (vterm--edit-read-line)
+                        #'vterm--edit-put-back))
 
   (with-eval-after-load 'vterm
     (define-key vterm-mode-map (kbd "C-x C-e") #'vterm--edit-command-line))
+#+end_src
+
+For =eshell=, the same command line editor is available through its
+own =C-x C-e=: the line between the prompt and the end of the buffer
+is opened in a fresh buffer (frame included), and =C-c C-c= leaves it
+on the prompt, ready to run with =RET=.  =C-c C-k= leaves the input as
+it was.  The editor refuses to edit while a command is still
+running, since eshell delimits the pending input with
+=eshell-last-output-end= only afterwards.
+#+begin_src emacs-lisp
+  (defun eshell--edit-prompting-p ()
+    "Return t when this eshell buffer is accepting command input.
+Eshell draws its prompt only there: the character right before
+`eshell-last-output-end' carries the `prompt' field exactly while
+input is pending, never in output or while a command still runs."
+    (and eshell-last-output-end
+         (>= (point-max) eshell-last-output-end)
+         (> (point-max) (point-min))
+         (eq (get-text-property
+              (max (point-min)
+                   (1- (marker-position eshell-last-output-end)))
+              'field)
+             'prompt)))
+
+  (defun eshell--edit-read-line ()
+    "Return the current command line in this eshell buffer.
+Eshell delimits the pending input with the marker
+`eshell-last-output-end', which rests right after the prompt
+whenever command input is pending."
+    (buffer-substring-no-properties
+     eshell-last-output-end (point-max)))
+
+  (defun eshell--edit-put-back (source text)
+    "Place TEXT on the eshell prompt of SOURCE, without executing it.
+The shell's pending input is deleted from the prompt onwards, so
+the prompt is left with exactly the edits, ready to run with RET.
+When the shell is no longer prompting (a command started meanwhile),
+nothing is written and the edit is discarded."
+    (if (not (with-current-buffer source (eshell--edit-prompting-p)))
+        (message "shell edit: the shell is gone, discarding the edit")
+      (with-current-buffer source
+        (goto-char (point-max))
+        (delete-region eshell-last-output-end (point-max))
+        (when (> (length text) 0)
+          (insert text))
+        (goto-char (point-max)))))
+
+  (defun eshell--edit-command-line ()
+    "Edit the current eshell command line in a fresh buffer.
+Like `vterm--edit-command-line' for vterm: C-c C-c puts the edited
+text back on the prompt and C-c C-k leaves the command as it was;
+nothing is executed."
+    (interactive)
+    (unless (eshell--edit-prompting-p)
+      (user-error "A command is still running in this eshell buffer"))
+    (shell--edit-buffer (current-buffer)
+                        (eshell--edit-read-line)
+                        #'eshell--edit-put-back))
+
+  ;; The keymap is defined by esh-mode, which eshell itself loads
+  ;; only when the first buffer is created: waiting for the `eshell'
+  ;; feature is not enough.
+  (with-eval-after-load 'esh-mode
+    (define-key eshell-mode-map (kbd "C-x C-e") #'eshell--edit-command-line))
 #+end_src
 
 * Eshell

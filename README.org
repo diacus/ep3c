@@ -199,3 +199,8 @@ Most keybindings use the spacebar as a leader key in Evil normal state.
 | Key     | Command                  | Description                                                                                 |
 |---------+--------------------------+---------------------------------------------------------------------------------------------|
 | =C-x C-e= | vterm--edit-command-line | Edit the shell's current command line in a frame; =C-c C-c= puts it back on the prompt (Unix) |
+
+*** Eshell (eshell-mode)
+| Key     | Command                  | Description                                                                       |
+|---------+--------------------------+-----------------------------------------------------------------------------------|
+| =C-x C-e= | eshell--edit-command-line | Edit the current command line in a frame; =C-c C-c= puts it back on the prompt    |
