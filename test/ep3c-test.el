@@ -15,6 +15,10 @@
 ;;   modules reference is defined by the sources, so void-symbol
 ;;   typos in hooks or calls fail instead of only misbehaving at
 ;;   runtime.
+;; - key binding integrity: every function a module binds to a key
+;;   that the modules define themselves carries an (interactive)
+;;   form, so a binding to a plain function (a `commandp' failure at
+;;   runtime) cannot ship.
 ;; - install smoke test: ep3c--setup installs init.el, core.el and
 ;;   every module into a throwaway user-emacs-directory, and the
 ;;   module-set validation drops unknown modules.
@@ -212,6 +216,110 @@ core.el or another module."
           (unless (memql ref defs)
             (push (format "%s: no definition among the sources for `%s'"
                           (file-name-nondirectory module) ref)
+                  failures)))))
+    (should-not (nreverse failures))))
+
+(defun ep3c-test--visit-forms (fn form)
+  "Call FN on FORM, then recursively on its car and its cdr.
+FORM may be an atom, a cons, or an improper list."
+  (funcall fn form)
+  (when (consp form)
+    (ep3c-test--visit-forms fn (car form))
+    (ep3c-test--visit-forms fn (cdr form))))
+
+(defun ep3c-test--find-bindings (form)
+  "Return the (FN . KEY-STRING) pairs the form FORM binds to keys.
+
+Recognizes `evil-define-key', `global-set-key', `define-key',
+`local-set-key' and the use-package `:bind'/`:bind-keymap'/`:map'
+plists.  The KEY-STRING is nil for keyspecs this reader does not
+understand (for example an event vector); those pairs are dropped."
+  (let (out)
+    (cl-labels
+        ((do-bind (keyform defform)
+           (let ((fn (pcase defform
+                       ((pred symbolp) defform)
+                       ((or `(quote ,sym) `(function ,sym))
+                        (and (symbolp sym) sym))))
+                 (key (pcase keyform
+                        ((pred stringp) keyform)
+                        (`(kbd ,k) (and (stringp k) k)))))
+             (when (and fn key)
+               (push (cons fn key) out))))
+         (bind-plist (value)
+           (cond
+            ((and (consp value) (eq (car value) :map))
+             (dolist (pair (cddr value)) (bind-plist pair)))
+            ((and (consp value) (stringp (car value)))
+             (do-bind (car value) (cdr value)))
+            ((consp value)
+             (dolist (sub value) (bind-plist sub)))))
+         (visit (f)
+           (pcase f
+             (`(evil-define-key . ,args)
+              ;; Drop the STATE and MAP arguments.
+              (setq args (cddr args))
+              ;; Alternate (KEYSPEC . DEF) pairs.
+              (while (cadr args)
+                (do-bind (car args) (cadr args))
+                (setq args (cddr args))))
+             (`(global-set-key ,key ,def) (do-bind key def))
+             (`(local-set-key ,key ,def) (do-bind key def))
+             (`(define-key . ,_)
+              (when (>= (safe-length f) 4)
+                (do-bind (nth 2 f) (nth 3 f))))
+             (`(use-package ,_ . ,tail)
+              (let ((rest (cdr tail)))
+                (while (keywordp (car-safe rest))
+                  (when (memq (car rest) '(:bind :bind-keymap :map))
+                    (bind-plist (cadr rest)))
+                  (setq rest (cddr rest))))
+              ;; The body may nest its own binding forms.
+              (dolist (sub tail) (visit sub)))
+             (_ (when (consp f)
+                  (visit (car f))
+                  (visit (cdr f)))))))
+      (visit form)
+      (nreverse out))))
+
+(ert-deftest ep3c-test-bound-functions-are-commands ()
+  "Every module-defined function bound to a key is an interactive command.
+
+A binding to a function without an (interactive) form fails at
+command execution with `wrong-type-argument (commandp ...)'.  Only
+functions the modules define themselves are checked: for
+third-party commands, commandness belongs to the package."
+  (let ((commands (make-hash-table :test #'eq))
+        bindings failures)
+    ;; Definitions first (a binding may live in a module other than
+    ;; the one that defines its target function).
+    (dolist (module ep3c-test-modules)
+      (dolist (elisp (ep3c-test--tangle-module module))
+        (dolist (form (ep3c-test--read-forms elisp))
+          (ep3c-test--visit-forms
+           (lambda (f)
+             (when (and (memql (car-safe f)
+                               '(defun defun* cl-defun defsubst))
+                        (symbolp (cadr f)))
+               (puthash (cadr f)
+                        (memq 'interactive (mapcar #'car-safe (cddr f)))
+                        commands)))
+           form))))
+    ;; Then the key bindings, annotated with the module that binds.
+    (dolist (module ep3c-test-modules)
+      (dolist (elisp (ep3c-test--tangle-module module))
+        (dolist (form (ep3c-test--read-forms elisp))
+          (dolist (binding (ep3c-test--find-bindings form))
+            (push (cons (file-name-nondirectory module) binding)
+                  bindings)))))
+    ;; A bound function the modules define must carry (interactive).
+    (dolist (entry bindings)
+      (pcase-let ((`(,module . (,fn . ,key)) entry))
+        (let ((state (gethash fn commands 'absent)))
+          (when (and (listp state) (not state))
+            (push (format "%s: `%s' is bound `%s', which is not a \
+command -- add (interactive) to its defun"
+                          module key fn)
                   failures)))))
     (should-not (nreverse failures))))
 

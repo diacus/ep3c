@@ -17,18 +17,54 @@ external dependencies (when feasable).
     (evil-define-key 'normal 'global (kbd "SPC p b") 'projectile-switch-to-buffer)
     (evil-define-key 'normal 'global (kbd "SPC p B") 'projectile-switch-to-buffer-other-frame)
     (evil-define-key 'normal 'global (kbd "SPC p c") 'projectile-compile-project)
+    (evil-define-key 'normal 'global (kbd "SPC p t") 'projectile-test-project)
     (projectile-mode +1)
     ;; Use default completion instead of ivy, since ivy is not installed.
     ;; This prevents "Cannot load projectile" error during startup.
     (setq projectile-completion-system 'default))
 
-  ;; Vterm integration for running terminals in project context.
-  ;; These keybindings are deferred until vterm loads because:
-  ;; 1. projectile-run-vterm-* functions require vterm to be defined
-  ;; 2. vterm is only available on Unix-like systems (not Windows)
-  ;; Using with-eval-after-load prevents load failures when vterm is unavailable.
-  (unless (member system-type '(ms-dos windows-nt cygwin))
-    (with-eval-after-load 'vterm
-      (evil-define-key 'normal 'global (kbd "SPC p t") 'projectile-run-vterm-other-window)
-      (evil-define-key 'normal 'global (kbd "SPC p T") 'projectile-run-vterm)))
+  ;; Run prefix (SPC p r): starts different REPLs in the project root.
+  ;; Lowercase opens the REPL in a popup window, uppercase selects it in
+  ;; the current window and reuses the project-specific buffer, like the
+  ;; shell module does for SPC t.  The popup wrappers depend on
+  ;; popup-window.el, installed by the shell module, so they wait for
+  ;; it to load.  Note that `display-buffer' tries `display-buffer-alist'
+  ;; before any explicit action the commands pass, hence even shell,
+  ;; term and ielm, which request the same window, end up in the popup.
+  (with-eval-after-load 'popup-window
+    (defun projectile--popup-shell ()
+      "Open the project shell in a popup window."
+      (interactive)
+      (funcall (make-repl-popup #'projectile-run-shell)))
+    (defun projectile--popup-eshell ()
+      "Open the project eshell in a popup window."
+      (interactive)
+      (funcall (make-repl-popup #'projectile-run-eshell)))
+    (defun projectile--popup-term ()
+      "Open the project term in a popup window."
+      (interactive)
+      (funcall (make-repl-popup #'projectile-run-term)))
+    (defun projectile--popup-ielm ()
+      "Open the project ielm in a popup window."
+      (interactive)
+      (funcall (make-repl-popup #'projectile-run-ielm)))
+    (defun projectile--popup-vterm ()
+      "Open the project vterm in a popup window."
+      (interactive)
+      (funcall (make-repl-popup #'projectile-run-vterm)))
+    (evil-define-key 'normal 'global
+      (kbd "SPC p r s") #'projectile--popup-shell
+      (kbd "SPC p r S") #'projectile-run-shell
+      (kbd "SPC p r e") #'projectile--popup-eshell
+      (kbd "SPC p r E") #'projectile-run-eshell
+      (kbd "SPC p r t") #'projectile--popup-term
+      (kbd "SPC p r T") #'projectile-run-term
+      (kbd "SPC p r i") #'projectile--popup-ielm
+      (kbd "SPC p r I") #'projectile-run-ielm)
+    ;; vterm is UNIX only: the v/V pair waits for vterm to load.
+    (unless (member system-type '(ms-dos windows-nt cygwin))
+      (with-eval-after-load 'vterm
+        (evil-define-key 'normal 'global
+          (kbd "SPC p r v") #'projectile--popup-vterm
+          (kbd "SPC p r V") #'projectile-run-vterm))))
 #+end_src

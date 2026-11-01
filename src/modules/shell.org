@@ -2,13 +2,24 @@
 #+AUTHOR: Diacus Magnuz
 #+STARTUP: overview
 
-Configuration settings to invoke a *Shell* window, defines two key bindings:
-- =SPC= + =o= + =t= :: opens shell in bottom window
-- =SPC= + =o= + =T= :: opens shell in current window
+Configuration settings to invoke a *Shell* window. All the terminal
+related key bindings live under the =SPC t= prefix: the lowercase key
+opens the shell in a popup window, the uppercase one opens it in the
+current window.
 
-Both shells are shown in a *popup* window at the bottom of the frame,
-which closes on its own when the shell is gone. This is the job of
-[[https://github.com/diacus/popup.el][popup-window.el]], installed from GitHub with =quelpa=.
+- =SPC= + =t= + =v= :: a new vterm buffer in a popup window (UNIX only)
+- =SPC= + =t= + =V= :: a new vterm buffer in the current window (UNIX only)
+- =SPC= + =t= + =s= :: shell in a popup window
+- =SPC= + =t= + =S= :: shell in the current window
+- =SPC= + =t= + =t= :: term in a popup window
+- =SPC= + =t= + =T= :: term in the current window
+- =SPC= + =t= + =e= :: eshell in a popup window
+- =SPC= + =t= + =E= :: eshell in the current window
+- =SPC= + =t= + =i= :: ielm in a popup window
+- =SPC= + =t= + =I= :: ielm in the current window
+
+The =SPC t p= and =SPC t P= bindings, for PowerShell, belong to the
+[[file:windows.org][windows module]].
 
 #+begin_src emacs-lisp
   (use-package popup-window
@@ -21,27 +32,27 @@ Emacs based on [[https://github.com/neovim/libvterm][libvterm]], a C library (UN
 #+begin_src emacs-lisp
   (unless (member system-type '(ms-dos windows-nt cygwin))
     (defun shell--popup-vterm ()
-      "Open vterm in a popup window at the bottom of the frame.
-The window closes by itself when the shell exits."
+      "Open a new vterm buffer in a popup window at the bottom of the
+frame.  Multi-vterm spawns it, so the popup always starts a fresh
+shell; the window closes by itself when the shell exits."
       (interactive)
-      (funcall (make-repl-popup #'vterm)))
+      (funcall (make-repl-popup #'multi-vterm)))
 
     (use-package vterm
-      :ensure t
-      :config (evil-define-key
-  		'(normal visual)
-  		'global (kbd "SPC o t")
-  		#'shell--popup-vterm)))
+      :ensure t))
 #+end_src
 
-The [[https://github.com/suonlight/multi-vterm][multi-vterm.el]] package allows managing multiple =vterm= buffers.
+The [[https://github.com/suonlight/multi-vterm][multi-vterm.el]] package allows managing multiple =vterm= buffers:
+it is what spawns a fresh shell on =SPC t v= and =SPC t V=.
 #+begin_src emacs-lisp
   (unless (member system-type '(ms-dos windows-nt cygwin))
     (use-package multi-vterm
       :ensure t
       :after (vterm projectile)
       :config
-      (evil-define-key '(normal visual) 'global (kbd "SPC o T") 'multi-vterm)))
+      (evil-define-key '(normal visual) 'global
+        (kbd "SPC t v") #'shell--popup-vterm
+        (kbd "SPC t V") #'multi-vterm)))
 #+end_src
 
 The shell's current command line can be edited in a separate buffer,
@@ -278,11 +289,64 @@ when the shell is gone."
     (interactive)
     (funcall (make-repl-popup #'eshell)))
 
-  (if (member system-type '(ms-dos windows-nt cygwin))
-      (progn
-        (evil-define-key '(normal visual) 'global (kbd "SPC o t") 'shell--popup-eshell)
-        (evil-define-key '(normal visual) 'global (kbd "SPC o T") 'eshell))
-    (progn
-        (evil-define-key '(normal visual) 'global (kbd "SPC o e") 'shell--popup-eshell)
-        (evil-define-key '(normal visual) 'global (kbd "SPC o E") 'eshell)))
+  (evil-define-key '(normal visual) 'global
+    (kbd "SPC t e") 'shell--popup-eshell
+    (kbd "SPC t E") 'eshell)
+#+end_src
+
+* Term, shell and ielm
+Gnu term provides a terminal emulator buffer, shell a comint
+wrapper for the system shell, and ielm an Emacs Lisp REPL. They
+join the =SPC t= prefix like the shells: lowercase opens the buffer
+in a popup window, uppercase selects it in the current window.
+=ielm= spawns no process, so its popup window does not close by
+itself; =term= and =shell= do, like the shells.
+
+#+begin_src emacs-lisp
+  ;; `term' takes the program to run as one mandatory argument in
+  ;; Emacs 30 -- it is a native subr, arity \(1 . 1) -- so binding it
+  ;; straight to a key fails at command execution with "Wrong number
+  ;; of arguments".  This wrapper supplies the program, defaulting
+  ;; like `term' itself and `projectile-run-term' do.
+  (defun shell--term (&optional program)
+    "Start `term' on PROGRAM, with the same default `term' prompts for.
+Bound as =SPC t T=, it asks for the program, =SPC t t= takes the
+default through `shell--popup-term'."
+    (interactive
+     (list (read-shell-command
+            "Run program: "
+            (or explicit-shell-file-name shell-file-name
+                (getenv "ESHELL")))))
+    (term (or program
+              (or explicit-shell-file-name shell-file-name
+                  (getenv "ESHELL")))))
+
+  (defun shell--popup-term ()
+    "Open term in a popup window at the bottom of the frame.
+Like `shell--popup-vterm' for vterm: popup-window.el closes the
+window when the shell is gone."
+    (interactive)
+    (funcall (make-repl-popup #'shell--term)))
+
+  (defun shell--popup-ielm ()
+    "Open ielm in a popup window at the bottom of the frame.
+Like `shell--popup-eshell' for eshell.  Ielm runs no external
+process, so the popup stays until the buffer is killed."
+    (interactive)
+    (funcall (make-repl-popup #'ielm)))
+
+  (defun shell--popup-shell ()
+    "Open shell in a popup window at the bottom of the frame.
+Like `shell--popup-vterm' for vterm: popup-window.el closes the
+window when the shell is gone."
+    (interactive)
+    (funcall (make-repl-popup #'shell)))
+
+  (evil-define-key '(normal visual) 'global
+    (kbd "SPC t s") 'shell--popup-shell
+    (kbd "SPC t S") 'shell
+    (kbd "SPC t t") 'shell--popup-term
+    (kbd "SPC t T") 'shell--term
+    (kbd "SPC t i") 'shell--popup-ielm
+    (kbd "SPC t I") 'ielm)
 #+end_src

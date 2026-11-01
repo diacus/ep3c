@@ -17,13 +17,26 @@ First define a powershell executable detector =use-powershell7=.
 When the operating system is Windows:
 1. Install PowerShell package
 2. Explicitly set shell to Powershell 7 if available
-3. Setup KQL mode for kusto queries
+3. Set up the =SPC t p= and =SPC t P= terminal bindings (see
+   [[file:shell.org][shell module]] for the =SPC t= prefix convention)
+4. Setup KQL mode for kusto queries
+
 #+begin_src emacs-lisp
   (when (member system-type '(ms-dos windows-nt cygwin))
+    (defun shell--popup-powershell ()
+      "Open powershell in a popup window at the bottom of the frame.
+Like `shell--popup-vterm' for vterm: popup-window.el closes the
+window when the shell is gone."
+      (interactive)
+      (funcall (make-repl-popup #'powershell)))
+
     (use-package powershell
       :ensure t
       :config
-      (use-powershell7))
+      (use-powershell7)
+      (evil-define-key '(normal visual) 'global
+        (kbd "SPC t p") #'shell--popup-powershell
+        (kbd "SPC t P") #'powershell))
     (use-package kql-mode
       :ensure t
       :config

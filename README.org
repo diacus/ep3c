@@ -92,8 +92,24 @@ Most keybindings use the spacebar as a leader key in Evil normal state.
 | =SPC p B= | projectile-switch-to-buffer-other-frame | Switch buffer other frame  |
 | =SPC p k= | projectile-kill-buffers                 | Kill project buffers       |
 | =SPC p c= | projectile-compile-project              | Compile project            |
-| =SPC p t= | projectile-run-vterm-other-window       | Terminal in project (Unix) |
-| =SPC p T= | projectile-run-vterm                    | Terminal in project (Unix) |
+| =SPC p t= | projectile-test-project                 | Test project               |
+
+*** Run (=SPC p r=)
+Lowercase opens the REPL in a popup window at the bottom, uppercase
+selects it in the current window. All of them run in the project
+root and reuse the project's own buffer.
+| Key         | Command                   | Description                    |
+|-------------+---------------------------+--------------------------------|
+| =SPC p r s= | projectile--popup-shell   | shell popup                    |
+| =SPC p r S= | projectile-run-shell      | shell in current window        |
+| =SPC p r e= | projectile--popup-eshell  | eshell popup                   |
+| =SPC p r E= | projectile-run-eshell     | eshell in current window       |
+| =SPC p r t= | projectile--popup-term    | term popup (Unix)              |
+| =SPC p r T= | projectile-run-term       | term in current window (Unix)  |
+| =SPC p r v= | projectile--popup-vterm   | vterm popup (Unix)             |
+| =SPC p r V= | projectile-run-vterm      | vterm in current window (Unix) |
+| =SPC p r i= | projectile--popup-ielm    | ielm popup                     |
+| =SPC p r I= | projectile-run-ielm       | ielm in current window         |
 
 *** Git/Magit (=SPC g=)
 | Key     | Command                     | Description           |
@@ -109,15 +125,27 @@ Most keybindings use the spacebar as a leader key in Evil normal state.
 |---------+---------------------------+-----------------------------|
 | =SPC o a= | org-agenda                | Open agenda                 |
 | =SPC o c= | org-capture               | Capture                     |
-| =SPC o r= | haskell-interactive-bring | Haskell REPL (haskell-mode) |
 
-*** Shell/Terminal (=SPC o=)
-| Key     | Command                                  | Description        |
-|---------+------------------------------------------+--------------------|
-| =SPC o t= | shell--popup-vterm / shell--popup-eshell | Open terminal in a popup window      |
-| =SPC o T= | multi-vterm / eshell                     | New terminal       |
-| =SPC o e= | shell--popup-eshell                      | Open eshell (Unix) |
-| =SPC o E= | eshell                                   | New eshell (Unix)  |
+*** Terminal (=SPC t=)
+The lowercase key opens the shell in a popup window, the uppercase
+one in the current window.
+| Key     | Command                  | Description                     |
+|---------+--------------------------+---------------------------------|
+| =SPC t v= | shell--popup-vterm       | New vterm popup (Unix)          |
+| =SPC t V= | multi-vterm              | New vterm in current window (Unix) |
+| =SPC t s= | shell--popup-shell       | shell popup                     |
+| =SPC t S= | shell                    | shell in current window         |
+| =SPC t t= | shell--popup-term        | term popup                      |
+| =SPC t T= | shell--term              | term in current window          |
+| =SPC t e= | shell--popup-eshell      | eshell popup                    |
+| =SPC t E= | eshell                   | eshell in current window        |
+| =SPC t i= | shell--popup-ielm        | ielm popup                      |
+| =SPC t I= | ielm                     | ielm in current window          |
+| =SPC t p= | shell--popup-powershell  | PowerShell popup (Windows)      |
+| =SPC t P= | powershell               | PowerShell in current window    |
+
+Note that =SPC p r v= and =SPC p r V= run a vterm in the project root,
+via projectile (see Run =SPC p r=).
 
 *** Debug/DAP (=SPC d=)
 | Key     | Command               | Description         |
@@ -142,6 +170,11 @@ Most keybindings use the spacebar as a leader key in Evil normal state.
 | Key            | Command                     | Description       |
 |----------------+-----------------------------+-------------------|
 | =SPC ;= (visual) | comment-or-uncomment-region | Comment selection |
+
+Haskell (haskell-mode buffers only):
+| Key     | Command                   | Description     |
+|---------+---------------------------+-----------------|
+| =SPC o r= | haskell-interactive-bring | Haskell REPL    |
 
 ** Global Keybindings
 *** Treemacs
