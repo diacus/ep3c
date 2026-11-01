@@ -1,4 +1,4 @@
-#+TITLE: Shell integrtion: vterm, eshell
+#+TITLE: Shell integration: vterm, eshell
 #+AUTHOR: Diacus Magnuz
 #+STARTUP: overview
 
@@ -8,11 +8,11 @@ Configuration settings to invoke a *Shell* window, defines two key bindings:
 
 Both shells are shown in a *popup* window at the bottom of the frame,
 which closes on its own when the shell is gone. This is the job of
-[[https://github.com/diacus/popup.el][popup.el]], installed from GitHub with =quelpa=.
+[[https://github.com/diacus/popup.el][popup-window.el]], installed from GitHub with =quelpa=.
 
 #+begin_src emacs-lisp
-  (use-package popup
-    :quelpa (popup :fetcher github :repo "diacus/popup.el"))
+  (use-package popup-window
+    :quelpa (popup-window :fetcher github :repo "diacus/popup.el"))
 #+end_src
 
 * Vterm
@@ -273,7 +273,7 @@ choice for a command line interface is presicely *eshell.*
 #+begin_src emacs-lisp
   (defun shell--popup-eshell ()
     "Open eshell in a popup window at the bottom of the frame.
-Like `shell--popup-vterm' for vterm: popup.el closes the window
+Like `shell--popup-vterm' for vterm: popup-window.el closes the window
 when the shell is gone."
     (interactive)
     (funcall (make-repl-popup #'eshell)))
