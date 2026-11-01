@@ -22,9 +22,10 @@
 ;; - install smoke test: ep3c--setup installs init.el, core.el and
 ;;   every module into a throwaway user-emacs-directory, and the
 ;;   module-set validation drops unknown modules.
-;; - functional vterm test: C-x C-e (vterm--edit-command-line)
-;;   round-trips the shell's command line against a real /bin/bash
-;;   vterm process; skipped when vterm/evil are not installed.
+;; - functional shell tests: C-x C-e round-trips the shell's command
+;;   line against a real /bin/bash in a vterm, in a term (char and
+;;   line mode), in an eshell (no pty needed) and in an comint shell;
+;;   skipped when vterm/evil are not installed.
 ;;
 ;;; Code:
 
@@ -387,10 +388,10 @@ that the module-set validation keeps only known modules."
           (should (equal (default-value 'ep3c-modules) '(evil yaml))))
       (delete-directory user-emacs-directory t))))
 
-;;; Functional test -- C-x C-e in vterm edits the shell command line
+;;; Functional tests -- C-x C-e edits the shell command line
 ;;;
-;;; Unlike the tests above this one exercises a real vterm process, so
-;;; it needs the runtime packages (vterm, evil) installed for this
+;;; Unlike the tests above these exercise real shell processes, so
+;;; they need the runtime packages (vterm, evil) installed for this
 ;;; user and a /bin/bash.  When any of them is missing it skips; a
 ;;; bare CI environment is therefore unaffected.
 
@@ -408,8 +409,8 @@ the same environment the user's Emacs runs its daemons in."
         (when (file-directory-p dir)
           (add-to-list 'load-path dir))))))
 
-(defun ep3c-test--vterm-functional-ready-p ()
-  "Return t when the functional vterm test can run on this machine.
+(defun ep3c-test--shell-ready-p ()
+  "Return t when the functional shell tests can run on this machine.
 Puts the runtime packages on the `load-path' as a side effect, so
 the callers only require what fails to load when this returns t."
   (and (executable-find "/bin/bash")
@@ -417,18 +418,31 @@ the callers only require what fails to load when this returns t."
          (ep3c-test--put-elpa-on-load-path
           ;; multi-vterm only because the tangled shell module
           ;; mentions it; the actual exercise needs vterm and evil.
-          '(vterm evil multi-vterm))
+          ;; quelpa-use-package registers use-package's :quelpa
+          ;; handler, which the module's use-package forms need
+          ;; before the tangled shell.org loads, lest use-package
+          ;; fail to parse them with "Unrecognized keyword"; quelpa
+          ;; itself provides that package.  popup-window is the
+          ;; module's first use-package target.
+          '(vterm evil multi-vterm quelpa quelpa-use-package
+                  popup-window))
          (and (require 'vterm nil t)
               (require 'use-package nil t)
-              (require 'evil nil t)))))
+              (require 'evil nil t)
+              (require 'quelpa-use-package nil t)
+              ;; Quelpa must never run from the suite: initialize
+              ;; package.el so the installed popup-window counts as
+              ;; installed, and inhibit the handler's quelpa call.
+              (progn (package-initialize)
+                     (setq quelpa-use-package-inhibit-loading-quelpa t))))))
 
 (defvar ep3c-test--vterm-module-file nil
   "Temporary file the tangled shell.org module was loaded from.")
 
-(defun ep3c-test--load-vterm-module ()
+(defun ep3c-test--load-shell-module ()
   "Load the tangled shell.org module once into the suite's Emacs.
 The runtime pieces are already ensured by
-`ep3c-test--vterm-functional-ready-p', which the test calls first."
+`ep3c-test--shell-ready-p', which the test calls first."
   (unless ep3c-test--vterm-module-file
     (setq ep3c-test--vterm-module-file
           (make-temp-file "ep3c-vterm-" nil ".el"))
@@ -497,8 +511,8 @@ the mode map, prompt-excluded extraction, the entry point wiring
 accepting an edit on the prompt, and that aborting leaves the
 prompt untouched."
 
-  (skip-unless (ep3c-test--vterm-functional-ready-p))
-  (ep3c-test--load-vterm-module)
+  (skip-unless (ep3c-test--shell-ready-p))
+  (ep3c-test--load-shell-module)
   (let* ((vterm-buffer (ep3c-test--vterm-open))
          (edit-buffer nil))
     (unwind-protect
@@ -575,8 +589,8 @@ edit on the prompt (which then runs through RET), the guard
 against editing while a command runs, and that aborting leaves
 the input intact."
 
-  (skip-unless (ep3c-test--vterm-functional-ready-p))
-  (ep3c-test--load-vterm-module)
+  (skip-unless (ep3c-test--shell-ready-p))
+  (ep3c-test--load-shell-module)
   ;; eshell is required before let-binding `eshell-buffer-name':
   ;; in this lexical-binding file the let would otherwise capture
   ;; the variable lexically, and the defcustom inside `(eshell)'
@@ -665,6 +679,295 @@ the input intact."
         (kill-buffer edit-buffer))
       (when (buffer-live-p eshell-buffer)
         (kill-buffer eshell-buffer)))))
+
+(defun ep3c-test--wait-output (buffer pattern)
+  "Wait up to ten seconds until BUFFER's text matches PATTERN.
+The shell output settles asynchronously, so the waiter sleeps
+instead of polling in a tight loop; it signals when the match
+never appears."
+  (let ((deadline (+ (float-time) 10)))
+    (while (and (< (float-time) deadline)
+                (not (with-current-buffer buffer
+                       (string-match-p pattern (buffer-string)))))
+      (sleep-for 0.2))
+    (with-current-buffer buffer
+      (should (string-match-p pattern (buffer-string))))))
+
+(defun ep3c-test--shell-wait-prompt (buffer)
+  "Wait up to ten seconds until the comint BUFFER accepts input.
+The readiness predicate is the one the editor itself relies on:
+the pending input region is empty, which only happens with a
+fresh prompt on the buffer's tail.  When the wait is over, the
+editor's extraction starts there."
+  (let ((deadline (+ (float-time) 10)))
+    (while (and (< (float-time) deadline)
+                (not (with-current-buffer buffer
+                       (and (comint--edit-process-live-p)
+                            (eq (point-max)
+                                (comint--edit-input-start))))))
+      (sleep-for 0.2))
+    (with-current-buffer buffer
+      (should (eq (point-max)
+                  (marker-position (comint--edit-input-start)))))))
+
+(defun ep3c-test--term-open (name char-mode)
+  "Start a term buffer named after NAME running /bin/bash.
+CHAR-MODE decides which term mode the buffer rests in -- `term'
+itself enters char mode when it spawns the shell.  The wait rests
+only when the shell has drawn its first prompt."
+  (with-current-buffer (make-term name "/bin/bash")
+    (when char-mode (term-char-mode)))
+  (let ((buffer (concat "*" name "*"))
+        (deadline (+ (float-time) 10)))
+    (while (and (< (float-time) deadline)
+                (<= (buffer-size (get-buffer buffer)) 5))
+      (sleep-for 0.2))
+    (get-buffer buffer)))
+
+(defun ep3c-test--term-wait-empty (buffer)
+  "Wait up to ten seconds until term BUFFER waits for input again.
+The extraction's own readiness predicate: an empty command line,
+which only happens on a prompt with nothing typed yet.  The
+extraction moves the shell's cursor, so the waiter polls through
+it -- harmless, since C-a on an input line never redraws it."
+  (let ((deadline (+ (float-time) 10)))
+    (while (and (< (float-time) deadline)
+                (not (with-current-buffer buffer
+                       (string= (term--edit-read-line) ""))))
+      (sleep-for 0.2))
+    (with-current-buffer buffer
+      (should (string= (term--edit-read-line) "")))))
+
+(ert-deftest ep3c-test-comint-edit-command-line ()
+  "Round-trip `comint--edit-command-line' with a real M-x shell.
+Like the eshell test this needs no pty -- the pending input lives
+in the buffer itself -- but it still loads the shell.org module,
+so it rides on the same readiness check.  Checks the C-x C-e
+binding in the comint mode map, prompt-excluded extraction, the
+edit buffer wiring, accepting an edit on the prompt (which then
+runs through RET), the `comint-accumulate' lines being part of the
+edit, the dead-process guard, and that aborting leaves the input
+intact."
+
+  (skip-unless (ep3c-test--shell-ready-p))
+  (ep3c-test--load-shell-module)
+  (require 'shell)
+  (let* ((shell-buffer (let ((explicit-shell-file-name "/bin/bash"))
+                         (shell "ep3c-test-comint")))
+         (edit-buffer nil))
+    (unwind-protect
+        (with-current-buffer shell-buffer
+          ;; The feature binding shadows the global eval-last-sexp.
+          (should (eq (lookup-key comint-mode-map (kbd "C-x C-e"))
+                      'comint--edit-command-line))
+          ;; A fresh prompt edits as an empty line -- process-mark
+          ;; rests at the end of the prompt, nothing is pending...
+          (ep3c-test--shell-wait-prompt shell-buffer)
+          (should (string= (comint--edit-read-line) ""))
+          ;; ...and typed-ahead input is extracted, prompt left out.
+          (goto-char (point-max))
+          (insert "echo comint-$((41+1))")
+          (should (string= (comint--edit-read-line)
+                           "echo comint-$((41+1))"))
+          ;; The entry point wires a fresh edit buffer back to this
+          ;; shell; batch mode has no graphic display, so no frame.
+          (comint--edit-command-line)
+          (setq edit-buffer (ep3c-test--shell-find-edit))
+          (should (bufferp edit-buffer))
+          (should (eq (buffer-local-value 'shell--edit-source edit-buffer)
+                      shell-buffer))
+          (should (null (buffer-local-value 'shell--edit-frame
+                                            edit-buffer)))
+          (with-current-buffer edit-buffer
+            (should (where-is-internal 'shell--edit-accept
+                                       (list (current-local-map))))
+            (should (where-is-internal 'shell--edit-abort
+                                       (list (current-local-map))))
+            (erase-buffer)
+            (insert "echo edited in comint && echo COMINT-$((40+3))")
+            (shell--edit-accept))
+          ;; The prompt carries the edit, and RET runs it: the
+          ;; arithmetic output appears only once the shell ran the
+          ;; edited line.
+          (with-current-buffer shell-buffer
+            (should (string= (comint--edit-read-line)
+                             "echo edited in comint && echo COMINT-$((40+3))"))
+            (funcall (key-binding "\r"))
+            (ep3c-test--wait-output shell-buffer "COMINT-43"))
+          (should (null (buffer-live-p edit-buffer)))
+          ;; Lines accumulated by M-RET are part of the same edit:
+          ;; they rest after the process mark too, the region
+          ;; comint-send-input runs on RET.
+          (with-current-buffer shell-buffer
+            (ep3c-test--shell-wait-prompt shell-buffer)
+            (goto-char (point-max))
+            (insert "echo first")
+            (comint-accumulate)
+            (should (string= (comint--edit-read-line) "echo first\n"))
+            (goto-char (point-max))
+            (insert "echo second")
+            (should (string= (comint--edit-read-line)
+                             "echo first\necho second"))
+            (comint--edit-command-line))
+          (setq edit-buffer (ep3c-test--shell-find-edit))
+          (should (bufferp edit-buffer))
+          (should (eq (buffer-local-value 'shell--edit-source edit-buffer)
+                      shell-buffer))
+          (with-current-buffer edit-buffer
+            (erase-buffer)
+            (insert "echo THIRD-$((41+1))\necho FOURTH-$((41+1))")
+            (shell--edit-accept))
+          (with-current-buffer shell-buffer
+            (should (string= (comint--edit-read-line)
+                             "echo THIRD-$((41+1))\necho FOURTH-$((41+1))"))
+            (funcall (key-binding "\r"))
+            (ep3c-test--wait-output shell-buffer "THIRD-42")
+            (ep3c-test--wait-output shell-buffer "FOURTH-42")
+            (ep3c-test--shell-wait-prompt shell-buffer))
+          (should (null (buffer-live-p edit-buffer)))
+          ;; Aborting leaves the pending input exactly as it was.
+          (with-current-buffer shell-buffer
+            (ep3c-test--shell-wait-prompt shell-buffer)
+            (goto-char (point-max))
+            (insert "echo keep me")
+            (comint--edit-command-line))
+          (setq edit-buffer (ep3c-test--shell-find-edit))
+          (should (bufferp edit-buffer))
+          (with-current-buffer edit-buffer
+            (erase-buffer)
+            (insert "must never reach the prompt")
+            (shell--edit-abort))
+          (with-current-buffer shell-buffer
+            (should (string= (comint--edit-read-line) "echo keep me")))
+          (should (null (buffer-live-p edit-buffer)))
+          ;; A dead shell process refuses to edit.
+          (with-current-buffer shell-buffer
+            (delete-process (get-buffer-process (current-buffer)))
+            (should-error (comint--edit-command-line) :type 'user-error)))
+      (when (buffer-live-p edit-buffer)
+        (with-current-buffer edit-buffer
+          (remove-hook 'kill-buffer-hook #'shell--edit-close-frame))
+        (kill-buffer edit-buffer))
+      (when (buffer-live-p shell-buffer)
+        (kill-buffer shell-buffer)))))
+
+(ert-deftest ep3c-test-term-edit-command-line ()
+  "Round-trip `term--edit-command-line' with a real /bin/bash term.
+Both term modes are exercised against live term processes: char
+mode -- the one `term' enters when it spawns -- drives readline
+through the pty the way the vterm test does, and line mode edits
+the buffer the way the comint test does.  Checks the C-x C-e
+bindings in both mode maps, that the other raw C-x chords still
+reach the pty, the edit buffer wiring, accepting an edit (which
+then runs through RET), and that aborting leaves the prompt
+untouched."
+
+  (skip-unless (ep3c-test--shell-ready-p))
+  (ep3c-test--load-shell-module)
+  (require 'term)
+  (let ((char-buffer (ep3c-test--term-open "ep3c-test-term" t))
+        (line-buffer nil)
+        (edit-buffer nil))
+    (unwind-protect
+        (progn
+          (with-current-buffer char-buffer
+            ;; The feature binding shadows the global
+            ;; eval-last-sexp in both term modes.
+            (should (eq (lookup-key term-raw-map (kbd "C-x C-e"))
+                        'term--edit-command-line))
+            (should (eq (lookup-key term-mode-map (kbd "C-x C-e"))
+                        'term--edit-command-line))
+            ;; In char mode every other C-x chord still reaches the
+            ;; pty through the default binding of the same prefix.
+            (should (eq (key-binding (vconcat "\C-x" "\C-e") t)
+                        'term--edit-command-line))
+            (should (eq (key-binding (vconcat "\C-x" "\C-s") t)
+                        'term--edit-send-raw-keys))
+            ;; A fresh prompt edits as an empty line...
+            (should (string= (term--edit-read-line) ""))
+            ;; ...and typing through the pty is extracted, prompt
+            ;; left out.
+            (term-send-raw-string "echo term-$((41+1))")
+            (ep3c-test--wait-output char-buffer
+                                    (regexp-quote "echo term-$((41+1))"))
+            (should (string= (term--edit-read-line) "echo term-$((41+1))"))
+            ;; The entry point wires a fresh edit buffer back to
+            ;; this term; batch mode has no graphic display, so no
+            ;; frame.
+            (term--edit-command-line)
+            (setq edit-buffer (ep3c-test--shell-find-edit))
+            (should (bufferp edit-buffer))
+            (should (eq (buffer-local-value 'shell--edit-source edit-buffer)
+                        char-buffer))
+            (should (null (buffer-local-value 'shell--edit-frame
+                                              edit-buffer)))
+            (with-current-buffer edit-buffer
+              (should (where-is-internal 'shell--edit-accept
+                                         (list (current-local-map))))
+              (should (where-is-internal 'shell--edit-abort
+                                         (list (current-local-map))))
+              (erase-buffer)
+              (insert "echo edited in term && echo TERM-$((40+2))")
+              (shell--edit-accept))
+            ;; The pty echoes the edit back on the line, and RET
+            ;; runs it: the arithmetic output is the one the shell
+            ;; computed, not the echoed line itself.
+            (ep3c-test--wait-output char-buffer
+                                    (regexp-quote "echo edited in term"))
+            (should (string= (term--edit-read-line)
+                             "echo edited in term && echo TERM-$((40+2))"))
+            (term-send-raw-string "\r")
+            (ep3c-test--wait-output char-buffer "TERM-42")
+            (ep3c-test--term-wait-empty char-buffer))
+          (should (null (buffer-live-p edit-buffer)))
+          ;; Aborting leaves the typed line exactly as it was.
+          (with-current-buffer char-buffer
+            (term-send-raw-string "echo keep me")
+            (ep3c-test--wait-output char-buffer (regexp-quote "echo keep me"))
+            (term--edit-command-line)
+            (setq edit-buffer (ep3c-test--shell-find-edit))
+            (should (bufferp edit-buffer))
+            (with-current-buffer edit-buffer
+              (erase-buffer)
+              (insert "must never reach the prompt")
+              (shell--edit-abort))
+            (sleep-for 0.5)
+            (should (string= (term--edit-read-line) "echo keep me")))
+          (should (null (buffer-live-p edit-buffer)))
+          ;; Line mode, against a fresh term: the pending input is
+          ;; entirely a buffer edit there, and nothing is sent -- the
+          ;; arithmetic output only appears through RET.
+          (setq line-buffer (ep3c-test--term-open "ep3c-test-term-line" nil))
+          (with-current-buffer line-buffer
+            (should (eq (lookup-key term-mode-map (kbd "C-x C-e"))
+                        'term--edit-command-line))
+            (ep3c-test--term-wait-empty line-buffer)
+            (goto-char (point-max))
+            (insert "echo line-$((41+1))")
+            (should (string= (term--edit-read-line) "echo line-$((41+1))"))
+            (term--edit-command-line))
+          (setq edit-buffer (ep3c-test--shell-find-edit))
+          (should (bufferp edit-buffer))
+          (should (eq (buffer-local-value 'shell--edit-source edit-buffer)
+                      line-buffer))
+          (with-current-buffer edit-buffer
+            (erase-buffer)
+            (insert "echo edited in line mode && echo LINE-$((40+2))")
+            (shell--edit-accept))
+          (with-current-buffer line-buffer
+            (should (string= (term--edit-read-line)
+                             "echo edited in line mode && echo LINE-$((40+2))"))
+            (term-send-input)
+            (ep3c-test--wait-output line-buffer "LINE-42"))
+          (should (null (buffer-live-p edit-buffer))))
+      (when (buffer-live-p edit-buffer)
+        (with-current-buffer edit-buffer
+          (remove-hook 'kill-buffer-hook #'shell--edit-close-frame))
+        (kill-buffer edit-buffer))
+      (when (buffer-live-p char-buffer)
+        (kill-buffer char-buffer))
+      (when (buffer-live-p line-buffer)
+        (kill-buffer line-buffer)))))
 
 (provide 'ep3c-test)
 ;;; ep3c-test.el ends here

@@ -237,3 +237,13 @@ Haskell (haskell-mode buffers only):
 | Key     | Command                  | Description                                                                       |
 |---------+--------------------------+-----------------------------------------------------------------------------------|
 | =C-x C-e= | eshell--edit-command-line | Edit the current command line in a frame; =C-c C-c= puts it back on the prompt    |
+
+*** Shell (shell-mode, any comint REPL)
+| Key     | Command                  | Description                                                                       |
+|---------+--------------------------+-----------------------------------------------------------------------------------|
+| =C-x C-e= | comint--edit-command-line | Edit the current command line in a frame; =C-c C-c= puts it back on the prompt    |
+
+*** Term (term-mode)
+| Key     | Command                  | Description                                                                       |
+|---------+--------------------------+-----------------------------------------------------------------------------------|
+| =C-x C-e= | term--edit-command-line | Edit the current command line in a frame; in char mode the other raw =C-x= chords still reach the shell |
