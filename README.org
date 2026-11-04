@@ -136,7 +136,7 @@ one in the current window.
 | =SPC t s= | shell--popup-shell       | shell popup                     |
 | =SPC t S= | shell                    | shell in current window         |
 | =SPC t t= | shell--popup-term        | term popup                      |
-| =SPC t T= | shell--term              | term in current window          |
+| =SPC t T= | term                     | term in current window          |
 | =SPC t e= | shell--popup-eshell      | eshell popup                    |
 | =SPC t E= | eshell                   | eshell in current window        |
 | =SPC t i= | shell--popup-ielm        | ielm popup                      |

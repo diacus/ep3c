@@ -21,9 +21,22 @@ current window.
 The =SPC t p= and =SPC t P= bindings, for PowerShell, belong to the
 [[file:windows.org][windows module]].
 
+The [[https://github.com/diacus/popup-window.el][popup-window.el]] package provides the =make-repl-popup= macro to
+wrap REPL-launching functions inside popup windows.  The popup shows
+up in a side window at the bottom of the frame, taking 30% of its
+height; the placement and the height are customizable through
+=popup-window-side= (=bottom= or =top=) and =popup-window-height= (a
+float for a fraction of the frame height, an integer for lines).
+The wrappers here follow the package's preferred form: =defalias= of
+the =make-repl-popup= expansion, so =C-h f= and =C-h k= document the
+command with what the macro generates, instead of an ad-hoc wrapper
+calling it through =funcall=.
+
 #+begin_src emacs-lisp
   (use-package popup-window
-    :quelpa (popup-window :fetcher github :repo "diacus/popup.el"))
+    :quelpa (popup-window :fetcher github
+                          :repo "diacus/popup-window.el"
+                          :commit "v0.2.0"))
 #+end_src
 
 * Vterm
@@ -31,12 +44,7 @@ Emacs-libvterm ([[https://github.com/akermu/emacs-libvterm][vterm]]) is a fully-
 Emacs based on [[https://github.com/neovim/libvterm][libvterm]], a C library (UNIX like systems only)
 #+begin_src emacs-lisp
   (unless (member system-type '(ms-dos windows-nt cygwin))
-    (defun shell--popup-vterm ()
-      "Open a new vterm buffer in a popup window at the bottom of the
-frame.  Multi-vterm spawns it, so the popup always starts a fresh
-shell; the window closes by itself when the shell exits."
-      (interactive)
-      (funcall (make-repl-popup #'multi-vterm)))
+    (defalias 'shell--popup-vterm (make-repl-popup #'multi-vterm))
 
     (use-package vterm
       :ensure t))
@@ -85,12 +93,7 @@ Since =vterm= doesn't support Windows operating system, the next viable
 choice for a command line interface is presicely *eshell.*
 
 #+begin_src emacs-lisp
-  (defun shell--popup-eshell ()
-    "Open eshell in a popup window at the bottom of the frame.
-Like `shell--popup-vterm' for vterm: popup-window.el closes the window
-when the shell is gone."
-    (interactive)
-    (funcall (make-repl-popup #'eshell)))
+  (defalias 'shell--popup-eshell (make-repl-popup #'eshell))
 
   (evil-define-key '(normal visual) 'global
     (kbd "SPC t e") 'shell--popup-eshell
@@ -106,50 +109,18 @@ in a popup window, uppercase selects it in the current window.
 itself; =term= and =shell= do, like the shells.
 
 #+begin_src emacs-lisp
-  ;; `term' takes the program to run as one mandatory argument in
-  ;; Emacs 30 -- it is a native subr, arity \(1 . 1) -- so binding it
-  ;; straight to a key fails at command execution with "Wrong number
-  ;; of arguments".  This wrapper supplies the program, defaulting
-  ;; like `term' itself and `projectile-run-term' do.
-  (defun shell--term (&optional program)
-    "Start `term' on PROGRAM, with the same default `term' prompts for.
-Bound as =SPC t T=, it asks for the program, =SPC t t= takes the
-default through `shell--popup-term'."
-    (interactive
-     (list (read-shell-command
-            "Run program: "
-            (or explicit-shell-file-name shell-file-name
-                (getenv "ESHELL")))))
-    (term (or program
-              (or explicit-shell-file-name shell-file-name
-                  (getenv "ESHELL")))))
-
-  (defun shell--popup-term ()
-    "Open term in a popup window at the bottom of the frame.
-Like `shell--popup-vterm' for vterm: popup-window.el closes the
-window when the shell is gone."
-    (interactive)
-    (funcall (make-repl-popup #'shell--term)))
-
-  (defun shell--popup-ielm ()
-    "Open ielm in a popup window at the bottom of the frame.
-Like `shell--popup-eshell' for eshell.  Ielm runs no external
-process, so the popup stays until the buffer is killed."
-    (interactive)
-    (funcall (make-repl-popup #'ielm)))
-
-  (defun shell--popup-shell ()
-    "Open shell in a popup window at the bottom of the frame.
-Like `shell--popup-vterm' for vterm: popup-window.el closes the
-window when the shell is gone."
-    (interactive)
-    (funcall (make-repl-popup #'shell)))
+  ;; `term' prompts for the program to run, defaulting like
+  ;; `projectile-run-term' does, so it binds straight to keys, and
+  ;; `make-repl-popup' runs no-argument calls through that same prompt.
+  (defalias 'shell--popup-term (make-repl-popup #'term))
+  (defalias 'shell--popup-ielm (make-repl-popup #'ielm))
+  (defalias 'shell--popup-shell (make-repl-popup #'shell))
 
   (evil-define-key '(normal visual) 'global
     (kbd "SPC t s") 'shell--popup-shell
     (kbd "SPC t S") 'shell
     (kbd "SPC t t") 'shell--popup-term
-    (kbd "SPC t T") 'shell--term
+    (kbd "SPC t T") 'term
     (kbd "SPC t i") 'shell--popup-ielm
     (kbd "SPC t I") 'ielm)
 #+end_src
