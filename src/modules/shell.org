@@ -63,27 +63,6 @@ it is what spawns a fresh shell on =SPC t v= and =SPC t V=.
         (kbd "SPC t V") #'multi-vterm)))
 #+end_src
 
-The shell's current command line -- in vterm, eshell, =M-x shell=
-and term alike -- can be edited in a separate buffer, like
-readline's =C-x C-e= (=edit-and-execute-command=).  The
-*[[https://github.com/diacus/shell-edit.el][shell-edit]]* package
-takes care of all of it: whatever is typed is opened for editing
-in an Emacs buffer displayed under the ordinary window rules,
-where =C-c C-c= places the edited line back on the shell prompt,
-without executing it, and =C-c C-k= (or plain =C-x k=) discards
-the edit.  How the buffer is displayed is customizable through
-=shell-edit-display-style=: besides the default, =window=, a
-dedicated frame is an option.  The backends know
-where each shell keeps its pending input -- the pty for vterm and
-char-mode term, the buffer for eshell and comint -- and bind their
-=C-x C-e= in the mode map as the mode loads.
-#+begin_src emacs-lisp
-  (use-package shell-edit
-    :quelpa (shell-edit :fetcher github
-                        :repo "diacus/shell-edit.el"
-                        :commit "v0.1.1"))
-#+end_src
-
 * Eshell
 #+begin_quote
 Eshell is a shell-like command interpreter implemented in Emacs
@@ -127,4 +106,27 @@ itself; =term= and =shell= do, like the shells.
     (kbd "SPC t T") 'term
     (kbd "SPC t i") 'shell--popup-ielm
     (kbd "SPC t I") 'ielm)
+#+end_src
+
+* Shell edit
+The shell's current command line -- in vterm, eshell, =M-x shell=
+and term alike -- can be edited in a separate buffer, like
+readline's =C-x C-e= (=edit-and-execute-command=).  The
+*[[https://github.com/diacus/shell-edit.el][shell-edit]]* package
+takes care of all of it: whatever is typed is opened for editing
+in an Emacs buffer displayed under the ordinary window rules,
+where =C-c C-c= places the edited line back on the shell prompt,
+without executing it, and =C-c C-k= (or plain =C-x k=) discards
+the edit.  How the buffer is displayed is customizable through
+=shell-edit-display-style=: besides the default, =window=, a
+dedicated frame is an option.  The backends know
+where each shell keeps its pending input -- the pty for vterm and
+char-mode term, the buffer for eshell and comint -- and bind their
+=C-x C-e= in the mode map as the mode loads.
+
+#+begin_src emacs-lisp
+  (use-package shell-edit
+    :quelpa (shell-edit :fetcher github
+                        :repo "diacus/shell-edit.el"
+                        :commit "v0.1.1"))
 #+end_src
