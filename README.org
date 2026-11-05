@@ -234,19 +234,19 @@ which ep3c pulls in through quelpa; the commands below are its.
 *** Vterm (vterm-mode)
 | Key     | Command          | Description                                                                                 |
 |---------+------------------+---------------------------------------------------------------------------------------------|
-| =C-x C-e= | shell-edit-vterm | Edit the shell's current command line in a frame; =C-c C-c= puts it back on the prompt (Unix) |
+| =C-x C-e= | shell-edit-vterm | Edit the shell's current command line in its own buffer; =C-c C-c= puts it back on the prompt (Unix) |
 
 *** Eshell (eshell-mode)
 | Key     | Command            | Description                                                                       |
 |---------+--------------------+-----------------------------------------------------------------------------------|
-| =C-x C-e= | shell-edit-eshell | Edit the current command line in a frame; =C-c C-c= puts it back on the prompt    |
+| =C-x C-e= | shell-edit-eshell | Edit the current command line in its own buffer; =C-c C-c= puts it back on the prompt |
 
 *** Shell (shell-mode, any comint REPL)
 | Key     | Command            | Description                                                                       |
 |---------+--------------------+-----------------------------------------------------------------------------------|
-| =C-x C-e= | shell-edit-comint | Edit the current command line in a frame; =C-c C-c= puts it back on the prompt    |
+| =C-x C-e= | shell-edit-comint | Edit the current command line in its own buffer; =C-c C-c= puts it back on the prompt |
 
 *** Term (term-mode)
 | Key     | Command           | Description                                                                       |
 |---------+-------------------+-----------------------------------------------------------------------------------|
-| =C-x C-e= | shell-edit-term | Edit the current command line in a frame; in char mode the other raw =C-x= chords still reach the shell |
+| =C-x C-e= | shell-edit-term | Edit the current command line in its own buffer; in char mode the other raw =C-x= chords still reach the shell |
