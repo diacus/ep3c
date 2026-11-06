@@ -9,6 +9,8 @@ current window.
 
 - =SPC= + =t= + =v= :: a new vterm buffer in a popup window (UNIX only)
 - =SPC= + =t= + =V= :: a new vterm buffer in the current window (UNIX only)
+- =SPC= + =t= + =g= :: a new ghostel terminal in a popup window
+- =SPC= + =t= + =G= :: a new ghostel terminal in the current window
 - =SPC= + =t= + =s= :: shell in a popup window
 - =SPC= + =t= + =S= :: shell in the current window
 - =SPC= + =t= + =t= :: term in a popup window
@@ -61,6 +63,38 @@ it is what spawns a fresh shell on =SPC t v= and =SPC t V=.
       (evil-define-key '(normal visual) 'global
         (kbd "SPC t v") #'shell--popup-vterm
         (kbd "SPC t V") #'multi-vterm)))
+#+end_src
+
+* Ghostel
+[[https://github.com/dakra/ghostel][Ghostel]] is a terminal emulator
+based on *libghostty*, the engine behind the [[https://ghostty.org][Ghostty]] terminal,
+shipped as a native dynamic module like vterm, but newer in its
+decade: real-color extras, hyperlink and URL detection, mouse
+passthrough, notifications, and a background thread that keeps Emacs
+responsive through long output.  Unlike vterm it runs on every system
+EP3C supports, Windows included, so no guard watches for it -- and it
+brings its own terminal management (project-scoped terminals,
+=M-x ghostel-list-buffers=), so nothing stands in for multi-vterm
+here.
+
+The first =M-x ghostel= is offered to download the prebuilt native
+module; =ghostel-module-auto-install= takes the offer away and lets
+the fresh download happen silently.
+
+Its =C-x C-e= flow is not covered by shell-edit yet, so the ad-hoc
+way to edit the current shell line in a proper Emacs buffer is
+ghostel's own line mode, =C-c C-l=.
+
+#+begin_src emacs-lisp
+  (use-package ghostel
+    :ensure t
+    :custom
+    (ghostel-module-auto-install 'download)
+    :config
+    (defalias 'shell--popup-ghostel (make-repl-popup #'ghostel))
+    (evil-define-key '(normal visual) 'global
+      (kbd "SPC t g") #'shell--popup-ghostel
+      (kbd "SPC t G") #'ghostel))
 #+end_src
 
 * Eshell

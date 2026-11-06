@@ -102,6 +102,8 @@ root and reuse the project's own buffer.
 |-------------+---------------------------+--------------------------------|
 | =SPC p r s= | projectile--popup-shell   | shell popup                    |
 | =SPC p r S= | projectile-run-shell      | shell in current window        |
+| =SPC p r g= | projectile--popup-ghostel | ghostel popup                  |
+| =SPC p r G= | projectile-run-ghostel    | ghostel in current window      |
 | =SPC p r e= | projectile--popup-eshell  | eshell popup                   |
 | =SPC p r E= | projectile-run-eshell     | eshell in current window       |
 | =SPC p r t= | projectile--popup-term    | term popup (Unix)              |
