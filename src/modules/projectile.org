@@ -52,6 +52,18 @@ external dependencies (when feasable).
       "Open the project vterm in a popup window."
       (interactive)
       (funcall (make-repl-popup #'projectile-run-vterm)))
+    ;; Projectile has no projectile-run-ghostel of its own: ghostel
+    ;; opens its terminal in `default-directory' like the other REPL
+    ;; commands, so this is their shared shape.
+    (defun projectile-run-ghostel ()
+      "Open the project ghostel terminal in the current window."
+      (interactive)
+      (let ((default-directory (projectile-project-root)))
+        (ghostel)))
+    (defun projectile--popup-ghostel ()
+      "Open the project ghostel terminal in a popup window."
+      (interactive)
+      (funcall (make-repl-popup #'projectile-run-ghostel)))
     (evil-define-key 'normal 'global
       (kbd "SPC p r s") #'projectile--popup-shell
       (kbd "SPC p r S") #'projectile-run-shell
@@ -59,6 +71,8 @@ external dependencies (when feasable).
       (kbd "SPC p r E") #'projectile-run-eshell
       (kbd "SPC p r t") #'projectile--popup-term
       (kbd "SPC p r T") #'projectile-run-term
+      (kbd "SPC p r g") #'projectile--popup-ghostel
+      (kbd "SPC p r G") #'projectile-run-ghostel
       (kbd "SPC p r i") #'projectile--popup-ielm
       (kbd "SPC p r I") #'projectile-run-ielm)
     ;; vterm is UNIX only: the v/V pair waits for vterm to load.

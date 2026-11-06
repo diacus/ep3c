@@ -135,6 +135,8 @@ one in the current window.
 |---------+--------------------------+---------------------------------|
 | =SPC t v= | shell--popup-vterm       | New vterm popup (Unix)          |
 | =SPC t V= | multi-vterm              | New vterm in current window (Unix) |
+| =SPC t g= | shell--popup-ghostel     | New ghostel popup               |
+| =SPC t G= | ghostel                  | ghostel in current window       |
 | =SPC t s= | shell--popup-shell       | shell popup                     |
 | =SPC t S= | shell                    | shell in current window         |
 | =SPC t t= | shell--popup-term        | term popup                      |
