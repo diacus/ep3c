@@ -1,6 +1,6 @@
 #+TITLE: Emacs Pretty Personal Portable Configuration
 #+AUTHOR: Diacus Mágnuz
-#+STARTUP: logdrawer overview
+#+STARTUP: logdrawer
 
 EP3C (Emacs Pretty Personal Portable Configuration) is a modular,
 batteries-included Emacs configuration. It uses =use-package= for
