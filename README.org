@@ -127,6 +127,7 @@ root and reuse the project's own buffer.
 |---------+---------------------------+-----------------------------|
 | =SPC o a= | org-agenda                | Open agenda                 |
 | =SPC o c= | org-capture               | Capture                     |
+| =SPC c=   | org-capture               | Capture, also on plain =c= (the vanilla =C-c c= chord without evil) |
 
 *** Terminal (=SPC t=)
 The lowercase key opens the shell in a popup window, the uppercase
@@ -201,7 +202,7 @@ Haskell (haskell-mode buffers only):
 *** Docker
 | Key   | Command |
 |-------+---------|
-| =C-c d= | docker  |
+| =C-c D= | docker  |
 
 *** Engine Mode
 | Key   | Command                  |
@@ -217,9 +218,7 @@ Haskell (haskell-mode buffers only):
 | =<f1> f=           | counsel-describe-function  |
 | =<f1> v=           | counsel-describe-variable  |
 | =<f1> o=           | counsel-describe-symbol    |
-| =C-c g=            | counsel-git                |
-| =C-c j=            | counsel-git-grep           |
-| =C-c k=            | counsel-ag                 |
+| =SPC j= / =SPC k=  | counsel-git-grep / counsel-ag (leader entries; they stay on =C-c j= / =C-c k= when evil is disabled) |
 | =C-r= (minibuffer) | counsel-minibuffer-history |
 
 *** Consult
