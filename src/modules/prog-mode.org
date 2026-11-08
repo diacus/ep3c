@@ -6,13 +6,35 @@
 Many programming language modes (see [[https://www.gnu.org/software/emacs/manual/html_node/elisp/Derived-Modes.html#Derived-Modes][Derived Modes]] for details) run
 =prog-mode-hook= prior running their own mode hooks. So this is a good
 place to define settings common for use with any programming language.
-#+begin_src emacs-lisp
-  (defun prog-mode-key-bindings()
-    "Define key bindings useful for prog-mode"
-    (ep3c-define-key 'visual prog-mode-map
-      ";" 'comment-or-uncomment-region))
 
-  (add-hook 'prog-mode-hook 'prog-mode-key-bindings)
+Comment toggling is one chord that must adapt to the language of the
+buffer it runs in, so it is bound globally to a small dispatcher:
+=comment-or-uncomment-region= resolves =comment-start=, =comment-end=
+and =comment-region-function= buffer-locally, which makes it toggle
+the right syntax per major mode, including =org-mode=, which installs
+=org-comment-or-uncomment-region= under it.
+
+In visual state it toggles the selection; in normal state, the
+current line.  Without evil the chord that lands on it is
+=C-c ;=, which =org-mode-map= shadows locally with =org-toggle-comment=
+in org buffers -- the mode-specific command wins where one exists.
+#+begin_src emacs-lisp
+  (defun ep3c-comment-toggle ()
+    "Toggle comments on the region, or on the current line without one."
+    (interactive)
+    (if (use-region-p)
+        (comment-or-uncomment-region (region-beginning) (region-end))
+      (save-excursion
+        ;; A cursor parked on a trailing empty line targets the real
+        ;; last line -- `line-beginning-position' would return that
+        ;; empty line itself and the toggle would silently do nothing.
+        (when (and (eobp) (/= (point) (point-min)))
+          (forward-line -1))
+        (comment-or-uncomment-region (line-beginning-position)
+                                     (line-beginning-position 2)))))
+
+  (ep3c-define-key '(normal visual) 'global
+    ";" #'ep3c-comment-toggle)
 #+end_src
 
 * Temp directory per project

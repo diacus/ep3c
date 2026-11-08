@@ -91,13 +91,37 @@ possessing basic file management utilities.
       (treemacs-hide-gitignored-files-mode nil))
     :bind
     (:map global-map
-	  ("M-0"       . treemacs-select-window)
-	  ("C-x t 1"   . treemacs-delete-other-windows)
-	  ("C-x t t"   . treemacs)
-	  ("C-x t d"   . treemacs-select-directory)
-	  ("C-x t B"   . treemacs-bookmark)
-	  ("C-x t C-t" . treemacs-find-file)
-	  ("C-x t M-t" . treemacs-find-tag)))
+	  ("M-0" . treemacs-select-window)))
+
+  ;; The other six commands hang from the leader (SPC with evil,
+  ;; C-c without it): the upstream-recommended C-x t chords collide
+  ;; with tab-bar's C-x t prefix on Emacs 29+, and whichever keymap
+  ;; binds C-x t last replaces the other tree entirely.
+  (ep3c-define-key 'normal 'global
+    "e e" #'treemacs
+    "e d" #'treemacs-select-directory
+    "e b" #'treemacs-bookmark
+    "e f" #'treemacs-find-file
+    "e g" #'treemacs-find-tag
+    "e 1" #'treemacs-delete-other-windows)
+
+  ;; treemacs buffers live in evil's `treemacs' state, not normal
+  ;; state (`treemacs-evil' sets it as the initial state), so the
+  ;; normal-state bindings above are unreachable inside the treemacs
+  ;; window -- there SPC is treemacs-mode's scroll-up-command.  The
+  ;; state cannot be bound right away: `evil-define-key*' *errors*
+  ;; on a state evil does not know yet, and `treemacs' exists only
+  ;; from treemacs-evil on, which loads with treemacs' first use
+  ;; (and never, without evil).  Hence the same deferred rebind
+  ;; projectile.org already uses for vterm.
+  (with-eval-after-load 'treemacs-evil
+    (ep3c-define-key 'treemacs 'global
+      "e e" #'treemacs
+      "e d" #'treemacs-select-directory
+      "e b" #'treemacs-bookmark
+      "e f" #'treemacs-find-file
+      "e g" #'treemacs-find-tag
+      "e 1" #'treemacs-delete-other-windows))
 
   (use-package treemacs-evil
     :after (treemacs evil)

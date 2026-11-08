@@ -12,7 +12,7 @@
       "g f" 'magit-find-file
       "g F" 'magit-find-file-other-frame
       "g l" 'magit-log-current
-      "g t" 'magit-log-all-branches)
+      "g b" 'magit-log-all-branches)
     (setq
      magit-log-arguments '("-n256" "--graph" "--decorate" "--color")
      magit-diff-refine-hunk t))

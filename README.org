@@ -120,7 +120,7 @@ root and reuse the project's own buffer.
 | =SPC g f= | magit-find-file             | Find file in git      |
 | =SPC g F= | magit-find-file-other-frame | Find file other frame |
 | =SPC g l= | magit-log-current           | Log current branch    |
-| =SPC g t= | magit-log-all-branches      | Log all branches      |
+| =SPC g b= | magit-log-all-branches      | Log all branches      |
 
 *** Org Mode (=SPC o=)
 | Key     | Command                   | Description                 |
@@ -178,9 +178,13 @@ Tools to talk to Large Language Models.
 | =SPC c c= | haskell-compile | Compile (haskell-mode) |
 
 *** Programming
-| Key            | Command                     | Description       |
-|----------------+-----------------------------+-------------------|
-| =SPC ;= (visual) | comment-or-uncomment-region | Comment selection |
+Comment toggling, one chord for every language: in visual state it
+toggles the selection, in normal state the current line.  Without
+evil (=C-c ;=), org-mode buffers keep their own =org-toggle-comment=
+on =C-c ;=, which wins in those buffers.
+| Key     | Command                | Description                          |
+|---------+------------------------+--------------------------------------|
+| =SPC ;= | ep3c-comment-toggle    | Toggle comments (selection or line)  |
 
 Haskell (haskell-mode buffers only):
 | Key     | Command                   | Description     |
@@ -189,15 +193,20 @@ Haskell (haskell-mode buffers only):
 
 ** Global Keybindings
 *** Treemacs
+The tree commands hang from the leader (=C-c e …= without evil): the
+upstream-recommended =C-x t= chords collide with tab-bar's =C-x t=
+prefix on Emacs 29+, replacing its whole tree.  They are also bound
+in treemacs' own evil state, so =SPC e e= closes the tree when the
+cursor is already inside the treemacs window.
 | Key       | Command                       |
 |-----------+-------------------------------|
 | =M-0=       | treemacs-select-window        |
-| =C-x t t=   | treemacs                      |
-| =C-x t 1=   | treemacs-delete-other-windows |
-| =C-x t d=   | treemacs-select-directory     |
-| =C-x t B=   | treemacs-bookmark             |
-| =C-x t C-t= | treemacs-find-file            |
-| =C-x t M-t= | treemacs-find-tag             |
+| =SPC e e=   | treemacs                      |
+| =SPC e 1=   | treemacs-delete-other-windows |
+| =SPC e d=   | treemacs-select-directory     |
+| =SPC e b=   | treemacs-bookmark             |
+| =SPC e f=   | treemacs-find-file            |
+| =SPC e g=   | treemacs-find-tag             |
 
 *** Docker
 | Key   | Command |

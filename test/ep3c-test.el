@@ -19,6 +19,10 @@
 ;;   that the modules define themselves carries an (interactive)
 ;;   form, so a binding to a plain function (a `commandp' failure at
 ;;   runtime) cannot ship.
+;; - comment toggle: `ep3c-comment-toggle' (the global `SPC ;' /
+;;   `C-c ;' comment chord) resolves the comment syntax of the
+;;   buffer's major mode, including org-mode, and toggles the
+;;   region when one is active, the current line otherwise.
 ;; - install smoke test: ep3c--setup installs init.el, core.el and
 ;;   every module into a throwaway user-emacs-directory, and the
 ;;   module-set validation drops unknown modules.
@@ -358,6 +362,77 @@ in ERT-SUITE-LIMITATIONS.md."
     (should (eq (lookup-key mode-map (vector 3 ?c ?c)) #'haskell-compile))
     (should (eq (lookup-key mode-map (vector 3 ?o ?r))
                 'haskell-interactive-bring))))
+
+(ert-deftest ep3c-test-comment-toggle ()
+  "`ep3c-comment-toggle' resolves the comment syntax of the mode.
+
+The command is the global comment chord (`SPC ;' with evil, `C-c ;'
+without it), so it must adapt to the major mode it runs in:
+`comment-start' and friends are buffer-local and org-mode swaps in
+its own `org-comment-or-uncomment-region'.  The defun is lifted out
+of prog-mode.org's tangle (the rest of the module wants packages),
+and both branches are exercised: the current line without a region,
+and a selection with one.  A cursor parked on the trailing empty
+line must toggle the real last line.  Toggle/untoggle round-trips
+are asserted rather than exact paddings, which `comment-add' owns."
+  (let ((defun-form))
+    (catch 'found
+      (dolist (elisp (ep3c-test--tangle-module
+                      (expand-file-name "src/modules/prog-mode.org"
+                                        ep3c-test-root)))
+        (dolist (form (ep3c-test--read-forms elisp))
+          (when (and (eq (car-safe form) 'defun)
+                     (eq (cadr form) 'ep3c-comment-toggle))
+            (setq defun-form form)
+            (throw 'found t)))))
+    (should defun-form)
+    (eval defun-form t)
+    ;; Line branch, in a mode where comment-start is ";".
+    (with-temp-buffer
+      (emacs-lisp-mode)
+      (insert "plain\n")
+      (let ((original (buffer-string)))
+        (goto-char (point-max))
+        (call-interactively #'ep3c-comment-toggle)
+        (should-not (string= (buffer-string) original))
+        (should (string-match-p "\\`\;.*plain" (buffer-string)))
+        (call-interactively #'ep3c-comment-toggle)
+        (should (string= (buffer-string) original))))
+    ;; Org mode resolves to its `#' syntax.
+    (with-temp-buffer
+      (org-mode)
+      (insert "plain\n")
+      (let ((original (buffer-string)))
+        (call-interactively #'ep3c-comment-toggle)
+        (should (string-match-p "\\`#" (buffer-string)))
+        (call-interactively #'ep3c-comment-toggle)
+        (should (string= (buffer-string) original))))
+    ;; Line branch again, with the cursor on the trailing empty line
+    ;; a down-motion or C-e in evil can leave it on.
+    (with-temp-buffer
+      (emacs-lisp-mode)
+      (insert "plain\n")
+      (goto-char (point-max))
+      (call-interactively #'ep3c-comment-toggle)
+      (should (string-match-p "plain" (buffer-string))))
+    ;; Region branch.  `transient-mark-mode' is forced on globally:
+    ;; in batch, a `push-mark' activation inside a fresh temporary
+    ;; buffer does not survive `point' motion, and the dispatcher
+    ;; would (correctly) take the line branch.
+    (transient-mark-mode 1)
+    (with-temp-buffer
+      (emacs-lisp-mode)
+      (insert "one\ntwo\n")
+      (let ((original (buffer-string)))
+        (goto-char (point-min))
+        (push-mark nil 'nomessage 'activate)
+        (forward-line 2)
+        (call-interactively #'ep3c-comment-toggle)
+        (should (string-match-p ";;? one" (buffer-string)))
+        (should (string-match-p ";;? two" (buffer-string)))
+        (should-not (string= (buffer-string) original))
+        (call-interactively #'ep3c-comment-toggle)
+        (should (string= (buffer-string) original))))))
 
 (ert-deftest ep3c-test-modules-have-title ()
   "Every module declares a non-empty #+TITLE: property."
