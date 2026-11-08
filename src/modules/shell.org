@@ -60,9 +60,9 @@ it is what spawns a fresh shell on =SPC t v= and =SPC t V=.
       :ensure t
       :after (vterm projectile)
       :config
-      (evil-define-key '(normal visual) 'global
-        (kbd "SPC t v") #'shell--popup-vterm
-        (kbd "SPC t V") #'multi-vterm)))
+      (ep3c-define-key '(normal visual) 'global
+        "t v" #'shell--popup-vterm
+        "t V" #'multi-vterm)))
 #+end_src
 
 * Ghostel
@@ -92,9 +92,9 @@ ghostel's own line mode, =C-c C-l=.
     (ghostel-module-auto-install 'download)
     :config
     (defalias 'shell--popup-ghostel (make-repl-popup #'ghostel))
-    (evil-define-key '(normal visual) 'global
-      (kbd "SPC t g") #'shell--popup-ghostel
-      (kbd "SPC t G") #'ghostel))
+    (ep3c-define-key '(normal visual) 'global
+      "t g" #'shell--popup-ghostel
+      "t G" #'ghostel))
 #+end_src
 
 * Eshell
@@ -112,9 +112,9 @@ choice for a command line interface is presicely *eshell.*
 #+begin_src emacs-lisp
   (defalias 'shell--popup-eshell (make-repl-popup #'eshell))
 
-  (evil-define-key '(normal visual) 'global
-    (kbd "SPC t e") 'shell--popup-eshell
-    (kbd "SPC t E") 'eshell)
+  (ep3c-define-key '(normal visual) 'global
+    "t e" 'shell--popup-eshell
+    "t E" 'eshell)
 #+end_src
 
 * Term, shell and ielm
@@ -133,13 +133,13 @@ itself; =term= and =shell= do, like the shells.
   (defalias 'shell--popup-ielm (make-repl-popup #'ielm))
   (defalias 'shell--popup-shell (make-repl-popup #'shell))
 
-  (evil-define-key '(normal visual) 'global
-    (kbd "SPC t s") 'shell--popup-shell
-    (kbd "SPC t S") 'shell
-    (kbd "SPC t t") 'shell--popup-term
-    (kbd "SPC t T") 'term
-    (kbd "SPC t i") 'shell--popup-ielm
-    (kbd "SPC t I") 'ielm)
+  (ep3c-define-key '(normal visual) 'global
+    "t s" 'shell--popup-shell
+    "t S" 'shell
+    "t t" 'shell--popup-term
+    "t T" 'term
+    "t i" 'shell--popup-ielm
+    "t I" 'ielm)
 #+end_src
 
 * Shell edit

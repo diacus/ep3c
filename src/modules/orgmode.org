@@ -296,11 +296,15 @@ by [[https://www.youtube.com/watch?v=a_WNtuefREM][LibrePhenix]].
   |----------+-------------|
   | =SPC= =o= =a=  | =org-agenda=  |
   | =SPC= =o= =c=  | =org-capture= |
+  | =SPC= =c=      | =org-capture= (the vanilla =C-c c= chord without evil) |
 
   #+begin_src emacs-lisp
-    (evil-define-key 'normal 'global
-      (kbd "SPC o a") #'org-agenda)
-    (evil-define-key 'normal 'global
-      (kbd "SPC o c") #'org-capture)
+    ;; The leader `c' slot gives org-capture its vanilla C-c c chord
+    ;; back without evil; haskell-mode keeps shadowing it locally with
+    ;; its own `c c' compile tree, so both coexist.
+    (ep3c-define-key 'normal 'global
+      "o a" #'org-agenda
+      "o c" #'org-capture
+      "c"   #'org-capture)
   #+end_src
 

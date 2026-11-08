@@ -10,15 +10,20 @@ external dependencies (when feasable).
   (use-package projectile
     :ensure t
     :config
-    (evil-define-key 'normal 'global (kbd "SPC p p") 'projectile-switch-project)
-    (evil-define-key 'normal 'global (kbd "SPC p k") 'projectile-kill-buffers)
-    (evil-define-key 'normal 'global (kbd "SPC p f") 'projectile-find-file)
-    (evil-define-key 'normal 'global (kbd "SPC p F") 'projectile-find-file-other-frame)
-    (evil-define-key 'normal 'global (kbd "SPC p b") 'projectile-switch-to-buffer)
-    (evil-define-key 'normal 'global (kbd "SPC p B") 'projectile-switch-to-buffer-other-frame)
-    (evil-define-key 'normal 'global (kbd "SPC p c") 'projectile-compile-project)
-    (evil-define-key 'normal 'global (kbd "SPC p t") 'projectile-test-project)
+    (ep3c-define-key 'normal 'global
+      "p p" 'projectile-switch-project
+      "p k" 'projectile-kill-buffers
+      "p f" 'projectile-find-file
+      "p F" 'projectile-find-file-other-frame
+      "p b" 'projectile-switch-to-buffer
+      "p B" 'projectile-switch-to-buffer-other-frame
+      "p c" 'projectile-compile-project
+      "p t" 'projectile-test-project)
     (projectile-mode +1)
+    ;; Projectile ships its own C-c p prefix in `projectile-mode-map';
+    ;; being a minor mode, it would shadow the non-evil leader key,
+    ;; which owns the `p' prefix for the bindings above.
+    (define-key projectile-mode-map (kbd "C-c p") nil)
     ;; Use default completion instead of ivy, since ivy is not installed.
     ;; This prevents "Cannot load projectile" error during startup.
     (setq projectile-completion-system 'default))
@@ -64,21 +69,21 @@ external dependencies (when feasable).
       "Open the project ghostel terminal in a popup window."
       (interactive)
       (funcall (make-repl-popup #'projectile-run-ghostel)))
-    (evil-define-key 'normal 'global
-      (kbd "SPC p r s") #'projectile--popup-shell
-      (kbd "SPC p r S") #'projectile-run-shell
-      (kbd "SPC p r e") #'projectile--popup-eshell
-      (kbd "SPC p r E") #'projectile-run-eshell
-      (kbd "SPC p r t") #'projectile--popup-term
-      (kbd "SPC p r T") #'projectile-run-term
-      (kbd "SPC p r g") #'projectile--popup-ghostel
-      (kbd "SPC p r G") #'projectile-run-ghostel
-      (kbd "SPC p r i") #'projectile--popup-ielm
-      (kbd "SPC p r I") #'projectile-run-ielm)
+    (ep3c-define-key 'normal 'global
+      "p r s" #'projectile--popup-shell
+      "p r S" #'projectile-run-shell
+      "p r e" #'projectile--popup-eshell
+      "p r E" #'projectile-run-eshell
+      "p r t" #'projectile--popup-term
+      "p r T" #'projectile-run-term
+      "p r g" #'projectile--popup-ghostel
+      "p r G" #'projectile-run-ghostel
+      "p r i" #'projectile--popup-ielm
+      "p r I" #'projectile-run-ielm)
     ;; vterm is UNIX only: the v/V pair waits for vterm to load.
     (unless (member system-type '(ms-dos windows-nt cygwin))
       (with-eval-after-load 'vterm
-        (evil-define-key 'normal 'global
-          (kbd "SPC p r v") #'projectile--popup-vterm
-          (kbd "SPC p r V") #'projectile-run-vterm))))
+        (ep3c-define-key 'normal 'global
+          "p r v" #'projectile--popup-vterm
+          "p r V" #'projectile-run-vterm))))
 #+end_src

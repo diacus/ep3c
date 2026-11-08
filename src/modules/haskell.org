@@ -17,14 +17,9 @@ guess how to compile the program associated to the current buffer.
 #+begin_src emacs-lisp
   (defun haskell-mode-key-bindings (mode-map)
     "Define convenient key-bindings for Haskell mode"
-    (evil-define-key '(normal visual motion)
-      mode-map
-      (kbd "SPC o r")
-      'haskell-interactive-bring)
-    (evil-define-key '(normal visual motion)
-      mode-map
-      (kbd "SPC c c")
-      'haskell-compile))
+    (ep3c-define-key '(normal visual motion) mode-map
+      "o r" 'haskell-interactive-bring
+      "c c" 'haskell-compile))
 
   (use-package haskell-mode
     :ensure t

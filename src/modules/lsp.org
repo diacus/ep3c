@@ -36,17 +36,18 @@ popular Emacs packages like =company=, =flycheck= and =projectile=.
 
   (add-hook 'dap-mode-hook
 	    (lambda ()
-	      (evil-define-key '(normal visual emacs) dap-mode-map (kbd "SPC d d") 'dap-debug)
-	      (evil-define-key '(normal visual emacs) dap-mode-map (kbd "SPC d c") 'dap-continue)
-	      (evil-define-key '(normal visual emacs) dap-mode-map (kbd "SPC d e") 'dap-debug-edit-template)
-	      (evil-define-key '(normal visual emacs) dap-mode-map (kbd "SPC d n") 'dap-next)
-	      (evil-define-key '(normal visual emacs) dap-mode-map (kbd "SPC d i") 'dap-step-in)
-	      (evil-define-key '(normal visual emacs) dap-mode-map (kbd "SPC d o") 'dap-step-out)
-	      (evil-define-key '(normal visual emacs) dap-mode-map (kbd "SPC d b") 'dap-breakpoint-toggle)
-	      (evil-define-key '(normal visual emacs) dap-mode-map (kbd "SPC d B") 'dap-ui-breakpoints)
-	      (evil-define-key '(normal visual emacs) dap-mode-map (kbd "SPC d l") 'dap-ui-locals)
-	      (evil-define-key '(normal visual emacs) dap-mode-map (kbd "SPC d s") 'dap-ui-sessions)
-	      (evil-define-key '(normal visual emacs) dap-mode-map (kbd "SPC d r") 'dap-ui-repl)))
+	      (ep3c-define-key '(normal visual emacs) dap-mode-map
+		"d d" 'dap-debug
+		"d c" 'dap-continue
+		"d e" 'dap-debug-edit-template
+		"d n" 'dap-next
+		"d i" 'dap-step-in
+		"d o" 'dap-step-out
+		"d b" 'dap-breakpoint-toggle
+		"d B" 'dap-ui-breakpoints
+		"d l" 'dap-ui-locals
+		"d s" 'dap-ui-sessions
+		"d r" 'dap-ui-repl)))
 
   (use-package yasnippet
     :ensure t

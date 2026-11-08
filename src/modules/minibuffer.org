@@ -57,9 +57,17 @@ without further integrations.
     (global-set-key (kbd "<f1> l") 'counsel-describe-find-library)
     (global-set-key (kbd "<f2> i") 'counsel-describe-info-lookup-symbol)
     (global-set-key (kbd "<f2> u") 'counsel-describe-unicode-char)
-    (global-set-key (kbd "C-c g") 'counsel-git)
-    (global-set-key (kbd "C-c j") 'counsel-git-grep)
-    (global-set-key (kbd "C-c k") 'counsel-ag)
+    ;; counsel-git is not bound: SPC p f (projectile-find-file) covers
+    ;; the same list of tracked files in a git project, and
+    ;; M-s M-f (consult-find) also finds untracked files.  Its old
+    ;; C-c g chord is left to the leader's `g' prefix without evil.
+    ;;
+    ;; j and k live in the leader: SPC j / SPC k with evil, and without
+    ;; it `ep3c-non-evil-leader' j / k -- by default the very chords
+    ;; they used to have.
+    (ep3c-define-key 'normal 'global
+      "j" 'counsel-git-grep
+      "k" 'counsel-ag)
     (global-set-key (kbd "C-x l") 'counsel-locate)
     (global-set-key (kbd "C-S-o") 'counsel-rhythmbox)
     (define-key minibuffer-local-map (kbd "C-r") 'counsel-minibuffer-history)

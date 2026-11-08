@@ -34,9 +34,9 @@ window when the shell is gone."
       :ensure t
       :config
       (use-powershell7)
-      (evil-define-key '(normal visual) 'global
-        (kbd "SPC t p") #'shell--popup-powershell
-        (kbd "SPC t P") #'powershell))
+      (ep3c-define-key '(normal visual) 'global
+        "t p" #'shell--popup-powershell
+        "t P" #'powershell))
     (use-package kql-mode
       :ensure t
       :config

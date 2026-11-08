@@ -31,9 +31,9 @@ takes care of.
     ;; claudemacs' README recommends auto-revert: the CLI edits and
     ;; saves project buffers behind Emacs' back.
     (global-auto-revert-mode +1)
-    ;; Modules tangle alphabetically, so claudemacs loads before evil;
-    ;; defer the binding until evil is up.
-    (with-eval-after-load 'evil
-      (evil-define-key '(normal visual) 'global
-        (kbd "SPC a c") #'claudemacs-transient-menu)))
+    ;; Modules tangle alphabetically, so this lands in the plain
+    ;; leader regime before evil arrives; `ep3c-define-key' redoes
+    ;; the binding through evil's states the moment evil loads.
+    (ep3c-define-key '(normal visual) 'global
+      "a c" #'claudemacs-transient-menu))
 #+end_src
