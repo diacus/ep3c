@@ -23,6 +23,10 @@
 ;;   `C-c ;' comment chord) resolves the comment syntax of the
 ;;   buffer's major mode, including org-mode, and toggles the
 ;;   region when one is active, the current line otherwise.
+;; - no raw `evil-define-key' macro calls outside evil.org: the
+;;   macro only expands against a loaded evil, and a call reached
+;;   through a hook lambda crashes every buffer the hook fires for
+;;   when evil is disabled (the orgmode.org terminal-TAB incident).
 ;; - install smoke test: ep3c--setup installs init.el, core.el and
 ;;   every module into a throwaway user-emacs-directory, and the
 ;;   module-set validation drops unknown modules.
@@ -433,6 +437,35 @@ are asserted rather than exact paddings, which `comment-add' owns."
         (should-not (string= (buffer-string) original))
         (call-interactively #'ep3c-comment-toggle)
         (should (string= (buffer-string) original))))))
+
+(ert-deftest ep3c-test-modules-do-not-call-evil-define-key-macro ()
+  "No module outside evil.org calls the `evil-define-key' macro.
+
+The incident that motivates this check is invisible to an offline
+suite: orgmode.org's terminal-TAB hook called the macro from an
+anonymous hook lambda, which fires for every org-mode buffer the
+daemon creates before a GUI frame exists -- and crashes with
+`void-function evil-define-key' when the evil.org module is
+disabled.  House rule: leader bindings go through
+`ep3c-define-key'; direct mode-map bindings in an evil-regime
+runtime path use the plain-function form `evil-define-key*'
+explicitly guarded by `(featurep 'evil)'.  The macro itself is
+reserved to evil.org, which only loads with evil."
+  (let (failures)
+    (dolist (module ep3c-test-modules)
+      (unless (string-suffix-p "evil.org" module)
+        (dolist (elisp (ep3c-test--tangle-module module))
+          (dolist (form (ep3c-test--read-forms elisp))
+            (ep3c-test--visit-forms
+             (lambda (f)
+               (when (eq (car-safe f) 'evil-define-key)
+                 (push (format "%s: raw `evil-define-key' call -- use \
+`ep3c-define-key' for leader bindings, or `evil-define-key*' under \
+a `(featurep 'evil)' guard for direct ones"
+                               (file-name-nondirectory module))
+                       failures)))
+             form)))))
+    (should-not (nreverse failures))))
 
 (ert-deftest ep3c-test-modules-have-title ()
   "Every module declares a non-empty #+TITLE: property."

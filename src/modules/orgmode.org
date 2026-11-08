@@ -102,10 +102,16 @@ by [[https://www.youtube.com/watch?v=a_WNtuefREM][LibrePhenix]].
 #+end_src
 
 * Evil Org
-  [[https://github.com/Somelauw/evil-org-mode][evil-org]] package adds key-bindings to Emacs org-mode
+  [[https://github.com/Somelauw/evil-org-mode][evil-org]] package adds key-bindings to Emacs org-mode.
+  Guarded on the module list: evil-org is an evil-only package
+  (`(require 'evil)' at its top), and its `:hook' deferral would
+  load it on the first org-mode buffer even with the evil.org
+  module disabled -- quietly pulling evil, treemacs-evil and every
+  `with-eval-after-load' rebind into the process.
   #+begin_src emacs-lisp
     (use-package evil-org
       :ensure t
+      :if (member 'evil ep3c-modules)
       :after org
       :hook (org-mode . evil-org-mode)
       :config
@@ -124,8 +130,13 @@ by [[https://www.youtube.com/watch?v=a_WNtuefREM][LibrePhenix]].
 		(unless (display-graphic-p)
 		  ;; Prevent Evil from binding C-i (Tab) to evil-jump-forward
 		  (setq evil-want-C-i-jump nil)
-		  ;; Bind TAB to org-cycle in normal state
-		  (evil-define-key 'normal 'global (kbd "TAB") 'org-cycle))))
+		  ;; Bind TAB to org-cycle in normal state.  Guarded: the
+		  ;; raw `evil-define-key' macro call fired from this hook
+		  ;; for every org buffer that a daemon creates before a
+		  ;; GUI frame exists -- and crashed outright (void
+		  ;; function) when the evil.org module was disabled.
+		  (when (featurep 'evil)
+		    (evil-define-key* 'normal 'global (kbd "TAB") 'org-cycle)))))
   #+end_src
 
 * Look and feel
