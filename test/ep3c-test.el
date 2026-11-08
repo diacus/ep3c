@@ -231,10 +231,11 @@ FORM may be an atom, a cons, or an improper list."
 (defun ep3c-test--find-bindings (form)
   "Return the (FN . KEY-STRING) pairs the form FORM binds to keys.
 
-Recognizes `evil-define-key', `global-set-key', `define-key',
-`local-set-key' and the use-package `:bind'/`:bind-keymap'/`:map'
-plists.  The KEY-STRING is nil for keyspecs this reader does not
-understand (for example an event vector); those pairs are dropped."
+Recognizes `evil-define-key', `ep3c-define-key' (leader-relative
+keys), `global-set-key', `define-key', `local-set-key' and the
+use-package `:bind'/`:bind-keymap'/`:map' plists.  The KEY-STRING
+is nil for keyspecs this reader does not understand (for example
+an event vector); those pairs are dropped."
   (let (out)
     (cl-labels
         ((do-bind (keyform defform)
@@ -258,6 +259,13 @@ understand (for example an event vector); those pairs are dropped."
          (visit (f)
            (pcase f
              (`(evil-define-key . ,args)
+              ;; Drop the STATE and MAP arguments.
+              (setq args (cddr args))
+              ;; Alternate (KEYSPEC . DEF) pairs.
+              (while (cadr args)
+                (do-bind (car args) (cadr args))
+                (setq args (cddr args))))
+             (`(ep3c-define-key . ,args)
               ;; Drop the STATE and MAP arguments.
               (setq args (cddr args))
               ;; Alternate (KEYSPEC . DEF) pairs.
@@ -323,6 +331,33 @@ command -- add (interactive) to its defun"
                           module key fn)
                   failures)))))
     (should-not (nreverse failures))))
+
+(ert-deftest ep3c-test-define-key-plain-regime ()
+  "Multi-pair `ep3c-define-key' calls take in the plain regime.
+
+`define-key' is not variadic, and a single-pair smoke would hide an
+arity bug -- one pair is exactly `define-key's three arguments --
+so this binds several pairs per call, in the leader map and in a
+mode map.  The evil branch needs the evil package, which the
+offline suite cannot install; it is verified by hand, as recorded
+in ERT-SUITE-LIMITATIONS.md."
+  (unless (fboundp 'ep3c-define-key)
+    (load-file (expand-file-name "src/core.el" ep3c-test-root)))
+  (ep3c-define-key 'normal 'global
+    "j" 'counsel-git-grep
+    "k" 'counsel-ag
+    "t v" #'eshell)
+  (should (eq (lookup-key ep3c-leader-map (vector ?j)) 'counsel-git-grep))
+  (should (eq (lookup-key ep3c-leader-map (vector ?k)) 'counsel-ag))
+  (should (eq (lookup-key ep3c-leader-map (vector ?t ?v)) #'eshell))
+  (should (eq (lookup-key global-map (vector 3)) ep3c-leader-map))
+  (let ((mode-map (make-sparse-keymap)))
+    (ep3c-define-key '(normal visual) mode-map
+      "c c" #'haskell-compile
+      "o r" 'haskell-interactive-bring)
+    (should (eq (lookup-key mode-map (vector 3 ?c ?c)) #'haskell-compile))
+    (should (eq (lookup-key mode-map (vector 3 ?o ?r))
+                'haskell-interactive-bring))))
 
 (ert-deftest ep3c-test-modules-have-title ()
   "Every module declares a non-empty #+TITLE: property."
