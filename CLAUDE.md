@@ -47,6 +47,7 @@ EP3C (Emacs Pretty Personal Portable Configuration) is a modular, batteries-incl
         ├── ledger.org        # ledger-mode
         ├── apheleia.org      # Async formatter (AWK uses spaces; ts/tsx → prettier)
         ├── gptel.org         # LLM client (Ollama + OpenAI examples)
+        ├── claudemacs.org      # AI CLI sessions (Claude Code) via SPC a
         ├── engine-mode.org   # web search bindings (GoodReads, DuckDuckGo)
         ├── password-store.org # GnuPG pinentry + WSL pass wrapper
         ├── docker.org        # docker, dockerfile-mode

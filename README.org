@@ -151,6 +151,12 @@ one in the current window.
 Note that =SPC p r v= and =SPC p r V= run a vterm in the project root,
 via projectile (see Run =SPC p r=).
 
+*** AI (=SPC a=)
+Tools to talk to Large Language Models.
+| Key     | Command                  | Description                    |
+|---------+--------------------------+--------------------------------|
+| =SPC a c= | claudemacs-transient-menu | Claudemacs sessions and actions |
+
 *** Debug/DAP (=SPC d=)
 | Key     | Command               | Description         |
 |---------+-----------------------+---------------------|

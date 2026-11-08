@@ -1,0 +1,39 @@
+#+TITLE: Claudemacs settings
+#+AUTHOR: Diacus Magnuz
+#+STARTUP: overview
+
+* Claudemacs
+[[https://github.com/cpoile/claudemacs][claudemacs]] runs AI coding assistants [[https://claude.com/claude-code][Claude Code]], Codex,
+Gemini, or any tool described in its registry, inside Emacs terminal
+buffers.  It deliberately stays out of the way: no agents, MCP servers
+or IDE integration, just the CLI plus Emacs conveniences around it --
+workspace-aware sessions, fix-error-at-point through *flycheck*,
+line/region context commands, and a *transient* menu.
+
+The AI tool key bindings live under the =SPC a= prefix. Sessions ride
+[[https://github.com/dakra/ghostel][ghostel]] from the [[file:shell.org][shell module]], which must be enabled too:
+claudemacs asks for the terminal backend at session start and errors
+out instead of falling back when the one it asks for cannot load.  The
+ghostel native module itself should be downloaded beforehand, as the
+[[file:shell.org][shell module]] explains.
+
+The =claude= and friends executables are external: they must be on
+=exec-path= before a session starts, which the [[file:environment.org][environment module]]
+takes care of.
+
+#+begin_src emacs-lisp
+  (use-package claudemacs
+    :quelpa (claudemacs :fetcher github
+                        :repo "cpoile/claudemacs")
+    :custom
+    (claudemacs-terminal-backend 'ghostel)
+    :config
+    ;; claudemacs' README recommends auto-revert: the CLI edits and
+    ;; saves project buffers behind Emacs' back.
+    (global-auto-revert-mode +1)
+    ;; Modules tangle alphabetically, so claudemacs loads before evil;
+    ;; defer the binding until evil is up.
+    (with-eval-after-load 'evil
+      (evil-define-key '(normal visual) 'global
+        (kbd "SPC a c") #'claudemacs-transient-menu)))
+#+end_src
