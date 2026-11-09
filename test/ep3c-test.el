@@ -27,6 +27,10 @@
 ;;   macro only expands against a loaded evil, and a call reached
 ;;   through a hook lambda crashes every buffer the hook fires for
 ;;   when evil is disabled (the orgmode.org terminal-TAB incident).
+;; - README leader notation: keybinding tables document leader
+;;   chords as =LEADER x y= (the placeholder for
+;;   `ep3c-evil-leader'/`ep3c-non-evil-leader'), never literally as
+;;   =SPC x y=.
 ;; - leader-key tree conventions: the leader `o' subtree is bound
 ;;   by orgmode.org only (haskell's old `LEADER o r' REPL binding
 ;;   predates the org-only convention), and language modules
@@ -471,6 +475,37 @@ a `(featurep 'evil)' guard for direct ones"
                        failures)))
              form)))))
     (should-not (nreverse failures))))
+
+(ert-deftest ep3c-test-readme-leader-notation ()
+  "README.org lists leader chords with the LEADER placeholder.
+
+The leader is `ep3c-evil-leader' (default SPC) with the evil
+module and `ep3c-non-evil-leader' (default C-c) without it, so no
+keybinding documentation can say \"SPC\" unconditionally.  The
+README declares the convention once (the intro names both
+defcustoms and states that =LEADER x y= means the regime's leader)
+and every leader chord in a table is written =LEADER x y=.  A
+literal =SPC- table cell here means a newly documented chord
+skipped the convention."
+  (with-temp-buffer
+    (insert-file-contents (expand-file-name "README.org" ep3c-test-root))
+    (goto-char (point-min))
+    (let (failures)
+      ;; (a) every leader key cell in a table uses the placeholder.
+      (while (search-forward-regexp "^| *=SPC" nil t)
+        (push (format "README:%d: literal =SPC- key cell -- use =LEADER"
+                      (line-number-at-pos (match-beginning 0)))
+              failures))
+      ;; (b) both regimes' defcustoms are named.
+      (dolist (var '("ep3c-evil-leader" "ep3c-non-evil-leader"))
+        (goto-char (point-min))
+        (unless (search-forward var nil t)
+          (push (format "README does not mention `%s'" var) failures)))
+      ;; (c) the convention itself is declared.
+      (goto-char (point-min))
+      (unless (search-forward-regexp "=LEADER x y=" nil t)
+        (push "README declares no =LEADER x y= convention" failures))
+      (should-not (nreverse failures)))))
 
 (ert-deftest ep3c-test-leader-o-is-org-only ()
   "The leader's `o' subtree is org's, everywhere but orgmode.org.
