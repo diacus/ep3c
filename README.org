@@ -185,6 +185,7 @@ Tools to talk to Large Language Models.
 |------------+-----------------------+---------------------|
 | =LEADER d d= | dap-debug             | Start debug session |
 | =LEADER d c= | dap-continue          | Continue execution  |
+| =LEADER d e= | dap-debug-edit-template | Edit the debug session template |
 | =LEADER d n= | dap-next              | Step over           |
 | =LEADER d i= | dap-step-in           | Step into           |
 | =LEADER d o= | dap-step-out          | Step out            |
@@ -261,6 +262,7 @@ their genuinely keymap-root chords remain here.
 | =<f1> o=           | counsel-describe-symbol    |
 | =LEADER j=         | counsel-git-grep           |
 | =LEADER k=         | counsel-ag                 |
+| =C-S-o=            | counsel-rhythmbox          |
 | =C-r= (minibuffer) | counsel-minibuffer-history |
 
 *** Consult
@@ -278,6 +280,11 @@ their genuinely keymap-root chords remain here.
 |---------+-------------------------|
 | =C-c C-z= | inf-perl-run            |
 | =C-c C-d= | spawn-run-perl-debugger |
+
+*** Scratch (lisp-interaction-mode)
+| Key     | Command                        |
+|---------+--------------------------------|
+| =C-j=     | ep3c-scratch-eval-print-as-comment |
 
 The =C-x C-e= command line editor is the [[https://github.com/diacus/shell-edit.el][shell-edit]] package,
 which ep3c pulls in through quelpa; the commands below are its.

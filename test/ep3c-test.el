@@ -597,6 +597,42 @@ and passes."
                            failures))))))))))
     (should-not failures)))
 
+(defun ep3c-test--leader-chords ()
+  "Every leader-relative key `ep3c-define-key' binds, as SPC-prefixed chords.
+Only `ep3c-define-key' forms count: their keys are leader-relative
+by contract.  Raw `define-key'/`global-set-key' chords are the
+non-leader surface (README tables them separately) and are not
+collected here."
+  (let (chords)
+    (dolist (module ep3c-test-modules)
+      (dolist (elisp (ep3c-test--tangle-module module))
+        (dolist (form (ep3c-test--read-forms elisp))
+          (dolist (call (ep3c-test--scan-forms form))
+            (let ((args (cddr call)))
+              (while (and (cadr args) (stringp (car args)))
+                (cl-pushnew (concat "SPC " (car args)) chords
+                            :test #'equal)
+                (setq args (cddr args))))))))
+    chords))
+
+(ert-deftest ep3c-test-readme-documents-leader-bindings ()
+  "Every leader chord the modules bind has a =LEADER …= row in README.
+Keybinding tables drift quietly: a chord added to a module is
+invisible to anyone reading the README only.  Chords collected by
+`ep3c-test--leader-chords' must each appear in the README as
+=LEADER key=."
+  (let ((readme (with-temp-buffer
+                  (insert-file-contents
+                   (expand-file-name "README.org" ep3c-test-root))
+                  (buffer-string)))
+        missing)
+    (dolist (chord (ep3c-test--leader-chords))
+      (let ((row (concat "=LEADER " (substring chord 4) "=")))
+        (unless (string-search row readme)
+          (push (format "leader chord %S has no README row %S" chord row)
+                missing))))
+    (should-not missing)))
+
 (ert-deftest ep3c-test-modules-have-title ()
   "Every module declares a non-empty #+TITLE: property."
   (dolist (module ep3c-test-modules)
