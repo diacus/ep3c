@@ -188,8 +188,8 @@ Tools to talk to Large Language Models.
 | =LEADER d n= | dap-next              | Step over           |
 | =LEADER d i= | dap-step-in           | Step into           |
 | =LEADER d o= | dap-step-out          | Step out            |
-| =LEADER d b= | dap-breakpoint-toggle | Toggle breakpoint   |
-| =LEADER d B= | dap-ui-breakpoints    | Show breakpoints    |
+| =LEADER d b t= | dap-breakpoint-toggle | Toggle breakpoint   |
+| =LEADER d b l= | dap-ui-breakpoints    | Show breakpoints    |
 | =LEADER d l= | dap-ui-locals         | Show locals         |
 | =LEADER d s= | dap-ui-sessions       | Show sessions       |
 | =LEADER d r= | dap-ui-repl           | Debug REPL          |

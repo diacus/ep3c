@@ -43,8 +43,8 @@ popular Emacs packages like =company=, =flycheck= and =projectile=.
 		"d n" 'dap-next
 		"d i" 'dap-step-in
 		"d o" 'dap-step-out
-		"d b" 'dap-breakpoint-toggle
-		"d B" 'dap-ui-breakpoints
+		"d b t" 'dap-breakpoint-toggle
+		"d b l" 'dap-ui-breakpoints
 		"d l" 'dap-ui-locals
 		"d s" 'dap-ui-sessions
 		"d r" 'dap-ui-repl)))
