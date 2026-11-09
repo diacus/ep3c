@@ -14,12 +14,20 @@ The *haskell-mode* includes an specialized /compilation mode/ with
 additional features called [[http://haskell.github.io/haskell-mode/manual/latest/Compilation.html#Compilation][haskell-compile]]. When invoked it tries to
 guess how to compile the program associated to the current buffer.
 
+The GHCi interactive buffer ([[http://haskell.github.io/haskell-mode/manual/latest/Interactive-Haskell.html#Interactive-Haskell][haskell-interactive-bring]]) is the
+language REPL of this convention: language modules reserve the
+leader's =p r r= leaf -- "run the REPL".  The binding overrides the
+leaf *only inside haskell and cabal buffers* by binding it into
+their major mode maps (the rest of the =p r= run tree is untouched
+and still comes from the global leader); nothing lands on =LEADER
+p r r= in other languages until they register their own REPL.
+
 #+begin_src emacs-lisp
   (defun haskell-mode-key-bindings (mode-map)
     "Define convenient key-bindings for Haskell mode"
-    (ep3c-define-key '(normal visual motion) mode-map
-      "o r" 'haskell-interactive-bring
-      "c c" 'haskell-compile))
+    (ep3c-define-key '(normal visual) mode-map
+      "p r r" #'haskell-interactive-bring
+      "c c"   #'haskell-compile))
 
   (use-package haskell-mode
     :ensure t

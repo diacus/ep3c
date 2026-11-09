@@ -27,6 +27,11 @@
 ;;   macro only expands against a loaded evil, and a call reached
 ;;   through a hook lambda crashes every buffer the hook fires for
 ;;   when evil is disabled (the orgmode.org terminal-TAB incident).
+;; - leader-key tree conventions: the leader `o' subtree is bound
+;;   by orgmode.org only (haskell's old `LEADER o r' REPL binding
+;;   predates the org-only convention), and language modules
+;;   override leaves of the `p' run subtree inside their modes
+;;   (`LEADER p r r' = the language's REPL).
 ;; - install smoke test: ep3c--setup installs init.el, core.el and
 ;;   every module into a throwaway user-emacs-directory, and the
 ;;   module-set validation drops unknown modules.
@@ -465,6 +470,35 @@ a `(featurep 'evil)' guard for direct ones"
                                (file-name-nondirectory module))
                        failures)))
              form)))))
+    (should-not (nreverse failures))))
+
+(ert-deftest ep3c-test-leader-o-is-org-only ()
+  "The leader's `o' subtree is org's, everywhere but orgmode.org.
+
+The `LEADER o r' haskell REPL binding predates the org-only
+convention: the module carried the old \"o = open\" meaning with
+no documentation anywhere, and nothing caught the drift -- the
+README could say =SPC o= is org only while the key still lived on
+the leader in a haskell buffer.  This test greps every module's
+bindings (orgmode.org excepted) for the `o' subtree: leader-
+relative keys straight out of `ep3c-define-key' (\"o r\", \"o c\")
+and direct chords (kbd \"SPC o ...\", \"C-c o ...\")."
+  (let (failures)
+    (dolist (module ep3c-test-modules)
+      (unless (string-suffix-p "orgmode.org" module)
+        (dolist (elisp (ep3c-test--tangle-module module))
+          (dolist (form (ep3c-test--read-forms elisp))
+            (dolist (binding (ep3c-test--find-bindings form))
+              (let ((key (cdr binding)))
+                (when (and (stringp key)
+                           (or (string-match-p "\\`o[ \\t]" key)
+                               (string-match-p "\\`SPC[ ]+o[ \\t]" key)
+                               (string-match-p "\\`C-c[ ]+o[ \\t]" key)))
+                  (push (format "%s: binding `%s' on key %S -- the \
+leader `o' subtree belongs to orgmode.org"
+                                (file-name-nondirectory module)
+                                (car binding) key)
+                        failures))))))))
     (should-not (nreverse failures))))
 
 (ert-deftest ep3c-test-modules-have-title ()
