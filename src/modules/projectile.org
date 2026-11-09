@@ -10,7 +10,7 @@ external dependencies (when feasable).
   (use-package projectile
     :ensure t
     :config
-    (ep3c-define-key 'normal 'global
+    (ep3c-define-key '(normal visual) 'global
       "p p" 'projectile-switch-project
       "p k" 'projectile-kill-buffers
       "p f" 'projectile-find-file
@@ -69,7 +69,7 @@ external dependencies (when feasable).
       "Open the project ghostel terminal in a popup window."
       (interactive)
       (funcall (make-repl-popup #'projectile-run-ghostel)))
-    (ep3c-define-key 'normal 'global
+    (ep3c-define-key '(normal visual) 'global
       "p r s" #'projectile--popup-shell
       "p r S" #'projectile-run-shell
       "p r e" #'projectile--popup-eshell
@@ -83,7 +83,7 @@ external dependencies (when feasable).
     ;; vterm is UNIX only: the v/V pair waits for vterm to load.
     (unless (member system-type '(ms-dos windows-nt cygwin))
       (with-eval-after-load 'vterm
-        (ep3c-define-key 'normal 'global
+        (ep3c-define-key '(normal visual) 'global
           "p r v" #'projectile--popup-vterm
           "p r V" #'projectile-run-vterm))))
 #+end_src

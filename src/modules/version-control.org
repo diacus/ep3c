@@ -7,7 +7,7 @@
   (use-package magit
     :ensure t
     :config
-    (ep3c-define-key 'normal 'global
+    (ep3c-define-key '(normal visual) 'global
       "g g" 'magit
       "g f" 'magit-find-file
       "g F" 'magit-find-file-other-frame

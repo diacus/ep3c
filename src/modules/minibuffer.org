@@ -65,7 +65,7 @@ without further integrations.
     ;; j and k live in the leader: SPC j / SPC k with evil, and without
     ;; it `ep3c-non-evil-leader' j / k -- by default the very chords
     ;; they used to have.
-    (ep3c-define-key 'normal 'global
+    (ep3c-define-key '(normal visual) 'global
       "j" 'counsel-git-grep
       "k" 'counsel-ag)
     (global-set-key (kbd "C-x l") 'counsel-locate)

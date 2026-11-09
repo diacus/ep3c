@@ -536,6 +536,67 @@ leader `o' subtree belongs to orgmode.org"
                         failures))))))))
     (should-not (nreverse failures))))
 
+(defun ep3c-test--quote-deref (x)
+  "Unwrap every QUOTE wrapper off X (returns X when not quoted).
+`ep3c-define-key' takes its arguments as quoted symbols or quoted
+lists, so the tangle reads a (quote ...) form on top."
+  (while (and (consp x) (eq (car x) 'quote))
+    (setq x (cadr x)))
+  x)
+
+(defun ep3c-test--scan-forms (form)
+  "Every `ep3c-define-key' call node anywhere inside FORM.
+Walks cons cells CAR and CDR recursively: dotted lists are common
+in tangled code (alist entries, `use-package' :hook pairs), and
+recursing on both cons fields is the only way to bottom out on
+every shape.  Recursion depth is bounded by cons-cell count per
+branch -- module lists are a handful of elements deep."
+  (cond
+   ((not (consp form)) ())
+   ((eq (car form) 'ep3c-define-key) (list form))
+   (t (append (ep3c-test--scan-forms (car form))
+              (ep3c-test--scan-forms (cdr form))))))
+
+(ert-deftest ep3c-test-global-leader-states ()
+  "Global leader bindings live in evil normal and visual states, only.
+
+The (normal visual) policy keeps the leader uniform across the two
+states whose keys are commands.  `emacs' state is deliberately out
+of it: there `SPC' is a literal space, so a global SPC-prefixed
+tree turns prose typing into undefined-prefix aborts in the
+buffers evil holds in emacs state (Custom, calc, ediff,
+debugger-mode, gdb-*, ...).  Where a mode's buffers genuinely want
+the leader keys in emacs state, the binding belongs on that mode's
+map -- dap's (normal visual emacs) call on `dap-mode-map' is the
+one in-house case; mode-map calls are all out of this check's
+scope.  For every `ep3c-define-key' form whose map is 'global: a
+state list drawn from normal/visual/emacs must be exactly
+(normal visual); any other state (treemacs.org's `treemacs`-state
+rebind, say) is by construction a mode-state binding of its own
+and passes."
+  (let ((failures ()))
+    (dolist (module ep3c-test-modules)
+      (dolist (form (apply #'append
+                           (mapcar #'ep3c-test--read-forms
+                                   (ep3c-test--tangle-module module))))
+        (dolist (call (ep3c-test--scan-forms form))
+          (pcase call
+            (`(ep3c-define-key ,raw-states ,map . ,_rest)
+             (when (eq (ep3c-test--quote-deref map) 'global)
+               (let ((states (ep3c-test--quote-deref raw-states)))
+                 (when (and (listp states)
+                            (cl-every (lambda (s)
+                                        (memq s '(normal visual emacs)))
+                                      states))
+                   (unless (and (= 2 (length states))
+                                (memq 'normal states)
+                                (memq 'visual states))
+                     (push (format "%s: 'global `ep3c-define-key' with state(s) %S -- the policy is (normal visual); emacs state only via mode maps (see dap)"
+                                   (file-name-nondirectory module)
+                                   states)
+                           failures))))))))))
+    (should-not failures)))
+
 (ert-deftest ep3c-test-modules-have-title ()
   "Every module declares a non-empty #+TITLE: property."
   (dolist (module ep3c-test-modules)

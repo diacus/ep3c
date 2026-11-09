@@ -313,7 +313,7 @@ by [[https://www.youtube.com/watch?v=a_WNtuefREM][LibrePhenix]].
     ;; The leader `c' slot gives org-capture its vanilla C-c c chord
     ;; back without evil; haskell-mode keeps shadowing it locally with
     ;; its own `c c' compile tree, so both coexist.
-    (ep3c-define-key 'normal 'global
+    (ep3c-define-key '(normal visual) 'global
       "o a" #'org-agenda
       "o c" #'org-capture
       "c"   #'org-capture)

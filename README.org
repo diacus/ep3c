@@ -92,11 +92,16 @@ leader; =which-key= shows the full tree under either leader.
 
 The tables below write =LEADER x y=: read as =SPC x y= with evil or
 =C-c x y= without it (or whatever key you customized the regime's
-leader to).  Language modules may override leaves of the =LEADER p=
-run subtree inside their own major modes: =LEADER p r r= is the
-reserved leaf for "the language's REPL" (haskell registers
-=haskell-interactive-bring= there), and each override is bounded to
-that language's buffers only.
+leader to).  With evil, leader chords are live in normal and visual
+state -- the two states whose keys are commands -- and never in
+emacs state, where =SPC= types a space; bindings inside emacs state
+exist only through a major-mode map (dap's =d= tree on its
+=wanted-buffer= maps is the in-repo case).  Language modules may
+override leaves of the =LEADER p= run subtree inside their own
+major modes: =LEADER p r r= is the reserved leaf for "the
+language's REPL" (haskell registers =haskell-interactive-bring=
+there), and each override is bounded to that language's buffers
+only.
 
 *** Projects (=LEADER p=)
 | Key        | Command                                 | Description               |

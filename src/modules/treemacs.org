@@ -97,7 +97,7 @@ possessing basic file management utilities.
   ;; C-c without it): the upstream-recommended C-x t chords collide
   ;; with tab-bar's C-x t prefix on Emacs 29+, and whichever keymap
   ;; binds C-x t last replaces the other tree entirely.
-  (ep3c-define-key 'normal 'global
+  (ep3c-define-key '(normal visual) 'global
     "e e" #'treemacs
     "e d" #'treemacs-select-directory
     "e b" #'treemacs-bookmark

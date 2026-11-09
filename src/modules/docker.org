@@ -19,7 +19,7 @@ second.
     :ensure t
     :defer t)
 
-  (ep3c-define-key 'normal 'global
+  (ep3c-define-key '(normal visual) 'global
     "D" #'docker)
 #+end_src
 
