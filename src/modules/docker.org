@@ -6,14 +6,21 @@
 Add support for managing Docker containers, images, volumes, networks,
 contexts and docker-compose
 
-Docker lives on =C-c D=: without evil the leader key is =C-c=, and
-=C-c d= there is the =SPC d= debug tree, so the lowercase chord is
-spoken for.
+Docker lives on the leader's uppercase =D= slot (with evil that is
+=SPC D=, without it =C-c D=): uppercase, to stay clear of the leader
+=d= subtree, which the dap module speaks for.  Binding through
+=ep3c-define-key= keeps the chord load-order-proof: a plain
+=global-map= =C-c D= binding races the leader map for the =C-c=
+prefix and loses in the non-evil regime, whichever module loads
+second.
 
 #+begin_src emacs-lisp
   (use-package docker
     :ensure t
-    :bind ("C-c D" . docker))
+    :defer t)
+
+  (ep3c-define-key 'normal 'global
+    "D" #'docker)
 #+end_src
 
 Use =M-x docker=, select a resource then mark or unmark items using
