@@ -1,4 +1,4 @@
-#+TITLE: Markdown Preview with Impatient Mode
+#+TITLE: Markdown Live Preview
 #+AUTHOR: Diacus Magnuz
 
 * Prerequisites
