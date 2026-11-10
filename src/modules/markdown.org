@@ -47,9 +47,9 @@ have their own preview.
   (defcustom markdown-preview-buffer-name-prefix "*markdown-preview"
     "Prefix for preview buffer names.
 The full name is constructed as `markdown-preview-buffer-name-prefix'
-plus a colon-separated suffix derived from the source buffer's name
-or file path. This ensures each markdown document gets its own
-preview buffer."
+plus a colon-separated suffix derived from the source buffer's name or
+file path, closed with an asterisk. This ensures each markdown document
+gets its own preview buffer, e.g. *markdown-preview:README.md*."
     :type 'string
     :group 'markdown-preview)
 
@@ -70,7 +70,7 @@ scheme:
            (suffix (or (when-let ((file (buffer-file-name source)))
                          (file-name-nondirectory file))
                        (buffer-name source))))
-      (format "%s:%s" prefix suffix)))
+      (format "%s:%s*" prefix suffix)))
 #+end_src
 
 ** State Variables
