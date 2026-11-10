@@ -260,9 +260,10 @@ Otherwise delete just the window."
       ;; Cancel timer
       (when (timerp markdown-preview--timer)
         (cancel-timer markdown-preview--timer))
+      (setq markdown-preview--timer nil)
       ;; Remove hooks
       (remove-hook 'after-change-functions #'markdown-preview--after-change t)
-      (remove-hook 'kill-buffer-hook #'markdown-preview--cleanup-source t)
+      (remove-hook 'kill-buffer-hook #'markdown-preview--kill-hook t)
       (remove-hook 'window-scroll-functions #'markdown-preview--sync-scroll-hook t)
       ;; Clean up preview buffer
       (when (buffer-live-p markdown-preview--preview-buffer)
@@ -283,9 +284,10 @@ Otherwise delete just the window."
             ;; Cancel timer
             (when (timerp markdown-preview--timer)
               (cancel-timer markdown-preview--timer))
+            (setq markdown-preview--timer nil)
             ;; Remove hooks
             (remove-hook 'after-change-functions #'markdown-preview--after-change t)
-            (remove-hook 'kill-buffer-hook #'markdown-preview--cleanup-source t)
+            (remove-hook 'kill-buffer-hook #'markdown-preview--kill-hook t)
             (remove-hook 'window-scroll-functions #'markdown-preview--sync-scroll-hook t)
             ;; Clear mode
             (setq markdown-preview-mode nil
@@ -338,6 +340,7 @@ Otherwise delete just the window."
     ;; Cancel timer
     (when (timerp markdown-preview--timer)
       (cancel-timer markdown-preview--timer))
+    (setq markdown-preview--timer nil)
     ;; Remove hooks
     (remove-hook 'after-change-functions #'markdown-preview--after-change t)
     (remove-hook 'kill-buffer-hook #'markdown-preview--kill-hook t)
