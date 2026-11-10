@@ -23,12 +23,15 @@ and various Markdown extensions.
 #+end_src
 
 * Markdown Preview Mode
-Live markdown preview using `shr-render-buffer' for in-memory HTML rendering.
+Live markdown preview using `shr-insert-document' for in-memory HTML rendering.
 
 ** Overview
 Converts markdown to HTML via pandoc and renders directly in Emacs using
-`shr-render-buffer'. This approach avoids temporary files and HTTP servers.
-Preview updates in real-time as you type.
+`shr-insert-document' over a `libxml-parse-html-region' parse. This approach
+avoids temporary files and HTTP servers. Preview updates in real-time as
+you type. The preview buffer is named uniquely per source document
+(e.g. `*markdown-preview:README.md*'), so multiple markdown buffers each
+have their own preview.
 
 ** Dependencies
 #+begin_src emacs-lisp
@@ -41,8 +44,12 @@ Preview updates in real-time as you type.
     "Live markdown preview settings."
     :group 'markdown)
 
-  (defcustom markdown-preview-buffer-name "*markdown-preview*"
-    "Name of the buffer used for markdown preview."
+  (defcustom markdown-preview-buffer-name-prefix "*markdown-preview"
+    "Prefix for preview buffer names.
+The full name is constructed as `markdown-preview-buffer-name-prefix'
+plus a colon-separated suffix derived from the source buffer's name
+or file path. This ensures each markdown document gets its own
+preview buffer."
     :type 'string
     :group 'markdown-preview)
 
@@ -50,6 +57,20 @@ Preview updates in real-time as you type.
     "Idle seconds before updating preview after a change."
     :type 'number
     :group 'markdown-preview)
+
+  (defun markdown-preview--buffer-name (&optional source-buffer)
+    "Compute preview buffer name for SOURCE-BUFFER (defaults to current).
+Derives a unique name from the source buffer's file or buffer name so
+that each markdown document has its own preview buffer. The naming
+scheme:
+- file-visiting buffer: PREFIX:FILENAME
+- non-file buffer: PREFIX:BUFFER-NAME"
+    (let* ((source (or source-buffer (current-buffer)))
+           (prefix markdown-preview-buffer-name-prefix)
+           (suffix (or (when-let ((file (buffer-file-name source)))
+                         (file-name-nondirectory file))
+                       (buffer-name source))))
+      (format "%s:%s" prefix suffix)))
 #+end_src
 
 ** State Variables
@@ -74,7 +95,6 @@ Preview updates in real-time as you type.
 Wraps in minimal HTML structure for proper rendering."
     (let ((content (buffer-string))
           (cmd (if (boundp 'markdown-command) markdown-command "pandoc")))
-      (message "[md-preview] Converting markdown to HTML (cmd: %s, len: %d)" cmd (length content))
       ;; Use temp file for reliable pandoc input
       (let ((temp-file (make-temp-file "md-preview" nil ".md")))
         (unwind-protect
@@ -82,14 +102,12 @@ Wraps in minimal HTML structure for proper rendering."
               (with-temp-file temp-file
                 (insert content))
               (with-temp-buffer
-                (let ((exit-code (call-process cmd nil t nil
-                                                "--from=gfm" "--to=html"
-                                                temp-file)))
-                  (message "[md-preview] pandoc exit-code: %s" exit-code)
-                  (let ((html (buffer-string)))
-                    (message "[md-preview] HTML output length: %d" (length html))
-                    ;; Wrap in HTML structure for better shr rendering
-                    (format "<!DOCTYPE html>
+                (call-process cmd nil t nil
+                              "--from=gfm" "--to=html"
+                              temp-file)
+                (let ((html (buffer-string)))
+                  ;; Wrap in HTML structure for better shr rendering
+                  (format "<!DOCTYPE html>
 <html>
 <head><meta charset=\"utf-8\">
 <style>
@@ -103,7 +121,7 @@ pre { background: #f5f5f5; padding: 1em; overflow-x: auto; }
 %s
 </body>
 </html>"
-                            html)))))
+                          html))))
           (delete-file temp-file)))))
 #+end_src
 
@@ -112,25 +130,18 @@ pre { background: #f5f5f5; padding: 1em; overflow-x: auto; }
   (defun markdown-preview--render-html (html)
     "Render HTML string into current buffer using shr.
 Argument HTML is the HTML string to render.
-Uses a temporary buffer for HTML input, then calls shr-render-buffer.
-Preserves the original buffer name after rendering."
-    (message "[md-preview] render-html called, current-buffer: %s, name: %s" (current-buffer) (buffer-name))
-    (let ((inhibit-read-only t)
-          (original-name (buffer-name))
-          (temp-buffer (generate-new-buffer " *md-html*")))
-      (unwind-protect
-          (progn
-            (with-current-buffer temp-buffer
-              (insert html))
-            (message "[md-preview] calling shr-render-buffer on temp-buffer: %s" temp-buffer)
-            (erase-buffer)
-            (shr-render-buffer temp-buffer)
-            (message "[md-preview] after shr-render-buffer, buffer name is: %s" (buffer-name))
-            ;; shr-render-buffer may rename the buffer, restore original name
-            (rename-buffer original-name t)
-            (message "[md-preview] after rename-buffer, buffer name is: %s" (buffer-name))
-            (goto-char (point-min)))
-        (kill-buffer temp-buffer))))
+
+Parses HTML via `libxml-parse-html-region' and renders via
+`shr-insert-document' directly. This avoids `shr-render-buffer' which
+calls `pop-to-buffer' and would create a new `*html*' buffer on every
+refresh, leaking buffers."
+    (let ((inhibit-read-only t))
+      (erase-buffer)
+      (shr-insert-document
+       (with-temp-buffer
+         (insert html)
+         (libxml-parse-html-region (point-min) (point-max))))
+      (goto-char (point-min))))
 #+end_src
 
 ** Preview Buffer Update
@@ -138,7 +149,6 @@ Preserves the original buffer name after rendering."
   (defun markdown-preview--refresh (source-buf preview-buf)
     "Refresh the preview buffer for SOURCE-BUF.
 Argument PREVIEW-BUF is the preview buffer to refresh."
-    (message "[md-preview] refresh called: source=%s preview=%s" source-buf preview-buf)
     (when (and (buffer-live-p source-buf)
                (buffer-live-p preview-buf))
       ;; Save window focus to prevent stealing focus during update
@@ -158,7 +168,6 @@ Argument PREVIEW-BUF is the preview buffer to refresh."
       ;; Capture buffer references for the timer callback
       (let ((source (current-buffer))
             (preview markdown-preview--preview-buffer))
-        (message "[md-preview] scheduling refresh in %s seconds" markdown-preview-debounce-time)
         (setq markdown-preview--timer
               (run-with-idle-timer markdown-preview-debounce-time nil
                                    #'markdown-preview--refresh
@@ -166,7 +175,6 @@ Argument PREVIEW-BUF is the preview buffer to refresh."
 
   (defun markdown-preview--after-change (&rest _)
     "Hook for after-change-functions to trigger preview update."
-    (message "[md-preview] after-change triggered")
     (markdown-preview--schedule-refresh))
 #+end_src
 
@@ -182,8 +190,6 @@ Argument WINDOW is the window being scrolled."
       (let* ((source-buffer (window-buffer window))
              (preview-buffer markdown-preview--preview-buffer)
              (preview-window markdown-preview--preview-window))
-        (message "[md-preview] sync-scroll: syncing scroll, preview-window live=%s"
-                 (window-live-p preview-window))
         (when (buffer-live-p source-buffer)
           ;; Calculate proportional scroll position
           (let* ((source-total (count-lines (point-min) (point-max) source-buffer))
@@ -195,8 +201,6 @@ Argument WINDOW is the window being scrolled."
                                   1
                                 (max 1 (floor (* (/ (float source-line) source-total)
                                                  preview-total))))))
-            (message "[md-preview] sync-scroll: syncing line %d/%d -> %d/%d"
-                     source-line source-total target-line preview-total)
             ;; Set preview window start position
             (with-selected-window preview-window
               (save-excursion
@@ -225,8 +229,6 @@ Argument WINDOW is the preview window being scrolled."
                                   1
                                 (max 1 (floor (* (/ (float preview-line) preview-total)
                                                  source-total))))))
-            (message "[md-preview] reverse-sync: syncing line %d/%d -> %d/%d"
-                     preview-line preview-total target-line source-total)
             (dolist (source-win source-windows)
               (with-selected-window source-win
                 (save-excursion
@@ -303,19 +305,18 @@ Otherwise delete just the window."
 #+begin_src emacs-lisp
   (defun markdown-preview--enable ()
     "Enable markdown live preview for current buffer."
-    (message "[md-preview] enable called")
     (unless (derived-mode-p 'markdown-mode 'gfm-mode)
       (user-error "Markdown preview requires markdown-mode or gfm-mode"))
-    ;; Kill any existing preview buffer to avoid naming conflicts
-    (when-let ((existing (get-buffer markdown-preview-buffer-name)))
-      (kill-buffer existing))
     (let* ((source (current-buffer))
+           (preview-name (markdown-preview--buffer-name source))
            (html (markdown-preview--to-html))
-           (preview (get-buffer-create markdown-preview-buffer-name))
+           ;; Reuse the existing preview buffer for this source if any
+           ;; (e.g., user disabled and re-enabled without changes).
+           (preview (or (get-buffer preview-name)
+                        (get-buffer-create preview-name)))
            (source-window (selected-window))
            (preview-window (display-buffer preview '(display-buffer-pop-up-window)))
            (actual-preview (window-buffer preview-window)))
-      (message "[md-preview] source=%s preview=%s actual=%s" source preview actual-preview)
       ;; Set up preview buffer
       (with-current-buffer actual-preview
         (markdown-preview--render-html html)
@@ -330,7 +331,6 @@ Otherwise delete just the window."
         (add-hook 'kill-buffer-hook #'markdown-preview--kill-hook nil t)
         (add-hook 'window-scroll-functions #'markdown-preview--sync-scroll-hook nil t))
       ;; Return to source window
-      (message "[md-preview] enable complete")
       (select-window source-window)))
 
   (defun markdown-preview--disable ()
@@ -354,8 +354,10 @@ Otherwise delete just the window."
     "Toggle live markdown preview mode.
 
 When enabled, displays an HTML preview of the current markdown buffer.
-The preview updates as you type. Uses `shr-render-buffer' for in-Emacs
-rendering without temporary files.
+The preview updates as you type. The preview buffer is named uniquely
+per source document, so multiple markdown files can have independent
+previews. Uses `shr-insert-document' and `libxml-parse-html-region'
+for in-Emacs rendering without temporary files.
 
 Behavior on source buffer kill:
 - If preview window is only window in frame: delete frame
