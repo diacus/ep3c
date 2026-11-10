@@ -180,65 +180,134 @@ Argument PREVIEW-BUF is the preview buffer to refresh."
 
 ** Scroll Synchronization
 #+begin_src emacs-lisp
+  ;; Scroll-sync plumbing: window-scroll-functions run during redisplay,
+  ;; and modifications made to another window during its redisplay pass
+  ;; only take effect on a LATER full redisplay - in practice when the
+  ;; user switches focus.  The hooks therefore only record the scroll
+  ;; that needs mirroring; a zero-second timer applies it after the
+  ;; current redisplay, outside redisplay context.  Programmatic moves
+  ;; carry a window-parameter stamp: in a GUI, set-window-start fires
+  ;; the hooks synchronously, and a hook that finds the window start at
+  ;; exactly the stamped value knows the scroll is its own echo and
+  ;; skips it, which prevents sync ping-pong.
+  (defvar markdown-preview--pending-window nil)
+  (defvar markdown-preview--pending-reverse nil)
+  (defvar markdown-preview--sync-timer nil)
+
   (defun markdown-preview--sync-scroll (window)
     "Sync preview buffer scroll position with source buffer.
-Argument WINDOW is the window being scrolled."
-    (when (and markdown-preview-mode
-               markdown-preview--preview-buffer
-               (buffer-live-p markdown-preview--preview-buffer)
-               (window-live-p markdown-preview--preview-window))
-      (let* ((source-buffer (window-buffer window))
-             (preview-buffer markdown-preview--preview-buffer)
-             (preview-window markdown-preview--preview-window))
-        (when (buffer-live-p source-buffer)
-          ;; Calculate proportional scroll position
-          (let* ((source-total (count-lines (point-min) (point-max) source-buffer))
-                 (source-start (window-start window))
-                 (source-line (line-number-at-pos source-start source-buffer))
-                 (preview-total (count-lines (point-min) (point-max) preview-buffer))
+Argument WINDOW is the source window being scrolled.
+
+All state is read relative to WINDOW's buffer: the hook may fire for
+a window that is not selected, or from a redisplay context where the
+current buffer is unrelated.  The preview window's point follows its
+start; leaving it behind lets redisplay pull the start back to make a
+stale point visible, undoing the scroll."
+    (when (buffer-live-p (window-buffer window))
+      (with-current-buffer (window-buffer window)
+        (when (and markdown-preview-mode
+                   markdown-preview--preview-buffer
+                   (buffer-live-p markdown-preview--preview-buffer)
+                   (window-live-p markdown-preview--preview-window))
+          (let* ((preview-buffer markdown-preview--preview-buffer)
+                 (preview-window markdown-preview--preview-window)
+                 (source-total (count-lines (point-min) (point-max)))
+                 (source-line (line-number-at-pos (window-start window)))
+                 (preview-total (with-current-buffer preview-buffer
+                                  (count-lines (point-min) (point-max))))
                  ;; Calculate target line proportionally
                  (target-line (if (zerop source-total)
                                   1
                                 (max 1 (floor (* (/ (float source-line) source-total)
                                                  preview-total))))))
-            ;; Set preview window start position
+            ;; Stamp BEFORE the move: the echo of this move can fire
+            ;; within this very call.
             (with-selected-window preview-window
-              (save-excursion
-                (goto-char (point-min))
-                (forward-line (1- target-line))
-                (set-window-start preview-window (point)))))))))
-
-  (defun markdown-preview--sync-scroll-hook (&rest _)
-    "Hook for window-scroll-functions to sync scroll positions."
-    (markdown-preview--sync-scroll (selected-window)))
+              (goto-char (point-min))
+              (forward-line (1- target-line))
+              (set-window-parameter preview-window
+                                    'markdown-preview-sync-start
+                                    (point))
+              (set-window-start preview-window (point))
+              (set-window-point preview-window (point))))))))
 
   (defun markdown-preview--reverse-sync-scroll (window)
     "Sync source buffer scroll position with preview buffer.
-Argument WINDOW is the preview window being scrolled."
-    (when (and markdown-preview--source-buffer
-               (buffer-live-p markdown-preview--source-buffer))
-      (let* ((preview-buffer (window-buffer window))
-             (source-buffer markdown-preview--source-buffer)
-             (source-windows (get-buffer-window-list source-buffer nil t)))
+Argument WINDOW is the preview window being scrolled.
+Like `markdown-preview--sync-scroll', state is read relative to
+WINDOW's buffer, and the source windows' points follow their starts
+so redisplay does not undo the scroll."
+    (when (buffer-live-p (window-buffer window))
+      (let* ((source-buffer nil)
+             (source-windows nil)
+             (preview-total (with-current-buffer (window-buffer window)
+                              (count-lines (point-min) (point-max))))
+             (preview-line (line-number-at-pos (window-start window)))
+             source-total)
+        (with-current-buffer (window-buffer window)
+          (setq source-buffer markdown-preview--source-buffer)
+          (when (buffer-live-p source-buffer)
+            (setq source-windows (get-buffer-window-list source-buffer nil t)
+                  source-total (with-current-buffer source-buffer
+                                 (count-lines (point-min) (point-max))))))
         (when source-windows
-          (let* ((preview-total (count-lines (point-min) (point-max) preview-buffer))
-                 (preview-start (window-start window))
-                 (preview-line (line-number-at-pos preview-start preview-buffer))
-                 (source-total (count-lines (point-min) (point-max) source-buffer))
-                 (target-line (if (zerop preview-total)
-                                  1
-                                (max 1 (floor (* (/ (float preview-line) preview-total)
-                                                 source-total))))))
+          (let ((target-line (if (zerop preview-total)
+                                 1
+                               (max 1 (floor (* (/ (float preview-line) preview-total)
+                                                source-total))))))
             (dolist (source-win source-windows)
               (with-selected-window source-win
-                (save-excursion
-                  (goto-char (point-min))
-                  (forward-line (1- target-line))
-                  (set-window-start source-win (point))))))))))
+                (goto-char (point-min))
+                (forward-line (1- target-line))
+                ;; Stamp BEFORE the move, same rationale as in
+                ;; `markdown-preview--sync-scroll'.
+                (set-window-parameter source-win
+                                      'markdown-preview-sync-start
+                                      (point))
+                (set-window-start source-win (point))
+                (set-window-point source-win (point)))))))))
 
-  (defun markdown-preview--reverse-sync-scroll-hook (&rest _)
-    "Hook for window-scroll-functions in preview buffer to sync back to source."
-    (markdown-preview--reverse-sync-scroll (selected-window)))
+  (defun markdown-preview--schedule-sync ()
+    "Schedule the outside-of-redisplay application of a pending sync."
+    (when (timerp markdown-preview--sync-timer)
+      (cancel-timer markdown-preview--sync-timer))
+    (setq markdown-preview--sync-timer
+          (run-with-timer 0 nil #'markdown-preview--process-pending-sync)))
+
+  (defun markdown-preview--process-pending-sync ()
+    "Apply the scroll recorded by the hooks, outside redisplay."
+    (setq markdown-preview--sync-timer nil)
+    (when markdown-preview--pending-window
+      (let ((window markdown-preview--pending-window)
+            (reverse markdown-preview--pending-reverse))
+        (setq markdown-preview--pending-window nil)
+        (when (window-live-p window)
+          (if reverse
+              (markdown-preview--reverse-sync-scroll window)
+            (markdown-preview--sync-scroll window))))))
+
+  (defun markdown-preview--sync-scroll-hook (window &rest _)
+    "Hook for `window-scroll-functions' to record forward syncs.
+Do not sync here: the sync work is deferred by
+`markdown-preview--schedule-sync' to run outside redisplay."
+    (let ((last (window-parameter window 'markdown-preview-sync-start)))
+      (if (and last (= (window-start window) last))
+          ;; Our own programmatic scroll echoed back; consume and skip.
+          (set-window-parameter window 'markdown-preview-sync-start nil)
+        (setq markdown-preview--pending-window window
+              markdown-preview--pending-reverse nil)
+        (markdown-preview--schedule-sync))))
+
+  (defun markdown-preview--reverse-sync-scroll-hook (window &rest _)
+    "Hook for `window-scroll-functions' to record reverse syncs.
+Like `markdown-preview--sync-scroll-hook', only records; the work is
+deferred to run outside redisplay."
+    (let ((last (window-parameter window 'markdown-preview-sync-start)))
+      (if (and last (= (window-start window) last))
+          (set-window-parameter window 'markdown-preview-sync-start nil)
+        (setq markdown-preview--pending-window window
+              markdown-preview--pending-reverse t)
+        (markdown-preview--schedule-sync))))
 #+end_src
 
 ** Cleanup
@@ -257,10 +326,15 @@ Otherwise delete just the window."
   (defun markdown-preview--cleanup-source ()
     "Cleanup when source buffer is killed."
     (when markdown-preview--preview-buffer
-      ;; Cancel timer
+      ;; Cancel timers
       (when (timerp markdown-preview--timer)
         (cancel-timer markdown-preview--timer))
       (setq markdown-preview--timer nil)
+      (when (timerp markdown-preview--sync-timer)
+        (cancel-timer markdown-preview--sync-timer))
+      (setq markdown-preview--sync-timer nil
+            markdown-preview--pending-window nil
+            markdown-preview--pending-reverse nil)
       ;; Remove hooks
       (remove-hook 'after-change-functions #'markdown-preview--after-change t)
       (remove-hook 'kill-buffer-hook #'markdown-preview--kill-hook t)
@@ -337,10 +411,15 @@ Otherwise delete just the window."
 
   (defun markdown-preview--disable ()
     "Disable markdown live preview for current buffer."
-    ;; Cancel timer
+    ;; Cancel timers
     (when (timerp markdown-preview--timer)
       (cancel-timer markdown-preview--timer))
     (setq markdown-preview--timer nil)
+    (when (timerp markdown-preview--sync-timer)
+      (cancel-timer markdown-preview--sync-timer))
+    (setq markdown-preview--sync-timer nil
+          markdown-preview--pending-window nil
+          markdown-preview--pending-reverse nil)
     ;; Remove hooks
     (remove-hook 'after-change-functions #'markdown-preview--after-change t)
     (remove-hook 'kill-buffer-hook #'markdown-preview--kill-hook t)
