@@ -117,6 +117,16 @@ choice for a command line interface is presicely *eshell.*
     "t E" 'eshell)
 #+end_src
 
+Using eshell over SSH tramp is a slow combination. I found a small
+recipy on [[https://www.reddit.com/r/emacs/comments/s1v0sp/running_remote_commands_in_eshell_is_way_too_slow/][r/emacs]] suggesting to disable =company-mode= within eshell.
+
+#+begin_src emacs-lisp
+  (defun ep3c--disable-company-mode ()
+    (company-mode -1))
+
+  (add-hook 'eshell-mode-hook #'ep3c--disable-company-mode)
+#+end_src
+
 * Term, shell and ielm
 Gnu term provides a terminal emulator buffer, shell a comint
 wrapper for the system shell, and ielm an Emacs Lisp REPL. They
