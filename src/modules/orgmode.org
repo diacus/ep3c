@@ -201,6 +201,19 @@ by [[https://www.youtube.com/watch?v=a_WNtuefREM][LibrePhenix]].
              org-modern-table nil
              org-modern-block-name nil)
 
+       ;; Disable block fringe markers.  `add-hook' prepends, so the
+       ;; org-mode-hook entries run in reverse registration order and
+       ;; `org-modern-mode' binds its font-lock keywords before
+       ;; `org-indent-mode' activates -- the mode's own org-indent
+       ;; guard never fires and the fringe keyword ships in every
+       ;; buffer.  Its fringe markers then overwrite `org-indent-mode''s
+       ;; `line-prefix'/`wrap-prefix' with 1-column `display' prefixes
+       ;; every time a source block gets refontified (i.e. after any
+       ;; edit inside or next to it), collapsing the block to the left
+       ;; margin.  The two features are mutually exclusive by design;
+       ;; org-indent wins here.
+       (setq org-modern-block-fringe nil)
+
        ;; Per-keyword TODO faces for org-modern (all 4 chars for uniform box width)
        (setq org-modern-todo-faces
              '(("TODO" . (:inherit shadow :weight light :box (:line-width -1)))
