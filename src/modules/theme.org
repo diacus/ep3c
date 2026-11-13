@@ -10,17 +10,66 @@ By default the cursorline highlighting is underlined, I don't like it.
      (set-face-attribute 'hl-line nil :underline nil))
 #+end_src
 
+* Distribution detection
+On GNU/Linux and BSD, the running distribution is read from the
+[[https://www.freedesktop.org/software/systemd/man/latest/os-release.html][os-release]] file, the freedesktop.org standard present on every
+modern distribution.  It supersedes the legacy =lsb_release= tool,
+which is not shipped by all distributions anymore.
+
+The =ID= entry is preferred over =NAME= as the canonical identifier:
+it is lowercase, machine oriented, and stable across distribution
+flavors (=opensuse-leap=, =opensuse-tumbleweed=, ...).
+#+begin_src emacs-lisp
+  (defun theme--os-release-field (field)
+    "Return the value of FIELD from the os-release file, or nil.
+Values may be double-quoted, as allowed by os-release(5).  Falls
+back to /usr/lib/os-release when /etc/os-release is missing."
+    (let ((file (cond ((file-exists-p "/etc/os-release")
+                       "/etc/os-release")
+                      ((file-exists-p "/usr/lib/os-release")
+                       "/usr/lib/os-release")))
+          case-fold-search)
+      (when file
+        (with-temp-buffer
+          (insert-file-contents file)
+          (goto-char (point-min))
+          (when (re-search-forward
+                 (format "^%s=\\(\"?\\)\\(.*?\\)\\1$"
+                         (regexp-quote field))
+                 nil t)
+            (match-string 2))))))
+
+
+  (defun theme--distro-id ()
+    "Return the ID of the running distribution, as a lowercase string.
+Nil is returned on non-Linux systems and where os-release is absent."
+    (when (member system-type '(android gnu/linux berkeley-unix))
+      (let ((id (theme--os-release-field "ID")))
+        (and id (downcase id)))))
+#+end_src
+
 * Colors for Linux and BSD
-Installing Nord theme included in [[https://github.com/doomemacs/themes?tab=readme-ov-file#manually--use-package][doom-themes]] collection
+Installing Nord theme included in [[https://github.com/doomemacs/themes?tab=readme-ov-file#manually--use-package][doom-themes]] collection.  On openSUSE
+distributions the Geeko palette takes precedence, taken from the
+[[https://github.com/diacus/openSUSE-Emacs-themes][openSUSE-Emacs-themes]] package, in its dark flavor; switch to
+=opensuse-light= in the snippet below for the light one.
 #+begin_src emacs-lisp
   (when (member system-type '(android gnu/linux berkeley-unix))
-    (use-package doom-themes
-      :ensure t
-      :config
-      ;; Global settings (defaults)
-      (setq doom-themes-enable-bold t
-  	  doom-themes-enable-italic t)
-      (load-theme 'doom-nord :no-confirm)))
+    (let ((id (theme--distro-id)))
+      (if (and id (string-match-p "suse" id))
+          (use-package opensuse-themes
+            :quelpa (opensuse-themes
+                     :fetcher github
+                     :repo "diacus/openSUSE-Emacs-themes")
+            :config
+            (load-theme 'opensuse-dark :no-confirm))
+        (use-package doom-themes
+          :ensure t
+          :config
+          ;; Global settings (defaults)
+          (setq doom-themes-enable-bold t
+      	  doom-themes-enable-italic t)
+          (load-theme 'doom-nord :no-confirm)))))
 #+end_src
 
 * Colors for MacOs
