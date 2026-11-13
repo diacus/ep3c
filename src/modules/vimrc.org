@@ -1,0 +1,14 @@
+#+TITLE: Vimscript settings
+#+AUTHOR: Diacus Magnuz
+#+STARTUP: overview
+
+
+[[https://github.com/mcandre/vimrc-mode][vimrc-mode]] is a major mode for Vim's vimscript: it provides font
+locking for =.vimrc= and =.vim= files.
+
+#+begin_src emacs-lisp
+  (use-package vimrc-mode
+    :ensure t
+    :mode (("\\.vim\\(rc\\)?\\'" . vimrc-mode)
+           ("_vimrc\\'" . vimrc-mode)))
+#+end_src
