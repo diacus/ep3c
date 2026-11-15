@@ -87,7 +87,23 @@ Executes FN right away otherwise."
   (set-default 'ep3c-modules (ep3c--valid-modules ep3c-modules modules-dir)))
 
 ;; Convert symbols to file paths before loading
-(let ((module-directory (file-name-concat user-emacs-directory "modules")))
+;; Load Org explicitly: nothing else does, and Org defines
+;; `org-element-context' through its autoloads, loaded here.  The
+;; requires stay outside the cache-binding `let' below: with the
+;; binding active, `org-loaddefs' aborts on its `defvar' of
+;; `org-element-use-cache' ("Defining as dynamic an already lexical
+;; var") and every autoload it declares after that, among them
+;; `org-element-context', stays undefined.
+(require 'org)
+(require 'ob-tangle)
+(let ((module-directory (file-name-concat user-emacs-directory "modules"))
+      ;; Persisted org-element caches are keyed to files that the
+      ;; installer deletes and recreates on every install; stale trees
+      ;; from previous installs load as valid (the path/inode match and
+      ;; the hash is refreshed on registration) and crash
+      ;; `org-element-context' on positions past the buffer end.  Module
+      ;; files are small; skip both the use and the persistence.
+      (org-element-use-cache nil))
   (mapcar (lambda (m)
             (org-babel-load-file
              (expand-file-name (format "%s.org" m) module-directory)))
