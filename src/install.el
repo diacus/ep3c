@@ -35,6 +35,19 @@ VALUE is the new value being assigned."
         (ep3c--migrate-modules-value (car (cdr saved)))
       '())))
 
+(defun ep3c--unregister-module-persist (modules)
+  "Remove persisted org-element caches for each MODULES path.
+The installer replaces module files, so element caches persisted
+by previous sessions cannot be trusted: after the tree of an old
+version is loaded into the rebuilt file's buffer, element
+properties point past the new buffer end and
+`org-element-context' fails with args-out-of-range."
+  (when (require 'org-persist nil t)
+    (dolist (module modules)
+      (ignore-errors
+        (org-persist-unregister '(elisp org-element--cache)
+                                module :remove-related t)))))
+
 (defun ep3c--install (init-package core-package modules-wildcard)
   "Main Installation routine.
 INIT-PACKAGE contains the path to init.el, CORE-PACKAGE the path to
@@ -55,7 +68,9 @@ core.el while MODULES-WILDCARD matches the available module paths"
 			 module
 			 modules-target-directory))
 	(copy-file module modules-target-directory t)))
-    (file-expand-wildcards (file-name-concat modules-target-directory "*.org"))))
+    (ep3c--unregister-module-persist
+     (file-expand-wildcards (file-name-concat modules-target-directory
+					      "*.org")))))
 
 
 (defun ep3c--setup ()
