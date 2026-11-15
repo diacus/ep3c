@@ -1,5 +1,6 @@
 #+TITLE: Markdown Live Preview
 #+AUTHOR: Diacus Magnuz
+#+STARTUP: overview
 
 * Prerequisites
 This module requires an external Markdown processor:
@@ -20,6 +21,94 @@ and various Markdown extensions.
            ("\\.md\\'" . markdown-mode)
            ("\\.markdown\\'" . markdown-mode))
     :init (setq markdown-command "pandoc"))
+#+end_src
+
+* Visual-line list indentation
+
+~visual-line-mode~ only switches word wrapping on.  The hanging indent of
+wrapped continuation lines comes from the ~wrap-prefix~ text property,
+which org buffers get from ~org-indent-mode~ and which ~markdown-mode~
+does not set; that is why wrapped list items align under the item text in
+orgmode but fall back to column 0 in markdown.  The font-lock keyword
+below gives every markdown list item the same virtual hanging indent as
+~org-indent-mode~ maintains for org list items: wrapped continuation
+lines align with the item text of the item, with the prefix derived from
+the marker line's leading whitespace, its list marker, an optional GFM
+task list checkbox, and the blank after them.  It follows the item
+itself instead of the source indentation, so flush-left bullets hang
+their text as well.  The prefix is display-only; the live preview, which
+reads the buffer text through pandoc, is unaffected.
+
+#+begin_src emacs-lisp
+  (defvar ep3c--markdown-wrap-font-lock-keywords
+    '((ep3c--search-markdown-wrap-line (0 (ep3c--fontify-markdown-list-line))))
+    "Font-lock keyword giving markdown list items a hanging indent.
+
+  Lines matching the keyword get the `wrap-prefix' of the columns of
+  their item text; lines that are no longer list items have the
+  leftover value cleared.")
+
+  (defun ep3c--search-markdown-wrap-line (limit)
+    "Match the next markdown list line up to LIMIT, for font-lock.
+  A line either matches `markdown-regex-list' as a list item, or
+  still carries a `wrap-prefix' the keyword has to clear, because
+  the property is not managed by font-lock.  Move point to the end
+  of the line, like `re-search-forward' does, and return the same
+  position, or nil when no such line is left."
+    (catch 'found
+      (while (not (eobp))
+        ;; Font-lock resumes the search at the end of the previous
+        ;; match, which may be inside an already processed line;
+        ;; skip the rest of it.
+        (cond
+         ((> (point) (line-beginning-position))
+          (forward-line 1))
+         ((looking-at markdown-regex-list)
+          (goto-char (line-end-position))
+          (throw 'found (point)))
+         ((get-text-property (line-beginning-position) 'wrap-prefix)
+          ;; A line that is no longer a list item; report the line
+          ;; itself, as an empty match when it is blank, so font-lock
+          ;; guards make progress.
+          (let ((beg (line-beginning-position)) (end (line-end-position)))
+            (set-match-data (list beg end))
+            (goto-char end)
+            (throw 'found end)))
+         ((>= (point) limit)
+          (throw 'found nil))
+         (t
+          (forward-line 1))))
+      nil))
+
+  (defun ep3c--fontify-markdown-list-line ()
+    "Set the `wrap-prefix' of the list line matched at point.
+  For a list item, the prefix is the columns of the item text:
+  leading whitespace, list marker, blank after the marker and, in
+  GFM task list items, the checkbox.  Any other matched line is
+  only a stale leftover and gets its prefix cleared.  The prefix
+  mirrors the virtual indent `org-indent-mode' maintains in org
+  buffers, and it is a display property, so the live preview,
+  which reads the buffer text, is unaffected."
+    (save-excursion
+      (goto-char (line-beginning-position))
+      (if (looking-at markdown-regex-list)
+          (put-text-property
+           (line-beginning-position) (line-end-position)
+           'wrap-prefix
+           (make-string (- (or (match-end 4) (match-end 3))
+                           (line-beginning-position))
+                        ?\s))
+        (remove-text-properties
+         (line-beginning-position) (line-end-position) '(wrap-prefix))))
+    nil)
+
+  (defun ep3c--markdown-wrap-setup ()
+    "Register the hanging-indent keyword in the markdown buffer."
+    (font-lock-add-keywords nil ep3c--markdown-wrap-font-lock-keywords)
+    (font-lock-flush))
+
+  (add-hook 'markdown-mode-hook #'ep3c--markdown-wrap-setup)
+  (add-hook 'gfm-mode-hook #'ep3c--markdown-wrap-setup)
 #+end_src
 
 * Markdown Preview Mode
