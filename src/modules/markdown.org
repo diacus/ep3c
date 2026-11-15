@@ -20,6 +20,10 @@ and various Markdown extensions.
     :mode (("README\\.md\\'" . gfm-mode)
            ("\\.md\\'" . markdown-mode)
            ("\\.markdown\\'" . markdown-mode))
+    :hook ((markdown-mode . (lambda ()
+                              (ep3c--markdown-leader-keys markdown-mode-map)))
+           (gfm-mode . (lambda ()
+                         (ep3c--markdown-leader-keys gfm-mode-map))))
     :init (setq markdown-command "pandoc"))
 #+end_src
 
@@ -111,458 +115,38 @@ reads the buffer text through pandoc, is unaffected.
   (add-hook 'gfm-mode-hook #'ep3c--markdown-wrap-setup)
 #+end_src
 
-* Markdown Preview Mode
-Live markdown preview using `shr-insert-document' for in-memory HTML rendering.
+* Live markdown preview
+The *[[https://github.com/diacus/native-md-preview.el][native-md-preview]]* package renders a live preview of the
+current markdown buffer entirely inside Emacs: the external processor
+(=markdown-command=, pandoc by default) converts the buffer,
+=libxml-parse-html-region= parses the HTML and =shr-insert-document=
+renders it in a per-document preview buffer (e.g.
+=*native-md-preview:README.md*=).  No HTTP servers, no websockets, no
+temporary output files.
 
-** Overview
-Converts markdown to HTML via pandoc and renders directly in Emacs using
-`shr-insert-document' over a `libxml-parse-html-region' parse. This approach
-avoids temporary files and HTTP servers. Preview updates in real-time as
-you type. The preview buffer is named uniquely per source document
-(e.g. `*markdown-preview:README.md*'), so multiple markdown buffers each
-have their own preview.
+The preview refreshes on idle edits -- saving is not required -- and
+re-anchors on every re-render, so it stays at the source's view instead
+of jumping back to the top when the buffer is edited in place.  Scroll
+sync runs in both directions with the source's proportional position
+and the programmatic moves echo-suppressed, so scrolling either window
+does not fight the other.
 
-** Dependencies
+The toggle is bound on the =m p= chord of the leader through
+=ep3c-define-key= (see the =Markdown Mode= section above): =LEADER m p=
+shows or removes the preview window of the current buffer.
+
 #+begin_src emacs-lisp
-  (require 'shr)
+  (use-package native-md-preview
+    :quelpa (native-md-preview :fetcher github
+                               :repo "diacus/native-md-preview.el"))
 #+end_src
 
-** Customization
 #+begin_src emacs-lisp
-  (defgroup markdown-preview nil
-    "Live markdown preview settings."
-    :group 'markdown)
+  (defun ep3c--markdown-leader-keys (mode-map)
+    "Bind the live preview toggle relative to the leader in MODE-MAP.
 
-  (defcustom markdown-preview-buffer-name-prefix "*markdown-preview"
-    "Prefix for preview buffer names.
-The full name is constructed as `markdown-preview-buffer-name-prefix'
-plus a colon-separated suffix derived from the source buffer's name or
-file path, closed with an asterisk. This ensures each markdown document
-gets its own preview buffer, e.g. *markdown-preview:README.md*."
-    :type 'string
-    :group 'markdown-preview)
-
-  (defcustom markdown-preview-debounce-time 0.3
-    "Idle seconds before updating preview after a change."
-    :type 'number
-    :group 'markdown-preview)
-
-  (defun markdown-preview--buffer-name (&optional source-buffer)
-    "Compute preview buffer name for SOURCE-BUFFER (defaults to current).
-Derives a unique name from the source buffer's file or buffer name so
-that each markdown document has its own preview buffer. The naming
-scheme:
-- file-visiting buffer: PREFIX:FILENAME
-- non-file buffer: PREFIX:BUFFER-NAME"
-    (let* ((source (or source-buffer (current-buffer)))
-           (prefix markdown-preview-buffer-name-prefix)
-           (suffix (or (when-let ((file (buffer-file-name source)))
-                         (file-name-nondirectory file))
-                       (buffer-name source))))
-      (format "%s:%s*" prefix suffix)))
-#+end_src
-
-** State Variables
-#+begin_src emacs-lisp
-  ;; In source buffer: reference to preview buffer
-  (defvar-local markdown-preview--preview-buffer nil)
-
-  ;; In source buffer: reference to preview window
-  (defvar-local markdown-preview--preview-window nil)
-
-  ;; In preview buffer: reference to source buffer
-  (defvar-local markdown-preview--source-buffer nil)
-
-  ;; Timer for debounced updates
-  (defvar-local markdown-preview--timer nil)
-#+end_src
-
-** HTML Conversion
-#+begin_src emacs-lisp
-  (defun markdown-preview--to-html ()
-    "Convert current markdown buffer to HTML string.
-Wraps in minimal HTML structure for proper rendering."
-    (let ((content (buffer-string))
-          (cmd (if (boundp 'markdown-command) markdown-command "pandoc")))
-      ;; Use temp file for reliable pandoc input
-      (let ((temp-file (make-temp-file "md-preview" nil ".md")))
-        (unwind-protect
-            (progn
-              (with-temp-file temp-file
-                (insert content))
-              (with-temp-buffer
-                (call-process cmd nil t nil
-                              "--from=gfm" "--to=html"
-                              temp-file)
-                (let ((html (buffer-string)))
-                  ;; Wrap in HTML structure for better shr rendering
-                  (format "<!DOCTYPE html>
-<html>
-<head><meta charset=\"utf-8\">
-<style>
-body { font-family: sans-serif; margin: 2em; line-height: 1.6; }
-h1, h2, h3 { margin-top: 1.5em; }
-code { background: #f5f5f5; padding: 0.2em 0.4em; }
-pre { background: #f5f5f5; padding: 1em; overflow-x: auto; }
-</style>
-</head>
-<body>
-%s
-</body>
-</html>"
-                          html))))
-          (delete-file temp-file)))))
-#+end_src
-
-** HTML Rendering
-#+begin_src emacs-lisp
-  (defun markdown-preview--render-html (html)
-    "Render HTML string into current buffer using shr.
-Argument HTML is the HTML string to render.
-
-Parses HTML via `libxml-parse-html-region' and renders via
-`shr-insert-document' directly. This avoids `shr-render-buffer' which
-calls `pop-to-buffer' and would create a new `*html*' buffer on every
-refresh, leaking buffers."
-    (let ((inhibit-read-only t))
-      (erase-buffer)
-      (shr-insert-document
-       (with-temp-buffer
-         (insert html)
-         (libxml-parse-html-region (point-min) (point-max))))
-      (goto-char (point-min))))
-#+end_src
-
-** Preview Buffer Update
-#+begin_src emacs-lisp
-  (defun markdown-preview--refresh (source-buf preview-buf)
-    "Refresh the preview buffer for SOURCE-BUF.
-Argument PREVIEW-BUF is the preview buffer to refresh."
-    (when (and (buffer-live-p source-buf)
-               (buffer-live-p preview-buf))
-      ;; Save window focus to prevent stealing focus during update
-      (save-selected-window
-        (let ((html (with-current-buffer source-buf
-                      (markdown-preview--to-html))))
-          (with-current-buffer preview-buf
-            (markdown-preview--render-html html))))))
-
-  (defun markdown-preview--schedule-refresh ()
-    "Schedule a debounced preview refresh."
-    (when (and markdown-preview-mode
-               markdown-preview--preview-buffer
-               (buffer-live-p markdown-preview--preview-buffer))
-      (when (timerp markdown-preview--timer)
-        (cancel-timer markdown-preview--timer))
-      ;; Capture buffer references for the timer callback
-      (let ((source (current-buffer))
-            (preview markdown-preview--preview-buffer))
-        (setq markdown-preview--timer
-              (run-with-idle-timer markdown-preview-debounce-time nil
-                                   #'markdown-preview--refresh
-                                   source preview)))))
-
-  (defun markdown-preview--after-change (&rest _)
-    "Hook for after-change-functions to trigger preview update."
-    (markdown-preview--schedule-refresh))
-#+end_src
-
-** Scroll Synchronization
-#+begin_src emacs-lisp
-  ;; Scroll-sync plumbing: window-scroll-functions run during redisplay,
-  ;; and modifications made to another window during its redisplay pass
-  ;; only take effect on a LATER full redisplay - in practice when the
-  ;; user switches focus.  The hooks therefore only record the scroll
-  ;; that needs mirroring; a zero-second timer applies it after the
-  ;; current redisplay, outside redisplay context.  Programmatic moves
-  ;; carry a window-parameter stamp: in a GUI, set-window-start fires
-  ;; the hooks synchronously, and a hook that finds the window start at
-  ;; exactly the stamped value knows the scroll is its own echo and
-  ;; skips it, which prevents sync ping-pong.
-  (defvar markdown-preview--pending-window nil)
-  (defvar markdown-preview--pending-reverse nil)
-  (defvar markdown-preview--sync-timer nil)
-
-  (defun markdown-preview--sync-scroll (window)
-    "Sync preview buffer scroll position with source buffer.
-Argument WINDOW is the source window being scrolled.
-
-All state is read relative to WINDOW's buffer: the hook may fire for
-a window that is not selected, or from a redisplay context where the
-current buffer is unrelated.  The preview window's point follows its
-start; leaving it behind lets redisplay pull the start back to make a
-stale point visible, undoing the scroll."
-    (when (buffer-live-p (window-buffer window))
-      (with-current-buffer (window-buffer window)
-        (when (and markdown-preview-mode
-                   markdown-preview--preview-buffer
-                   (buffer-live-p markdown-preview--preview-buffer)
-                   (window-live-p markdown-preview--preview-window))
-          (let* ((preview-buffer markdown-preview--preview-buffer)
-                 (preview-window markdown-preview--preview-window)
-                 (source-total (count-lines (point-min) (point-max)))
-                 (source-line (line-number-at-pos (window-start window)))
-                 (preview-total (with-current-buffer preview-buffer
-                                  (count-lines (point-min) (point-max))))
-                 ;; Calculate target line proportionally
-                 (target-line (if (zerop source-total)
-                                  1
-                                (max 1 (floor (* (/ (float source-line) source-total)
-                                                 preview-total))))))
-            ;; Stamp BEFORE the move: the echo of this move can fire
-            ;; within this very call.
-            (with-selected-window preview-window
-              (goto-char (point-min))
-              (forward-line (1- target-line))
-              (set-window-parameter preview-window
-                                    'markdown-preview-sync-start
-                                    (point))
-              (set-window-start preview-window (point))
-              (set-window-point preview-window (point))))))))
-
-  (defun markdown-preview--reverse-sync-scroll (window)
-    "Sync source buffer scroll position with preview buffer.
-Argument WINDOW is the preview window being scrolled.
-Like `markdown-preview--sync-scroll', state is read relative to
-WINDOW's buffer, and the source windows' points follow their starts
-so redisplay does not undo the scroll."
-    (when (buffer-live-p (window-buffer window))
-      (let* ((source-buffer nil)
-             (source-windows nil)
-             (preview-total (with-current-buffer (window-buffer window)
-                              (count-lines (point-min) (point-max))))
-             (preview-line (line-number-at-pos (window-start window)))
-             source-total)
-        (with-current-buffer (window-buffer window)
-          (setq source-buffer markdown-preview--source-buffer)
-          (when (buffer-live-p source-buffer)
-            (setq source-windows (get-buffer-window-list source-buffer nil t)
-                  source-total (with-current-buffer source-buffer
-                                 (count-lines (point-min) (point-max))))))
-        (when source-windows
-          (let ((target-line (if (zerop preview-total)
-                                 1
-                               (max 1 (floor (* (/ (float preview-line) preview-total)
-                                                source-total))))))
-            (dolist (source-win source-windows)
-              (with-selected-window source-win
-                (goto-char (point-min))
-                (forward-line (1- target-line))
-                ;; Stamp BEFORE the move, same rationale as in
-                ;; `markdown-preview--sync-scroll'.
-                (set-window-parameter source-win
-                                      'markdown-preview-sync-start
-                                      (point))
-                (set-window-start source-win (point))
-                (set-window-point source-win (point)))))))))
-
-  (defun markdown-preview--schedule-sync ()
-    "Schedule the outside-of-redisplay application of a pending sync."
-    (when (timerp markdown-preview--sync-timer)
-      (cancel-timer markdown-preview--sync-timer))
-    (setq markdown-preview--sync-timer
-          (run-with-timer 0 nil #'markdown-preview--process-pending-sync)))
-
-  (defun markdown-preview--process-pending-sync ()
-    "Apply the scroll recorded by the hooks, outside redisplay."
-    (setq markdown-preview--sync-timer nil)
-    (when markdown-preview--pending-window
-      (let ((window markdown-preview--pending-window)
-            (reverse markdown-preview--pending-reverse))
-        (setq markdown-preview--pending-window nil)
-        (when (window-live-p window)
-          (if reverse
-              (markdown-preview--reverse-sync-scroll window)
-            (markdown-preview--sync-scroll window))))))
-
-  (defun markdown-preview--sync-scroll-hook (window &rest _)
-    "Hook for `window-scroll-functions' to record forward syncs.
-Do not sync here: the sync work is deferred by
-`markdown-preview--schedule-sync' to run outside redisplay."
-    (let ((last (window-parameter window 'markdown-preview-sync-start)))
-      (if (and last (= (window-start window) last))
-          ;; Our own programmatic scroll echoed back; consume and skip.
-          (set-window-parameter window 'markdown-preview-sync-start nil)
-        (setq markdown-preview--pending-window window
-              markdown-preview--pending-reverse nil)
-        (markdown-preview--schedule-sync))))
-
-  (defun markdown-preview--reverse-sync-scroll-hook (window &rest _)
-    "Hook for `window-scroll-functions' to record reverse syncs.
-Like `markdown-preview--sync-scroll-hook', only records; the work is
-deferred to run outside redisplay."
-    (let ((last (window-parameter window 'markdown-preview-sync-start)))
-      (if (and last (= (window-start window) last))
-          (set-window-parameter window 'markdown-preview-sync-start nil)
-        (setq markdown-preview--pending-window window
-              markdown-preview--pending-reverse t)
-        (markdown-preview--schedule-sync))))
-#+end_src
-
-** Cleanup
-#+begin_src emacs-lisp
-  (defun markdown-preview--delete-window-or-frame (buffer)
-    "Delete windows showing BUFFER or their frames.
-If BUFFER is the only window in its frame, delete the frame.
-Otherwise delete just the window."
-    (dolist (win (get-buffer-window-list buffer nil t))
-      (when (window-live-p win)
-        (let ((frame (window-frame win)))
-          (if (= (length (window-list frame)) 1)
-              (delete-frame frame)
-            (delete-window win))))))
-
-  (defun markdown-preview--cleanup-source ()
-    "Cleanup when source buffer is killed."
-    (when markdown-preview--preview-buffer
-      ;; Cancel timers
-      (when (timerp markdown-preview--timer)
-        (cancel-timer markdown-preview--timer))
-      (setq markdown-preview--timer nil)
-      (when (timerp markdown-preview--sync-timer)
-        (cancel-timer markdown-preview--sync-timer))
-      (setq markdown-preview--sync-timer nil
-            markdown-preview--pending-window nil
-            markdown-preview--pending-reverse nil)
-      ;; Remove hooks
-      (remove-hook 'after-change-functions #'markdown-preview--after-change t)
-      (remove-hook 'kill-buffer-hook #'markdown-preview--kill-hook t)
-      (remove-hook 'window-scroll-functions #'markdown-preview--sync-scroll-hook t)
-      ;; Clean up preview buffer
-      (when (buffer-live-p markdown-preview--preview-buffer)
-        (markdown-preview--delete-window-or-frame markdown-preview--preview-buffer)
-        (kill-buffer markdown-preview--preview-buffer))
-      ;; Clear state
-      (setq markdown-preview--preview-buffer nil
-            markdown-preview--preview-window nil)))
-
-  (defun markdown-preview--cleanup-preview ()
-    "Cleanup when preview buffer is killed."
-    ;; Remove reverse sync hook from preview buffer
-    (remove-hook 'window-scroll-functions #'markdown-preview--reverse-sync-scroll-hook t)
-    (when-let ((source markdown-preview--source-buffer))
-      (when (buffer-live-p source)
-        (with-current-buffer source
-          (when markdown-preview-mode
-            ;; Cancel timer
-            (when (timerp markdown-preview--timer)
-              (cancel-timer markdown-preview--timer))
-            (setq markdown-preview--timer nil)
-            ;; Remove hooks
-            (remove-hook 'after-change-functions #'markdown-preview--after-change t)
-            (remove-hook 'kill-buffer-hook #'markdown-preview--kill-hook t)
-            (remove-hook 'window-scroll-functions #'markdown-preview--sync-scroll-hook t)
-            ;; Clear mode
-            (setq markdown-preview-mode nil
-                  markdown-preview--preview-buffer nil
-                  markdown-preview--preview-window nil))))))
-
-  (defun markdown-preview--kill-hook ()
-    "Buffer-local kill hook that calls the appropriate cleanup."
-    (if markdown-preview--source-buffer
-        ;; We're in the preview buffer
-        (markdown-preview--cleanup-preview)
-      ;; We're in the source buffer
-      (markdown-preview--cleanup-source)))
-#+end_src
-
-** Enable/Disable
-#+begin_src emacs-lisp
-  (defun markdown-preview--enable ()
-    "Enable markdown live preview for current buffer."
-    (unless (derived-mode-p 'markdown-mode 'gfm-mode)
-      (user-error "Markdown preview requires markdown-mode or gfm-mode"))
-    (let* ((source (current-buffer))
-           (preview-name (markdown-preview--buffer-name source))
-           (html (markdown-preview--to-html))
-           ;; Reuse the existing preview buffer for this source if any
-           ;; (e.g., user disabled and re-enabled without changes).
-           (preview (or (get-buffer preview-name)
-                        (get-buffer-create preview-name)))
-           (source-window (selected-window))
-           (preview-window (display-buffer preview '(display-buffer-pop-up-window)))
-           (actual-preview (window-buffer preview-window)))
-      ;; Set up preview buffer
-      (with-current-buffer actual-preview
-        (markdown-preview--render-html html)
-        (setq-local markdown-preview--source-buffer source)
-        (add-hook 'kill-buffer-hook #'markdown-preview--kill-hook nil t)
-        (add-hook 'window-scroll-functions #'markdown-preview--reverse-sync-scroll-hook nil t))
-      ;; Set up source buffer - store both buffer AND window
-      (with-current-buffer source
-        (setq-local markdown-preview--preview-buffer actual-preview)
-        (setq-local markdown-preview--preview-window preview-window)
-        (add-hook 'after-change-functions #'markdown-preview--after-change nil t)
-        (add-hook 'kill-buffer-hook #'markdown-preview--kill-hook nil t)
-        (add-hook 'window-scroll-functions #'markdown-preview--sync-scroll-hook nil t))
-      ;; Return to source window
-      (select-window source-window)))
-
-  (defun markdown-preview--disable ()
-    "Disable markdown live preview for current buffer."
-    ;; Cancel timers
-    (when (timerp markdown-preview--timer)
-      (cancel-timer markdown-preview--timer))
-    (setq markdown-preview--timer nil)
-    (when (timerp markdown-preview--sync-timer)
-      (cancel-timer markdown-preview--sync-timer))
-    (setq markdown-preview--sync-timer nil
-          markdown-preview--pending-window nil
-          markdown-preview--pending-reverse nil)
-    ;; Remove hooks
-    (remove-hook 'after-change-functions #'markdown-preview--after-change t)
-    (remove-hook 'kill-buffer-hook #'markdown-preview--kill-hook t)
-    (remove-hook 'window-scroll-functions #'markdown-preview--sync-scroll-hook t)
-    ;; Clean up preview buffer
-    (when (buffer-live-p markdown-preview--preview-buffer)
-      (markdown-preview--delete-window-or-frame markdown-preview--preview-buffer)
-      (kill-buffer markdown-preview--preview-buffer))
-    ;; Clear state
-    (setq markdown-preview--preview-buffer nil
-          markdown-preview--preview-window nil))
-
-  (define-minor-mode markdown-preview-mode
-    "Toggle live markdown preview mode.
-
-When enabled, displays an HTML preview of the current markdown buffer.
-The preview updates as you type. The preview buffer is named uniquely
-per source document, so multiple markdown files can have independent
-previews. Uses `shr-insert-document' and `libxml-parse-html-region'
-for in-Emacs rendering without temporary files.
-
-Behavior on source buffer kill:
-- If preview window is only window in frame: delete frame
-- Otherwise: delete just preview window
-
-Killing preview buffer disables this mode."
-    :lighter " MD-Preview"
-    :keymap (make-sparse-keymap)
-    (if markdown-preview-mode
-        (markdown-preview--enable)
-      (markdown-preview--disable)))
-#+end_src
-
-** Interactive Command
-#+begin_src emacs-lisp
-  (defun ep3c-markdown-preview ()
-    "Toggle markdown live preview for current buffer.
-
-Creates a preview window showing rendered HTML. Updates in real-time.
-
-Error if not in `markdown-mode' or `gfm-mode'."
-    (interactive)
-    (if (derived-mode-p 'markdown-mode 'gfm-mode)
-        (markdown-preview-mode (if markdown-preview-mode -1 1))
-      (user-error "Current buffer is not in markdown-mode or gfm-mode")))
-#+end_src
-
-** Keybindings
-#+begin_src emacs-lisp
-  (defun markdown-preview--setup-keys ()
-    "Setup keybindings for markdown preview."
-    (evil-define-key '(normal visual motion) markdown-mode-map
-      (kbd "SPC m p") 'ep3c-markdown-preview))
-
-  (add-hook 'markdown-mode-hook #'markdown-preview--setup-keys)
-  (add-hook 'gfm-mode-hook #'markdown-preview--setup-keys)
+Called from `markdown-mode-hook' / `gfm-mode-hook', where markdown-mode
+is loaded and MODE-MAP already exists."
+    (ep3c-define-key '(normal visual motion) mode-map
+                     "m p" #'native-md-preview-toggle))
 #+end_src
